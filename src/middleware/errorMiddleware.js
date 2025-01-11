@@ -1,4 +1,4 @@
-import { log } from "../utils/logger";
+import { log } from "../utils/logger.js";
 
 const errorMiddleware = (err, req, res, next) => {
   log.error(`Error: ${err.message}`, {

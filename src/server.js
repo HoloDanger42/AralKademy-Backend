@@ -1,12 +1,11 @@
-// Initialize Express
 import express, { json } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { errorMiddleware } from "./middleware/errorMiddleware";
-import { logMiddleware } from "./middleware/logMiddleware";
-import { databaseConnection } from "./config/database";
-import userRouter from "./routes/users";
-import courseRouter from "./routes/courses";
+import { errorMiddleware } from "./middleware/errorMiddleware.js";
+import { logMiddleware } from "./middleware/logMiddleware.js";
+import { databaseConnection } from "./config/database.js";
+import userRouter from "./routes/users.js";
+import courseRouter from "./routes/courses.js";
 
 dotenv.config();
 
@@ -24,12 +23,20 @@ app.use("/courses", courseRouter);
 
 app.use(errorMiddleware);
 
-databaseConnection();
+// Start server after database connection
+const startServer = async () => {
+  try {
+    await databaseConnection();
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
 
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+startServer();
 
 export default app;

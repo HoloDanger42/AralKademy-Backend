@@ -1,7 +1,7 @@
-import { User } from "../models/User";
-import bcrypt from "bcrypt";
+import { User } from "../models/User.js";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { log } from "../utils/logger";
+import { log } from "../utils/logger.js";
 
 const signup = async (req, res) => {
   try {
@@ -38,9 +38,9 @@ const signup = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    const user = await User.findOne({ where: { username } });
+    const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -50,7 +50,7 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ username }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ email }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
     res
@@ -58,8 +58,10 @@ const login = async (req, res) => {
       .json({ message: "Logged in successfully", token: token, user: user });
     log.info("User logged in successfully");
   } catch (error) {
-    log.error(error);
-    res.status(500).json({ message: "Something went wrong" });
+    log.error(`Login Error: ${error.message}`);
+    res
+      .status(500)
+      .json({ message: "Something went wrong", error: error.message });
   }
 };
 

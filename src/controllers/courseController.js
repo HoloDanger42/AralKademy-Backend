@@ -1,5 +1,5 @@
-import { Course } from "../models/Course";
-import { log } from "../utils/logger";
+import { Course } from "../models/Course.js";
+import { log } from "../utils/logger.js";
 
 const getAllCourses = async (_req, res) => {
   try {

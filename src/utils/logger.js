@@ -3,7 +3,7 @@ import winston from "winston";
 const log = winston.createLogger({
   level: "info",
   format: winston.format.combine(
-    winstone.format.timestamp(),
+    winston.format.timestamp(),
     winston.format.json()
   ),
   transports: [

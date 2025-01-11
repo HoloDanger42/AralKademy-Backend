@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
-import { User } from "../models/User";
-import { log } from "../utils/logger";
+import { User } from "../models/User.js";
+import { log } from "../utils/logger.js";
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -18,7 +18,7 @@ const authMiddleware = async (req, res, next) => {
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
     // 3. Fetch user using id from decoded token
-    const user = await User.findOne({ where: { id: decodedToken.username } });
+    const user = await User.findOne({ where: { email: decodedToken.email } });
 
     if (!user) {
       log.warn("User not found");
