@@ -6,22 +6,22 @@ This is a RESTful API backend for the AralKademy Learning Management System (LMS
 
 ## Key Features
 
-*   **User Management:** User registration, authentication, and management.
-*   **Course Management:** Creation, retrieval, and management of courses.
-*   **Secure Authentication:** JWT-based authentication for securing API endpoints.
-*   **Logging:** Request and response logging for debugging and monitoring.
-*   **Error Handling:** Comprehensive error handling middleware for graceful error responses.
-*   **Testing:** Automated unit and integration tests using Jest.
-*   **Database ORM:** Sequelize for managing database interactions with PostgreSQL.
-*   **API Documentation:** Automatically generated interactive API documentation.
+- **User Management:** User registration, authentication, and management.
+- **Course Management:** Creation, retrieval, and management of courses.
+- **Secure Authentication:** JWT-based authentication for securing API endpoints.
+- **Logging:** Request and response logging for debugging and monitoring.
+- **Error Handling:** Comprehensive error handling middleware for graceful error responses.
+- **Testing:** Automated unit and integration tests using Jest.
+- **Database ORM:** Sequelize for managing database interactions with PostgreSQL.
+- **API Documentation:** Automatically generated interactive API documentation.
 
 ## Technical Requirements
 
-*   **Node.js:** v18 or higher
-*   **npm:** v8 or higher
-*   **PostgreSQL:** v13 or higher
-*   **pgAdmin 4:** for PostgreSQL database management
-*   **REST Client:** Postman for testing API endpoints
+- **Node.js:** v18 or higher
+- **npm:** v8 or higher
+- **PostgreSQL:** v13 or higher
+- **pgAdmin 4:** for PostgreSQL database management
+- **REST Client:** Postman for testing API endpoints
 
 ## Version Information
 
@@ -79,25 +79,26 @@ aralkademy-backend/
 
 3.  **Set Up Your Environment Variables:**
 
-    *   Create a `.env` file in the root of the project (next to the `package.json`).
-    *   Populate the `.env` file with your database credentials, JWT secret, and other configurations.
-    *   **Sample .env:**
+    - Create a `.env` file in the root of the project (next to the `package.json`).
+    - Populate the `.env` file with your database credentials, JWT secret, and other configurations.
+    - **Sample .env:**
 
-        ```env
-        # Database Configuration
-        DB_HOST=localhost
-        DB_USER=your_db_user
-        DB_PASSWORD=your_db_password
-        DB_NAME=your_db_name
+      ```env
+      # Database Configuration
+      DB_HOST=localhost
+      DB_USER=your_db_user
+      DB_PASSWORD=your_db_password
+      DB_NAME=your_db_name
 
-        # Server Configuration
-        PORT=3000
+      # Server Configuration
+      PORT=3000
 
-        # Authentication Configuration
-        JWT_SECRET=your_jwt_secret_key
-        ```
-    *   **Important:** You need a running PostgreSQL instance, and a database created, along with a user with the necessary privileges for the application.
-    *   Refer to the PostgreSQL documentation for setting up the database, and creating users.
+      # Authentication Configuration
+      JWT_SECRET=your_jwt_secret_key
+      ```
+
+    - **Important:** You need a running PostgreSQL instance, and a database created, along with a user with the necessary privileges for the application.
+    - Refer to the PostgreSQL documentation for setting up the database, and creating users.
 
 4.  **Start the Server:**
 
@@ -126,136 +127,136 @@ You can view the automatically generated API documentation [here](link-to-your-s
 
 ### User Endpoints
 
-*   `POST /users/signup`: Create a new user
-    *   **Request Body:**
-        ```json
-        {
-          "username": "string",
-          "email": "string",
-          "password": "string"
+- `POST /users/signup`: Create a new user
+  - **Request Body:**
+    ```json
+    {
+      "username": "string",
+      "email": "string",
+      "password": "string"
+    }
+    ```
+  - **Response:** `201 Created` on success.
+    - **Example:**
+      ```json
+      {
+        "message": "User created successfully",
+        "user": {
+          "id": 1,
+          "username": "testuser",
+          "email": "test@example.com",
+          "updatedAt": "2024-10-27T06:35:01.673Z",
+          "createdAt": "2024-10-27T06:35:01.673Z"
         }
-        ```
-    *   **Response:** `201 Created` on success.
-        *   **Example:**
-            ```json
-            {
-                "message": "User created successfully",
-                "user": {
-                    "id": 1,
-                    "username": "testuser",
-                    "email": "test@example.com",
-                    "updatedAt": "2024-10-27T06:35:01.673Z",
-                    "createdAt": "2024-10-27T06:35:01.673Z"
-                }
-            }
-            ```
-    *   **Error Codes**:
-        *   `400 Bad Request`: Missing required fields, or incorrect data types.
-        *   `409 Conflict`: User already exists.
-        *   `500 Internal Server Error`: Internal server error.
-*   `POST /users/login`: Authenticate user
-    *   **Request Body:**
-        ```json
-        {
-          "username": "string",
-          "password": "string"
+      }
+      ```
+  - **Error Codes**:
+    - `400 Bad Request`: Missing required fields, or incorrect data types.
+    - `409 Conflict`: User already exists.
+    - `500 Internal Server Error`: Internal server error.
+- `POST /users/login`: Authenticate user
+  - **Request Body:**
+    ```json
+    {
+      "username": "string",
+      "password": "string"
+    }
+    ```
+  - **Response:** `200 OK` on success.
+    - **Example:**
+      ```json
+      {
+        "message": "Logged in successfully",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTcxOTQ2OTU5MCwiZXhwIjoxNzE5NDczMTkwfQ.B1yO05bK7nZ_66Wk0_01P52y87H1V34L68G3xH9_v4U",
+        "user": {
+          "id": 1,
+          "username": "testuser",
+          "email": "test@example.com",
+          "createdAt": "2024-06-27T07:19:50.830Z",
+          "updatedAt": "2024-06-27T07:19:50.830Z"
         }
-        ```
-    *   **Response:** `200 OK` on success.
-        *   **Example:**
-            ```json
-            {
-                "message": "Logged in successfully",
-                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImlhdCI6MTcxOTQ2OTU5MCwiZXhwIjoxNzE5NDczMTkwfQ.B1yO05bK7nZ_66Wk0_01P52y87H1V34L68G3xH9_v4U",
-                "user": {
-                    "id": 1,
-                    "username": "testuser",
-                    "email": "test@example.com",
-                    "createdAt": "2024-06-27T07:19:50.830Z",
-                    "updatedAt": "2024-06-27T07:19:50.830Z"
-                }
-            }
-            ```
-    *   **Error Codes**:
-        *   `400 Bad Request`: Missing required fields.
-        *   `401 Unauthorized`: Invalid credentials.
-        *   `500 Internal Server Error`: Internal server error.
-*   `GET /users`: Get all users
-    *   **Headers:** `Authorization: Bearer <token>`
-    *   **Response:** `200 OK` on success.
-        *   **Example:**
-            ```json
-            [
-                {
-                    "id": 1,
-                    "username": "testuser1",
-                    "email": "test1@example.com",
-                    "createdAt": "2024-10-27T06:35:01.673Z",
-                    "updatedAt": "2024-10-27T06:35:01.673Z"
-                },
-                {
-                    "id": 2,
-                    "username": "testuser2",
-                    "email": "test2@example.com",
-                    "createdAt": "2024-10-27T06:35:01.673Z",
-                    "updatedAt": "2024-10-27T06:35:01.673Z"
-                }
-            ]
-            ```
-    *   **Error Codes:**
-        *   `401 Unauthorized`: Invalid or missing token.
-        *   `500 Internal Server Error`: Internal server error.
+      }
+      ```
+  - **Error Codes**:
+    - `400 Bad Request`: Missing required fields.
+    - `401 Unauthorized`: Invalid credentials.
+    - `500 Internal Server Error`: Internal server error.
+- `GET /users`: Get all users
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` on success.
+    - **Example:**
+      ```json
+      [
+        {
+          "id": 1,
+          "username": "testuser1",
+          "email": "test1@example.com",
+          "createdAt": "2024-10-27T06:35:01.673Z",
+          "updatedAt": "2024-10-27T06:35:01.673Z"
+        },
+        {
+          "id": 2,
+          "username": "testuser2",
+          "email": "test2@example.com",
+          "createdAt": "2024-10-27T06:35:01.673Z",
+          "updatedAt": "2024-10-27T06:35:01.673Z"
+        }
+      ]
+      ```
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token.
+    - `500 Internal Server Error`: Internal server error.
 
 ### Course Endpoints
 
-*   `GET /courses`: Get all courses
-    *   **Headers:** `Authorization: Bearer <token>`
-    *   **Response:** `200 OK` on success.
-        *   **Example:**
-            ```json
-            [
-                {
-                    "id": 1,
-                    "name": "Test Course",
-                    "description": "Test description",
-                    "createdAt": "2024-10-27T07:19:50.830Z",
-                    "updatedAt": "2024-10-27T07:19:50.830Z"
-                }
-            ]
-            ```
-    *   **Error Codes:**
-        *   `401 Unauthorized`: Invalid or missing token.
-        *   `500 Internal Server Error`: Internal server error.
-*   `POST /courses`: Create a new course
-    *   **Headers:**
-        *   `Authorization: Bearer <token>`
-        *   `Content-Type: application/json`
-    *   **Request Body:**
-        ```json
+- `GET /courses`: Get all courses
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` on success.
+    - **Example:**
+      ```json
+      [
         {
-            "name": "string",
-            "description": "string"
+          "id": 1,
+          "name": "Test Course",
+          "description": "Test description",
+          "createdAt": "2024-10-27T07:19:50.830Z",
+          "updatedAt": "2024-10-27T07:19:50.830Z"
         }
-        ```
-    *   **Response:** `201 Created` on success.
-        *   **Example:**
-            ```json
-            {
-                "message": "Course created successfully",
-                "course": {
-                  "id": 1,
-                  "name": "Test Course",
-                  "description": "Test description",
-                    "createdAt": "2024-06-27T07:19:50.830Z",
-                    "updatedAt": "2024-06-27T07:19:50.830Z"
-                }
-            }
-            ```
-    *   **Error Codes:**
-        *   `400 Bad Request`: Missing required fields, or incorrect data types.
-        *   `401 Unauthorized`: Invalid or missing token.
-        *   `409 Conflict`: Course name already exists.
-        *   `500 Internal Server Error`: Internal server error.
+      ]
+      ```
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token.
+    - `500 Internal Server Error`: Internal server error.
+- `POST /courses`: Create a new course
+  - **Headers:**
+    - `Authorization: Bearer <token>`
+    - `Content-Type: application/json`
+  - **Request Body:**
+    ```json
+    {
+      "name": "string",
+      "description": "string"
+    }
+    ```
+  - **Response:** `201 Created` on success.
+    - **Example:**
+      ```json
+      {
+        "message": "Course created successfully",
+        "course": {
+          "id": 1,
+          "name": "Test Course",
+          "description": "Test description",
+          "createdAt": "2024-06-27T07:19:50.830Z",
+          "updatedAt": "2024-06-27T07:19:50.830Z"
+        }
+      }
+      ```
+  - **Error Codes:**
+    - `400 Bad Request`: Missing required fields, or incorrect data types.
+    - `401 Unauthorized`: Invalid or missing token.
+    - `409 Conflict`: Course name already exists.
+    - `500 Internal Server Error`: Internal server error.
 
 ## Testing Instructions
 
@@ -281,19 +282,19 @@ The project utilizes GitHub actions for CI/CD. Every pull request will automatic
 
 Implement logging and monitoring solutions for the application in production. Consider using tools such as:
 
-*   **Application Performance Monitoring (APM):**  New Relic, Datadog, or similar.
-*   **Logging:** ELK stack, Splunk, or similar.
-*   **Alerting:** Set up alerts for critical errors and performance issues.
+- **Application Performance Monitoring (APM):** New Relic, Datadog, or similar.
+- **Logging:** ELK stack, Splunk, or similar.
+- **Alerting:** Set up alerts for critical errors and performance issues.
 
 ## Security Notes
 
-*   **Authentication:** Uses JWT (JSON Web Tokens) for authentication.
-*   **Password Hashing:** Passwords are securely hashed using bcrypt before being stored in the database.
-*   **Environment Variables:** Sensitive data, such as database passwords and JWT secrets, are managed using environment variables.
-*   **Input Sanitization:** The application sanitizes and validates all data before it is used.
-*   **Rate Limiting:** Rate limiting is recommended to protect against malicious requests.
-*   **CORS:** Ensure that the correct CORS configuration is being used, and only trusted origins are allowed.
-*   **HTTPS:** Ensure that your application is deployed using HTTPS, for encrypted communication.
+- **Authentication:** Uses JWT (JSON Web Tokens) for authentication.
+- **Password Hashing:** Passwords are securely hashed using bcrypt before being stored in the database.
+- **Environment Variables:** Sensitive data, such as database passwords and JWT secrets, are managed using environment variables.
+- **Input Sanitization:** The application sanitizes and validates all data before it is used.
+- **Rate Limiting:** Rate limiting is recommended to protect against malicious requests.
+- **CORS:** Ensure that the correct CORS configuration is being used, and only trusted origins are allowed.
+- **HTTPS:** Ensure that your application is deployed using HTTPS, for encrypted communication.
 
 ## Database Schema
 
@@ -301,26 +302,26 @@ The application uses the following database schema:
 
 ### `users` table
 
-*   `id`: Primary key, Auto-increment, Integer.
-*   `username`: Unique, String, not null, Minimum length of 3.
-*   `email`: Unique, String, not null, valid email format.
-*   `password`: String, not null, Minimum length of 8.
-*   `created_at`: Timestamp, automatically added
-*   `updated_at`: Timestamp, automatically added.
+- `id`: Primary key, Auto-increment, Integer.
+- `username`: Unique, String, not null, Minimum length of 3.
+- `email`: Unique, String, not null, valid email format.
+- `password`: String, not null, Minimum length of 8.
+- `created_at`: Timestamp, automatically added
+- `updated_at`: Timestamp, automatically added.
 
 ### `courses` table
 
-*   `id`: Primary key, Auto-increment, Integer.
-*   `name`: String, not null, unique.
-*   `description`: String, nullable.
-*   `created_at`: Timestamp, automatically added
-*   `updated_at`: Timestamp, automatically added.
+- `id`: Primary key, Auto-increment, Integer.
+- `name`: String, not null, unique.
+- `description`: String, nullable.
+- `created_at`: Timestamp, automatically added
+- `updated_at`: Timestamp, automatically added.
 
 ## Performance Considerations
 
-*   Use database indexes where needed to optimize query performance.
-*   Implement caching mechanisms for data that does not change frequently.
-*   Use pagination for API endpoints that return a large list to ensure better performance.
+- Use database indexes where needed to optimize query performance.
+- Implement caching mechanisms for data that does not change frequently.
+- Use pagination for API endpoints that return a large list to ensure better performance.
 
 ## Contributing
 

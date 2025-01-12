@@ -1,9 +1,9 @@
 export default {
-  testEnvironment: "node",
+  testEnvironment: 'node',
   transform: {},
   moduleNameMapper: {
-    "^(\\.{1,2}/.*)\\.js$": "$1",
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  testMatch: ["**/*.test.js"],
-  setupFiles: ["<rootDir>/tests/jest.setup.js"],
-};
+  testMatch: ['**/*.test.js'],
+  setupFiles: ['<rootDir>/tests/jest.setup.js'],
+}

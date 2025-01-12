@@ -1,8 +1,8 @@
-import { DataTypes } from "sequelize";
-import { sequelize } from "../config/database.js";
+import { DataTypes } from 'sequelize'
+import { sequelize } from '../config/database.js'
 
 const User = sequelize.define(
-  "User",
+  'User',
   {
     id: {
       type: DataTypes.INTEGER,
@@ -15,11 +15,11 @@ const User = sequelize.define(
       unique: true,
       validate: {
         notEmpty: {
-          msg: "Username is required",
+          msg: 'Username is required',
         },
         len: {
           args: [3, 255],
-          msg: "Username must be between 3 and 255 characters",
+          msg: 'Username must be between 3 and 255 characters',
         },
       },
     },
@@ -29,10 +29,10 @@ const User = sequelize.define(
       unique: true,
       validate: {
         isEmail: {
-          msg: "Email must be a valid email address",
+          msg: 'Email must be a valid email address',
         },
         notEmpty: {
-          msg: "Email is required",
+          msg: 'Email is required',
         },
       },
     },
@@ -41,20 +41,20 @@ const User = sequelize.define(
       allowNull: false,
       validate: {
         notEmpty: {
-          msg: "Password is required",
+          msg: 'Password is required',
         },
         len: {
           args: [8, Infinity],
-          msg: "Password must be at least 8 characters long",
+          msg: 'Password must be at least 8 characters long',
         },
       },
     },
   },
   {
-    tableName: "users",
+    tableName: 'users',
     timestamps: true,
     underscored: true,
   }
-);
+)
 
-export { User };
+export { User }

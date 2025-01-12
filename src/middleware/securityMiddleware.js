@@ -1,48 +1,43 @@
-import cors from "cors";
-import helmet from "helmet";
-import mongoSanitize from "express-mongo-sanitize";
-import rateLimit from "express-rate-limit";
-import { body, validationResult } from "express-validator";
-import xss from "xss-clean";
+import cors from 'cors'
+import helmet from 'helmet'
+import mongoSanitize from 'express-mongo-sanitize'
+import rateLimit from 'express-rate-limit'
+import { body, validationResult } from 'express-validator'
+import xss from 'xss-clean'
 
 // Security constants
-const FIFTEEN_MINUTES = 15 * 60 * 1000;
-const MAX_REQUESTS = 100;
-const AUTH_MAX_REQUESTS = 5;
-const STRICT_POLICY = true;
+const FIFTEEN_MINUTES = 15 * 60 * 1000
+const MAX_REQUESTS = 100
+const AUTH_MAX_REQUESTS = 5
+const STRICT_POLICY = true
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:3000"],
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-Requested-With",
-    "Accept",
-  ],
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true,
   maxAge: FIFTEEN_MINUTES,
-  exposedHeaders: ["set-cookie"],
-};
+  exposedHeaders: ['set-cookie'],
+}
 
 // Rate limiters
 const standardLimiter = rateLimit({
   windowMs: FIFTEEN_MINUTES,
   max: MAX_REQUESTS,
-  message: "Too many requests from this IP",
+  message: 'Too many requests from this IP',
   standardHeaders: true,
   legacyHeaders: false,
-});
+})
 
 const authLimiter = rateLimit({
   windowMs: FIFTEEN_MINUTES,
   max: AUTH_MAX_REQUESTS,
-  message: "Too many authentication requests",
+  message: 'Too many authentication requests',
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === "test",
-});
+  skip: () => process.env.NODE_ENV === 'test',
+})
 
 // Helmet configuration
 const helmetConfig = {
@@ -64,7 +59,7 @@ const helmetConfig = {
   noSniff: STRICT_POLICY,
   referrerPolicy: STRICT_POLICY,
   xssFilter: STRICT_POLICY,
-};
+}
 
 const securityMiddleware = [
   cors(corsOptions),
@@ -72,6 +67,6 @@ const securityMiddleware = [
   xss(),
   mongoSanitize(),
   standardLimiter,
-];
+]
 
-export { securityMiddleware, authLimiter };
+export { securityMiddleware, authLimiter }
