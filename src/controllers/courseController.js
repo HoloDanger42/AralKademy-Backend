@@ -1,9 +1,9 @@
-import { Course } from "../models/Course.js";
+import courseService from "../services/courseService.js";
 import { log } from "../utils/logger.js";
 
 const getAllCourses = async (_req, res) => {
   try {
-    const courses = await Course.findAll();
+    const courses = await courseService.getAllCourses();
     res.status(200).json(courses);
     log.info("Retrieved all courses");
   } catch (error) {
@@ -15,21 +15,8 @@ const getAllCourses = async (_req, res) => {
 const createCourse = async (req, res) => {
   try {
     const { name, description } = req.body;
+    const newCourse = await courseService.createCourse(name, description);
 
-    if (!name || name.trim() === "") {
-      return res.status(400).json({
-        message: "Course name is required",
-        field: "name",
-      });
-    }
-
-    if (!description) {
-      return res.status(400).json({
-        message: "Course description is required",
-      });
-    }
-
-    const newCourse = await Course.create({ name, description });
     res.status(201).json({
       message: "Course created successfully",
       course: newCourse,
@@ -37,6 +24,16 @@ const createCourse = async (req, res) => {
     log.info(`Course ${name} was successfully created`);
   } catch (error) {
     log.error("Create course error:", error);
+    if (error.message === "Course name is required") {
+      return res.status(400).json({
+        message: "Course name is required",
+      });
+    }
+    if (error.message === "Course description is required") {
+      return res.status(400).json({
+        message: "Course description is required",
+      });
+    }
     if (error.name === "SequelizeUniqueConstraintError") {
       return res.status(409).json({
         message: "Course name already exists",

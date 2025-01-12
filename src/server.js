@@ -26,13 +26,15 @@ const app = express();
 app.use(compression());
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false,
-});
-app.use(limiter);
+if (process.env.NODE_ENV !== "test") {
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  app.use(limiter);
+}
 
 // Pagination middleware
 app.use(paginate.middleware(10, 50)); // Default: 10 items per page, max 50

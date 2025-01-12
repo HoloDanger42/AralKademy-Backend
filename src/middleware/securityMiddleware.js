@@ -41,6 +41,7 @@ const authLimiter = rateLimit({
   message: "Too many authentication requests",
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === "test",
 });
 
 // Helmet configuration

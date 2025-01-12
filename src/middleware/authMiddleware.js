@@ -6,9 +6,9 @@ const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      log.warn("No token present");
+      log.warn("No token present or incorrect format");
       return res.status(401).json({
-        message: "Unauthorized: No token provided",
+        message: "Unauthorized: No token provided or incorrect format",
       });
     }
     const token = authHeader.split(" ")[1];

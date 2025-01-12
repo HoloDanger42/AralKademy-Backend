@@ -51,7 +51,6 @@ aralkademy-backend/
 │   │   └── courses.js
 │   ├── utils/          # Utility functions
 │   │   └── logger.js
-│   └── ... (other files)
 ├── tests/            # Automated tests
 │   ├── user.test.js
 │   └── course.test.js

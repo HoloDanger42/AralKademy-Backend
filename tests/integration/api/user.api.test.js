@@ -1,6 +1,6 @@
 import request from "supertest";
-import app from "../server.js";
-import { sequelize } from "../config/database.js";
+import app from "../../../src/server.js";
+import { sequelize } from "../../../src/config/database.js";
 import { jest } from "@jest/globals";
 
 jest.setTimeout(10000);
@@ -62,13 +62,3 @@ describe("User Endpoints", () => {
     expect(res.body.length).toBeGreaterThan(0);
   });
 });
-
-// describe("Negative-path tests", () => {
-//   it("should fail signup with missing fields", async () => {
-//     const res = await request(app).post("/users/signup").send({
-//       email: "example@example.com",
-//     });
-//     expect(res.statusCode).not.toEqual(201);
-//     expect(res.body).toHaveProperty("error");
-//   });
-// });
