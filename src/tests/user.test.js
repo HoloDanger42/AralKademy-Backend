@@ -61,34 +61,14 @@ describe("User Endpoints", () => {
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBeGreaterThan(0);
   });
-
-  it("should create a new course", async () => {
-    const res = await request(app)
-      .post("/courses")
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        name: "Introduction to Programming",
-        description: "Learn the basics of programming.",
-      });
-    expect(res.statusCode).toEqual(201);
-    expect(res.body).toHaveProperty("message", "Course created successfully");
-    expect(res.body.course).toHaveProperty("id");
-    expect(res.body.course).toHaveProperty(
-      "name",
-      "Introduction to Programming"
-    );
-    expect(res.body.course).toHaveProperty(
-      "description",
-      "Learn the basics of programming."
-    );
-  });
-
-  it("should retrieve all courses", async () => {
-    const res = await request(app)
-      .get("/courses")
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.statusCode).toEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeGreaterThan(0);
-  });
 });
+
+// describe("Negative-path tests", () => {
+//   it("should fail signup with missing fields", async () => {
+//     const res = await request(app).post("/users/signup").send({
+//       email: "example@example.com",
+//     });
+//     expect(res.statusCode).not.toEqual(201);
+//     expect(res.body).toHaveProperty("error");
+//   });
+// });

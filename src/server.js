@@ -1,11 +1,15 @@
 // 1. External dependencies
 import express, { json } from "express";
-import cors from "cors";
 import dotenv from "dotenv";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
+import cache from "memory-cache";
+import paginate from "express-paginate";
 
 // 2. Middleware
 import { errorMiddleware } from "./middleware/errorMiddleware.js";
 import { logMiddleware } from "./middleware/logMiddleware.js";
+import { securityMiddleware } from "./middleware/securityMiddleware.js";
 
 // 3. Configuration
 import { databaseConnection } from "./config/database.js";
@@ -17,9 +21,51 @@ import courseRouter from "./routes/courses.js";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// Performance Middleware
+app.use(compression());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false,
+});
+app.use(limiter);
+
+// Pagination middleware
+app.use(paginate.middleware(10, 50)); // Default: 10 items per page, max 50
+
+// Cache middleware
+const cacheMiddleware = (duration) => {
+  return (req, res, next) => {
+    const key = `__express__${req.originalUrl || req.url}${JSON.stringify(
+      req.body
+    )}`;
+    const cachedBody = cache.get(key);
+
+    if (cachedBody) {
+      res.send(cachedBody);
+      return;
+    } else {
+      res.sendResponse = res.send;
+      res.send = (body) => {
+        cache.put(key, body, duration * 1000);
+        res.sendResponse(body);
+      };
+      next();
+    }
+  };
+};
+
+if (process.env.NODE_ENV !== "test") {
+  app.use("/courses", cacheMiddleware(300));
+}
+
 app.use(json());
 app.use(logMiddleware);
+securityMiddleware.forEach((middleware) => app.use(middleware));
 
 app.get("/", (_req, res) => {
   res.send("API is running");

@@ -15,6 +15,20 @@ const getAllCourses = async (_req, res) => {
 const createCourse = async (req, res) => {
   try {
     const { name, description } = req.body;
+
+    if (!name || name.trim() === "") {
+      return res.status(400).json({
+        message: "Course name is required",
+        field: "name",
+      });
+    }
+
+    if (!description) {
+      return res.status(400).json({
+        message: "Course description is required",
+      });
+    }
+
     const newCourse = await Course.create({ name, description });
     res.status(201).json({
       message: "Course created successfully",
@@ -29,9 +43,14 @@ const createCourse = async (req, res) => {
       });
     }
     if (error.name === "SequelizeValidationError") {
-      return res.status(400).json({ message: error.message });
+      const field = error.errors ? error.errors[0].path : "unknown";
+      return res.status(400).json({
+        message: error.message,
+        field: field,
+      });
     }
     return res.status(500).json({ message: "Error creating course" });
   }
 };
+
 export { getAllCourses, createCourse };
