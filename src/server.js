@@ -1,9 +1,16 @@
+// 1. External dependencies
 import express, { json } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+
+// 2. Middleware
 import { errorMiddleware } from "./middleware/errorMiddleware.js";
 import { logMiddleware } from "./middleware/logMiddleware.js";
+
+// 3. Configuration
 import { databaseConnection } from "./config/database.js";
+
+// 4. Routes
 import userRouter from "./routes/users.js";
 import courseRouter from "./routes/courses.js";
 

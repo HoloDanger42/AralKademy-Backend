@@ -15,11 +15,11 @@ const Course = sequelize.define(
       unique: true,
       validate: {
         notEmpty: {
-          msg: "Course name is required.",
+          msg: "Course name is required",
         },
         len: {
           args: [1, 255],
-          msg: "Course name must be between 1 and 255 characters.",
+          msg: "Course name must be between 1 and 255 characters",
         },
       },
     },
@@ -30,8 +30,8 @@ const Course = sequelize.define(
   },
   {
     tableName: "courses",
-    timestamps: true, // Automatically adds createdAt and updatedAt fields
-    underscored: true, // use snake_case for the database
+    timestamps: true,
+    underscored: true,
   }
 );
 

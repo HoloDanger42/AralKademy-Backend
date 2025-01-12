@@ -15,11 +15,11 @@ const User = sequelize.define(
       unique: true,
       validate: {
         notEmpty: {
-          msg: "Username is required.",
+          msg: "Username is required",
         },
         len: {
           args: [3, 255],
-          msg: "Username must be between 3 and 255 characters.",
+          msg: "Username must be between 3 and 255 characters",
         },
       },
     },
@@ -32,7 +32,7 @@ const User = sequelize.define(
           msg: "Email must be a valid email address",
         },
         notEmpty: {
-          msg: "Email is required.",
+          msg: "Email is required",
         },
       },
     },
@@ -41,19 +41,19 @@ const User = sequelize.define(
       allowNull: false,
       validate: {
         notEmpty: {
-          msg: "Password is required.",
+          msg: "Password is required",
         },
         len: {
           args: [8, Infinity],
-          msg: "Password must be at least 8 characters long.",
+          msg: "Password must be at least 8 characters long",
         },
       },
     },
   },
   {
     tableName: "users",
-    timestamps: true, // Automatically adds createdAt and updatedAt fields
-    underscored: true, // uses snake_case for the database
+    timestamps: true,
+    underscored: true,
   }
 );
 

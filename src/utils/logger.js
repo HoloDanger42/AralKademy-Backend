@@ -7,8 +7,10 @@ const log = winston.createLogger({
     winston.format.json()
   ),
   transports: [
-    new winston.transports.Console(), // Output logs to console
-    new winston.transports.File({ filename: "aralkademy.log" }), // Output logs to a file
+    new winston.transports.Console(),
+    new winston.transports.File({
+      filename: "aralkademy.log",
+    }),
   ],
 });
 

@@ -3,7 +3,6 @@ import app from "../server.js";
 import { sequelize } from "../config/database.js";
 import { jest } from "@jest/globals";
 
-// Set global timeout
 jest.setTimeout(10000);
 
 describe("User Endpoints", () => {
@@ -13,7 +12,7 @@ describe("User Endpoints", () => {
   beforeAll(async () => {
     try {
       await sequelize.sync({ force: true });
-      server = app.listen(0); // Use random port
+      server = app.listen(0);
     } catch (error) {
       console.error("Setup failed:", error);
       throw error;
@@ -56,7 +55,7 @@ describe("User Endpoints", () => {
 
   it("should retrieve all users", async () => {
     const res = await request(app)
-      .get("/users/users")
+      .get("/users")
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toEqual(200);
     expect(Array.isArray(res.body)).toBe(true);
