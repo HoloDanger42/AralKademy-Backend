@@ -1,9 +1,9 @@
 import request from 'supertest'
-import app from '../../../src/server.js'
-import { sequelize } from '../../../src/config/database.js'
+import app from '../../src/server.js'
+import { sequelize } from '../../src/config/database.js'
 import { expect, jest } from '@jest/globals'
 import cache from 'memory-cache'
-import { Course } from '../../../src/models/Course.js'
+import { Course } from '../../src/models/Course.js'
 
 jest.setTimeout(10000)
 

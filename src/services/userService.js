@@ -4,12 +4,24 @@ import { User } from '../models/User.js'
 
 class UserService {
   async createUser(username, email, password) {
-    const hashedPassword = await bcrypt.hash(password, 10)
-    return await User.create({
-      username,
-      email,
-      password: hashedPassword,
-    })
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10)
+      return await User.create({
+        username,
+        email,
+        password: hashedPassword,
+      })
+    } catch (error) {
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        if (error.errors[0].path === 'email') {
+          throw new Error('Email already exists')
+        }
+        if (error.errors[0].path === 'username') {
+          throw new Error('Username already exists')
+        }
+      }
+      throw error
+    }
   }
 
   async loginUser(email, password) {
@@ -30,4 +42,4 @@ class UserService {
   }
 }
 
-export default new UserService()
+export default UserService

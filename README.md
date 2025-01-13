@@ -31,35 +31,68 @@ This is a RESTful API backend for the AralKademy Learning Management System (LMS
 
 ```
 aralkademy-backend/
-├── .env               # Environment variables (never commit this!)
+├── .vscode/
+│   └── settings.json          # VS Code workspace settings (for formatting, linting, etc.)
+├── .eslintrc.js               # ESLint configuration
+├── .prettierrc                # Prettier configuration
+├── .env                       # Environment variables (never commit this!)
+├── aralkademy.log             # Application log file
 ├── src/
-│   ├── server.js      # Main server file
-│   ├── config/        # Configuration files
-│   │   └── database.js   # Database connection
-│   ├── controllers/    # API logic
+│   ├── server.js              # Main server file
+│   ├── config/                # Configuration files
+│   │   └── database.js        # Database connection
+│   ├── controllers/            # API logic
 │   │   ├── userController.js
 │   │   └── courseController.js
-│   ├── middleware/     # Middleware functions
-│   │   ├── authMiddleware.js  # Auth middlware
+│   ├── middleware/             # Middleware functions
+│   │   ├── authMiddleware.js  # Auth middleware
 │   │   ├── errorMiddleware.js # Error handling
 │   │   └── logMiddleware.js  # Logging requests and responses
-│   ├── models/         # Database Models
+│   ├── models/                 # Database Models
 │   │   ├── User.js
 │   │   └── Course.js
-│   ├── routes/         # API endpoint definitions
+│   ├── routes/                 # API endpoint definitions
 │   │   ├── users.js
 │   │   └── courses.js
-│   ├── utils/          # Utility functions
-│   │   └── logger.js
-├── tests/            # Automated tests
-│   ├── user.test.js
-│   └── course.test.js
-├── babel.config.js    # Babel configuration for JavaScript transpilation
-├── jest.config.js     # Jest configuration for unit testing
-├── package.json       # Project dependencies
-├── package-lock.json  # Dependency lock file
-├── README.md          # Project documentation
-└── .gitignore          # Excluded files in git
+│   ├── services/               # Business logic and services
+│   │   ├── userService.js
+│   │   └── courseService.js
+│   └── utils/                  # Utility functions
+│       └── logger.js
+├── tests/
+│   ├── fixtures/               # Reusable test data
+│   │   ├── userData.js
+│   │   └── courseData.js
+│   ├── helpers/                # Test utility functions
+│   │   ├── testData.js
+│   │   ├── testSetup.js
+│   │   └── testUtils.js
+│   ├── unit/                   # Unit tests
+│   │   ├── controllers/
+│   │   │   ├── userController.test.js
+│   │   │   └── courseController.test.js
+│   │   ├── middleware/
+│   │   │   ├── authMiddleware.test.js
+│   │   │   ├── errorMiddleware.test.js
+│   │   │   └── logMiddleware.test.js
+│   │   ├── models/
+│   │   │   ├── User.test.js
+│   │   │   └── Course.test.js
+│   │   ├── services/
+│   │   │   ├── userService.test.js
+│   │   │   └── courseService.test.js
+│   │   └── utils/
+│   │       └── logger.test.js
+│   ├── integration/            # Integration tests
+│   │   ├── courses.test.js
+│   │   └── users.test.js
+│   └── jest.setup.js           # Jest setup and configuration
+├── babel.config.js            # Babel configuration
+├── jest.config.js             # Jest configuration
+├── package.json               # Project dependencies
+├── package-lock.json          # Dependency lock file
+├── README.md                  # Project documentation
+└── .gitignore                  # Files excluded from Git
 ```
 
 ## Installation Guide

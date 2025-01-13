@@ -12,7 +12,10 @@ const Course = sequelize.define(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: {
+        args: true,
+        msg: 'Course name already exists',
+      },
       validate: {
         notEmpty: {
           msg: 'Course name is required',
@@ -26,6 +29,12 @@ const Course = sequelize.define(
     description: {
       type: DataTypes.TEXT,
       allowNull: true,
+      validate: {
+        len: {
+          args: [0, 1000],
+          msg: 'Course description must be less than 1000 characters',
+        },
+      },
     },
   },
   {

@@ -1,6 +1,6 @@
 import request from 'supertest'
-import app from '../../../src/server.js'
-import { sequelize } from '../../../src/config/database.js'
+import app from '../../src/server.js'
+import { sequelize } from '../../src/config/database.js'
 import { jest } from '@jest/globals'
 
 jest.setTimeout(10000)

@@ -12,8 +12,14 @@ const User = sequelize.define(
     username: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: {
+        args: true,
+        msg: 'Username already exists',
+      },
       validate: {
+        notNull: {
+          msg: 'Username is required',
+        },
         notEmpty: {
           msg: 'Username is required',
         },
@@ -26,8 +32,14 @@ const User = sequelize.define(
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: {
+        args: true,
+        msg: 'Email already exists',
+      },
       validate: {
+        notNull: {
+          msg: 'Email is required',
+        },
         isEmail: {
           msg: 'Email must be a valid email address',
         },
@@ -40,6 +52,9 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
+        notNull: {
+          msg: 'Password is required',
+        },
         notEmpty: {
           msg: 'Password is required',
         },
