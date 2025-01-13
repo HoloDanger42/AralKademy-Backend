@@ -1,23 +1,9 @@
 import { jest } from '@jest/globals'
-import jwt from 'jsonwebtoken'
-import { User } from '../../../src/models/User.js'
-
-// Mock bcryptjs methods
-jest.mock('bcryptjs', () => ({
-  __esModule: true,
-  default: {
-    hash: jest.fn().mockResolvedValue('hashedpassword'),
-    compare: jest.fn().mockResolvedValue(true),
-  },
-}))
-
 import UserService from '../../../src/services/userService.js'
+import { User } from '../../../src/models/User.js'
 import { validUsers } from '../../fixtures/userData.js'
-
-// Mock jsonwebtoken
-jest.mock('jsonwebtoken', () => ({
-  sign: jest.fn(() => 'mockedtoken'),
-}))
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 
 // Set environment variable for JWT secret
 process.env.JWT_SECRET = 'testsecret'
@@ -40,12 +26,14 @@ describe('User Service', () => {
 
   beforeEach(() => {
     userService = new UserService()
+    jest.clearAllMocks()
   })
 
   describe('createUser', () => {
     test('should create a user successfully with hashed password', async () => {
       // Arrange
       const userData = validUsers[0]
+      jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedpassword')
 
       // Act
       const user = await userService.createUser(
@@ -55,9 +43,7 @@ describe('User Service', () => {
       )
 
       // Assert
-      const bcrypt = await import('bcryptjs')
-      console.log('bcrypt.hash:', bcrypt.default.hash)
-      expect(bcrypt.default.hash).toHaveBeenCalledWith(userData.password, 10)
+      expect(bcrypt.hash).toHaveBeenCalledWith(userData.password, 10)
       expect(user).toHaveProperty('id')
       expect(user.username).toBe(userData.username)
       expect(user.email).toBe(userData.email)
@@ -91,7 +77,9 @@ describe('User Service', () => {
     test('should login a user successfully and return user and token', async () => {
       // Arrange
       const userData = validUsers[0]
-      const hashedPassword = 'hashedpassword'
+      const hashedPassword = await bcrypt.hash(userData.password, 10)
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true)
+      jest.spyOn(jwt, 'sign').mockReturnValue('mockedtoken')
       await userService.createUser(userData.username, userData.email, userData.password)
 
       // Act
@@ -116,7 +104,9 @@ describe('User Service', () => {
     test('should throw "Invalid credentials" if password is incorrect', async () => {
       // Arrange
       const userData = validUsers[0]
-      await userService.createUser(userData.username, userData.email, userData.password)
+      const hashedPassword = await bcrypt.hash(userData.password, 10)
+      jest.spyOn(bcrypt, 'compare').mockResolvedValue(false)
+      await userService.createUser(userData.username, userData.email, hashedPassword)
 
       // Act & Assert
       await expect(userService.loginUser(userData.email, 'wrongpassword')).rejects.toThrow(
