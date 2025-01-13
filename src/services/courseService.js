@@ -1,8 +1,10 @@
-import { Course } from '../models/Course.js'
-
 class CourseService {
+  constructor(courseModel) {
+    this.CourseModel = courseModel
+  }
+
   async getAllCourses() {
-    return await Course.findAll()
+    return await this.CourseModel.findAll()
   }
 
   async createCourse(name, description) {
@@ -14,8 +16,8 @@ class CourseService {
       throw new Error('Course description is required')
     }
 
-    return await Course.create({ name, description })
+    return await this.CourseModel.create({ name, description })
   }
 }
 
-export default new CourseService()
+export default CourseService

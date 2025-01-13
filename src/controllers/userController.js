@@ -1,5 +1,8 @@
-import userService from '../services/userService.js'
+import UserService from '../services/userService.js'
+import { User } from '../models/User.js'
 import { log } from '../utils/logger.js'
+
+const userService = new UserService(User)
 
 const signup = async (req, res) => {
   try {

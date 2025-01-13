@@ -1,12 +1,15 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { User } from '../models/User.js'
 
 class UserService {
+  constructor(UserModel) {
+    this.UserModel = UserModel
+  }
+
   async createUser(username, email, password) {
     try {
       const hashedPassword = await bcrypt.hash(password, 10)
-      return await User.create({
+      return await this.UserModel.create({
         username,
         email,
         password: hashedPassword,
@@ -25,7 +28,7 @@ class UserService {
   }
 
   async loginUser(email, password) {
-    const user = await User.findOne({ where: { email } })
+    const user = await this.UserModel.findOne({ where: { email } })
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new Error('Invalid credentials')
     }
@@ -38,7 +41,7 @@ class UserService {
   }
 
   async getAllUsers() {
-    return await User.findAll()
+    return await this.UserModel.findAll()
   }
 }
 

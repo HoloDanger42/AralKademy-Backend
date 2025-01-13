@@ -73,8 +73,8 @@ describe('Course Endpoints (Integration Tests)', () => {
       description: 'Invalid course',
     })
 
-    expect(res.statusCode).toEqual(400) // Or whatever error code your API returns
-    expect(res.body).toHaveProperty('message') // Check for your error message
+    expect(res.statusCode).toEqual(400)
+    expect(res.body).toHaveProperty('message')
   })
 
   it('should retrieve all courses', async () => {

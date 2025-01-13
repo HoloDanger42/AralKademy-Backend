@@ -1,6 +1,5 @@
 import { jest } from '@jest/globals'
 import UserService from '../../../src/services/userService.js'
-import { User } from '../../../src/models/User.js'
 import { validUsers } from '../../fixtures/userData.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
@@ -8,25 +7,18 @@ import jwt from 'jsonwebtoken'
 // Set environment variable for JWT secret
 process.env.JWT_SECRET = 'testsecret'
 
+const mockUserModel = {
+  create: jest.fn(),
+  findOne: jest.fn(),
+  findAll: jest.fn(),
+}
+
 describe('User Service', () => {
   let userService
 
-  beforeAll(async () => {
-    await User.sync({ force: true })
-  })
-
-  afterAll(async () => {
-    await User.sync({ force: true })
-  })
-
-  afterEach(async () => {
-    await User.destroy({ where: {} })
-    jest.clearAllMocks()
-  })
-
   beforeEach(() => {
-    userService = new UserService()
-    jest.clearAllMocks()
+    userService = new UserService(mockUserModel)
+    jest.resetAllMocks()
   })
 
   describe('createUser', () => {
@@ -34,6 +26,7 @@ describe('User Service', () => {
       // Arrange
       const userData = validUsers[0]
       jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedpassword')
+      mockUserModel.create.mockResolvedValue({ id: 1, ...userData, password: 'hashedpassword' })
 
       // Act
       const user = await userService.createUser(
@@ -53,7 +46,16 @@ describe('User Service', () => {
     test('should throw an error when creating a user with existing email', async () => {
       // Arrange
       const userData = validUsers[0]
-      await userService.createUser(userData.username, userData.email, userData.password)
+
+      mockUserModel.create.mockRejectedValueOnce({
+        name: 'SequelizeUniqueConstraintError',
+        errors: [
+          {
+            path: 'email',
+            message: 'email must be unique',
+          },
+        ],
+      })
 
       // Act & Assert
       await expect(
@@ -64,7 +66,15 @@ describe('User Service', () => {
     test('should throw an error when creating a user with existing username', async () => {
       // Arrange
       const userData = validUsers[0]
-      await userService.createUser(userData.username, 'newemail@example.com', userData.password)
+      mockUserModel.create.mockRejectedValueOnce({
+        name: 'SequelizeUniqueConstraintError',
+        errors: [
+          {
+            path: 'username',
+            message: 'username must be unique',
+          },
+        ],
+      })
 
       // Act & Assert
       await expect(
@@ -77,28 +87,55 @@ describe('User Service', () => {
     test('should login a user successfully and return user and token', async () => {
       // Arrange
       const userData = validUsers[0]
-      const hashedPassword = await bcrypt.hash(userData.password, 10)
+      jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedpassword')
+
+      mockUserModel.findOne.mockResolvedValue({
+        id: 1,
+        ...userData,
+        password: 'hashedPassword',
+      })
+
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true)
-      jest.spyOn(jwt, 'sign').mockReturnValue('mockedtoken')
-      await userService.createUser(userData.username, userData.email, userData.password)
+      jest.spyOn(jwt, 'sign').mockImplementation((payload, secret, options) => {
+        expect(payload).toEqual({ email: userData.email })
+        expect(secret).toBe(process.env.JWT_SECRET)
+        expect(options).toEqual({ expiresIn: '1h' })
+
+        return 'mockedToken'
+      })
 
       // Act
       const response = await userService.loginUser(userData.email, userData.password)
 
       // Assert
-      expect(bcrypt.compare).toHaveBeenCalledWith(userData.password, hashedPassword)
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({
+        where: { email: userData.email },
+      })
+      expect(bcrypt.compare).toHaveBeenCalledWith(userData.password, 'hashedPassword')
       expect(jwt.sign).toHaveBeenCalledWith({ email: userData.email }, process.env.JWT_SECRET, {
         expiresIn: '1h',
       })
-      expect(response).toHaveProperty('user')
-      expect(response).toHaveProperty('token', 'mockedtoken')
+      expect(response).toEqual({
+        user: expect.objectContaining({
+          id: 1,
+          email: userData.email,
+          username: userData.username,
+        }),
+        token: 'mockedToken',
+      })
     })
 
     test('should throw "Invalid credentials" if user does not exist', async () => {
+      mockUserModel.findOne.mockResolvedValue(null)
+
       // Act & Assert
       await expect(userService.loginUser('nonexistent@example.com', 'password123')).rejects.toThrow(
         'Invalid credentials'
       )
+
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({
+        where: { email: 'nonexistent@example.com' },
+      })
     })
 
     test('should throw "Invalid credentials" if password is incorrect', async () => {
@@ -118,16 +155,12 @@ describe('User Service', () => {
   describe('getAllUsers', () => {
     test('should return all users', async () => {
       // Arrange
-      await userService.createUser(
-        validUsers[0].username,
-        validUsers[0].email,
-        validUsers[0].password
-      )
-      await userService.createUser(
-        validUsers[1].username,
-        validUsers[1].email,
-        validUsers[1].password
-      )
+      const expectedUsers = [
+        { ...validUsers[0], id: 1 },
+        { ...validUsers[1], id: 2 },
+      ]
+
+      mockUserModel.findAll.mockResolvedValue(expectedUsers)
 
       // Act
       const users = await userService.getAllUsers()
@@ -139,11 +172,15 @@ describe('User Service', () => {
     })
 
     test('should return an empty array when no users exist', async () => {
+      // Arrange
+      mockUserModel.findAll.mockResolvedValue([])
+
       // Act
       const users = await userService.getAllUsers()
 
       // Assert
       expect(users).toEqual([])
+      expect(mockUserModel.findAll).toHaveBeenCalled()
     })
   })
 })
