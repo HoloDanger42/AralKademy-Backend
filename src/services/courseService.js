@@ -12,8 +12,8 @@ class CourseService {
       throw new Error('Course name is required')
     }
 
-    if (!description) {
-      throw new Error('Course description is required')
+    if (name.length > 255) {
+      throw new Error('Course name is too long')
     }
 
     return await this.CourseModel.create({ name, description })
