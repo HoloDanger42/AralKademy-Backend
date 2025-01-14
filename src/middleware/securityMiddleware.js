@@ -2,7 +2,6 @@ import cors from 'cors'
 import helmet from 'helmet'
 import mongoSanitize from 'express-mongo-sanitize'
 import rateLimit from 'express-rate-limit'
-import { body, validationResult } from 'express-validator'
 import xss from 'xss-clean'
 
 // Security constants
@@ -25,7 +24,11 @@ const corsOptions = {
 const standardLimiter = rateLimit({
   windowMs: FIFTEEN_MINUTES,
   max: MAX_REQUESTS,
-  message: 'Too many requests from this IP',
+  handler: (_req, res) => {
+    res.status(429).json({
+      message: 'Too many requests from this IP',
+    })
+  },
   standardHeaders: true,
   legacyHeaders: false,
 })
@@ -33,10 +36,13 @@ const standardLimiter = rateLimit({
 const authLimiter = rateLimit({
   windowMs: FIFTEEN_MINUTES,
   max: AUTH_MAX_REQUESTS,
-  message: 'Too many authentication requests',
+  handler: (_req, res) => {
+    res.status(429).json({
+      message: 'Too many authentication requests',
+    })
+  },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test',
 })
 
 // Helmet configuration
@@ -53,7 +59,9 @@ const helmetConfig = {
   crossOriginOpenerPolicy: STRICT_POLICY,
   crossOriginResourcePolicy: STRICT_POLICY,
   dnsPrefetchControl: STRICT_POLICY,
-  frameguard: STRICT_POLICY,
+  frameguard: {
+    action: 'deny',
+  },
   hsts: STRICT_POLICY,
   ieNoOpen: STRICT_POLICY,
   noSniff: STRICT_POLICY,

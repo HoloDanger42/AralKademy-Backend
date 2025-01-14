@@ -2,10 +2,10 @@ import express from 'express'
 import { signup, login, getAllUsers } from '../controllers/userController.js'
 import { authLimiter } from '../middleware/securityMiddleware.js'
 
-const router = express.Router()
+const usersRouter = express.Router()
 
-router.post('/signup', authLimiter, signup)
-router.post('/login', authLimiter, login)
-router.get('/', getAllUsers)
+usersRouter.post('/signup', authLimiter, signup)
+usersRouter.post('/login', authLimiter, login)
+usersRouter.get('/', getAllUsers)
 
-export default router
+export { usersRouter }

@@ -15,8 +15,8 @@ import { securityMiddleware } from './middleware/securityMiddleware.js'
 import { databaseConnection } from './config/database.js'
 
 // 4. Routes
-import userRouter from './routes/users.js'
-import courseRouter from './routes/courses.js'
+import { usersRouter } from './routes/users.js'
+import { coursesRouter } from './routes/courses.js'
 
 dotenv.config()
 
@@ -71,8 +71,14 @@ app.get('/', (_req, res) => {
   res.send('API is running')
 })
 
-app.use('/users', userRouter)
-app.use('/courses', courseRouter)
+app.use('/users', usersRouter)
+app.use('/courses', coursesRouter)
+
+app.use((_req, res, _next) => {
+  const err = new Error('Not Found')
+  err.status = 404
+  next(err)
+})
 
 app.use(errorMiddleware)
 
@@ -80,10 +86,12 @@ app.use(errorMiddleware)
 const startServer = async () => {
   try {
     await databaseConnection()
-    const PORT = process.env.PORT || 3000
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`)
-    })
+    if (process.env.NODE_ENV !== 'test') {
+      const PORT = process.env.PORT || 3000
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`)
+      })
+    }
   } catch (error) {
     console.error('Failed to start server:', error)
     process.exit(1)

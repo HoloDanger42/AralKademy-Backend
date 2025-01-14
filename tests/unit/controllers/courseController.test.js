@@ -2,10 +2,7 @@ import { beforeEach, describe, expect, jest } from '@jest/globals'
 import { getAllCourses, createCourse } from '../../../src/controllers/courseController.js'
 import CourseService from '../../../src/services/courseService.js'
 import { log } from '../../../src/utils/logger.js'
-import { validCourses, invalidCourses } from '../../fixtures/courseData.js'
-
-// Mock CourseService
-jest.mock('../../../src/services/courseService.js')
+import { validCourses } from '../../fixtures/courseData.js'
 
 describe('Course Controller', () => {
   let mockReq

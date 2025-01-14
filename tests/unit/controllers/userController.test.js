@@ -1,15 +1,15 @@
-import { expect, jest } from '@jest/globals'
+import { afterEach, expect, jest } from '@jest/globals'
 import { signup, login, getAllUsers } from '../../../src/controllers/userController.js'
-import UserService from '../../../src/services/userService.js'
+import * as UserServiceModule from '../../../src/services/userService.js'
 import { log } from '../../../src/utils/logger.js'
-import { validUsers, invalidUsers } from '../../fixtures/userData.js'
-
-// Mock UserService and logger
-jest.mock('../../../src/services/userService.js')
+import { validUsers } from '../../fixtures/userData.js'
 
 describe('User Controller', () => {
   let mockReq
   let mockRes
+  let createUserSpy
+  let loginUserSpy
+  let getAllUsersSpy
 
   beforeEach(() => {
     mockReq = {
@@ -19,8 +19,16 @@ describe('User Controller', () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     }
+
+    createUserSpy = jest.spyOn(UserServiceModule.default.prototype, 'createUser')
+    loginUserSpy = jest.spyOn(UserServiceModule.default.prototype, 'loginUser')
+    getAllUsersSpy = jest.spyOn(UserServiceModule.default.prototype, 'getAllUsers')
+
     jest.spyOn(log, 'info')
     jest.spyOn(log, 'error')
+  })
+
+  afterEach(() => {
     jest.clearAllMocks()
   })
 
@@ -30,7 +38,7 @@ describe('User Controller', () => {
       const userData = validUsers[0]
       mockReq.body = userData
       const mockUser = { id: 1, ...userData }
-      UserService.prototype.createUser = jest.fn().mockResolvedValue(mockUser)
+      createUserSpy.mockResolvedValue(mockUser)
 
       // Act
       await signup(mockReq, mockRes)
@@ -49,7 +57,7 @@ describe('User Controller', () => {
       mockReq.body = validUsers[0]
       const error = new Error()
       error.name = 'SequelizeUniqueConstraintError'
-      UserService.prototype.createUser = jest.fn().mockRejectedValue(error)
+      createUserSpy.mockRejectedValue(error)
 
       // Act
       await signup(mockReq, mockRes)
@@ -60,6 +68,37 @@ describe('User Controller', () => {
         message: 'Username or email already exists',
       })
       expect(log.error).toHaveBeenCalled()
+    })
+
+    test('should handle validation errors', async () => {
+      // Arrange
+      mockReq.body = { username: '', email: 'invalid-email', password: 'short' }
+      const error = new Error('Validation failed')
+      error.name = 'SequelizeValidationError'
+      createUserSpy.mockRejectedValue(error)
+
+      // Act
+      await signup(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Validation failed' })
+      expect(log.error).toHaveBeenCalledWith('Signup error:', error)
+    })
+
+    test('should handle general server errors', async () => {
+      // Arrange
+      mockReq.body = validUsers[0]
+      const error = new Error('Database connection failed')
+      createUserSpy.mockRejectedValue(error)
+
+      // Act
+      await signup(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error creating user' })
+      expect(log.error).toHaveBeenCalledWith('Signup error:', error)
     })
   })
 
@@ -72,7 +111,7 @@ describe('User Controller', () => {
         user: { id: 1, ...loginData },
         token: 'mockedToken',
       }
-      UserService.prototype.loginUser = jest.fn().mockResolvedValue(mockResponse)
+      loginUserSpy.mockResolvedValue(mockResponse)
 
       // Act
       await login(mockReq, mockRes)
@@ -86,6 +125,39 @@ describe('User Controller', () => {
       })
       expect(log.info).toHaveBeenCalled()
     })
+
+    test('should handle invalid credentials', async () => {
+      // Arrange
+      const loginData = { email: 'nonexistent@example.com', password: 'wrongpassword' }
+      mockReq.body = loginData
+      const error = new Error('Invalid credentials')
+      error.name = 'InvalidCredentialsError'
+      loginUserSpy.mockRejectedValue(error)
+
+      // Act
+      await login(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Authentication failed' })
+      expect(log.error).toHaveBeenCalledWith('Login error:', error)
+    })
+
+    test('should handle general server errors during login', async () => {
+      // Arrange
+      const loginData = validUsers[0]
+      mockReq.body = loginData
+      const error = new Error('Server is down')
+      loginUserSpy.mockRejectedValue(error)
+
+      // Act
+      await login(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Authentication failed' })
+      expect(log.error).toHaveBeenCalledWith('Login error:', error)
+    })
   })
 
   describe('getAllUsers', () => {
@@ -95,7 +167,7 @@ describe('User Controller', () => {
         id: index + 1,
         ...user,
       }))
-      UserService.prototype.getAllUsers = jest.fn().mockResolvedValue(mockUsers)
+      getAllUsersSpy.mockResolvedValue(mockUsers)
 
       // Act
       await getAllUsers(mockReq, mockRes)
