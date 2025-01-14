@@ -1,0 +1,17 @@
+# Node modules
+node_modules/
+
+# Logs
+*.log
+
+# Environment files
+.env
+
+# Build, coverage, and dist
+dist/
+coverage/
+.nyc_output/
+
+# OS-specific
+.DS_Store
+Thumbs.db
