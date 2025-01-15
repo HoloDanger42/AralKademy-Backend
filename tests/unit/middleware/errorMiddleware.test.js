@@ -91,7 +91,7 @@ describe('Error Middleware', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(500)
     expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'Oops, something went wrong.',
+      message: 'Unknown error',
     })
   })
 

@@ -24,25 +24,23 @@ describe('Course Endpoints (Integration Tests)', () => {
     return res.body.token
   }
 
-  beforeEach(async () => {
-    // Clear cache
-    cache.clear()
-
-    token = await signupAndLogin(
-      'testuser' + Date.now(),
-      `testuser${Date.now()}@example.com`,
-      'securepassword123'
-    )
-  })
-
+  // Use beforeAll to sign up and log in once
   beforeAll(async () => {
     try {
       await sequelize.sync({ force: true })
       server = app.listen(0)
+
+      // Sign up and log in a single user for all tests
+      token = await signupAndLogin('testuser', `testuser@example.com`, 'securepassword123')
     } catch (error) {
       console.error('Setup failed:', error)
       throw error
     }
+  })
+
+  beforeEach(async () => {
+    // Clear cache before each test
+    cache.clear()
   })
 
   it('should create a new course', async () => {
@@ -78,13 +76,6 @@ describe('Course Endpoints (Integration Tests)', () => {
   })
 
   it('should retrieve all courses', async () => {
-    token = await signupAndLogin(
-      'testuser' + Date.now(),
-      `testuser${Date.now()}@example.com`,
-      'securepassword123'
-    )
-
-    // Create some courses directly in the database
     await Course.create({
       name: 'Course 1',
       description: 'Desc 1',
@@ -97,17 +88,10 @@ describe('Course Endpoints (Integration Tests)', () => {
     const res = await request(app).get('/courses').set('Authorization', `Bearer ${token}`)
 
     expect(res.statusCode).toEqual(200)
-    expect(res.body.length).toBeGreaterThanOrEqual(2) // Check for at least the courses you created
+    expect(res.body.length).toBeGreaterThanOrEqual(2)
   })
 
   it('should handle errors when retrieving courses', async () => {
-    token = await signupAndLogin(
-      'testuser' + Date.now(),
-      `testuser${Date.now()}@example.com`,
-      'securepassword123'
-    )
-
-    // Simulate an error by temporarily breaking the database connection or query
     jest.spyOn(Course, 'findAll').mockRejectedValueOnce(new Error('Database error'))
 
     const res = await request(app).get('/courses').set('Authorization', `Bearer ${token}`)

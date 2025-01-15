@@ -21,5 +21,9 @@ export default {
       statements: 80,
     },
   },
+  reporters: [
+    'default', // Output to console
+    ['jest-junit', { outputDirectory: 'reports', outputName: 'junit.xml' }], // Generate JUnit XML report
+  ],
   verbose: true,
 }

@@ -7,6 +7,14 @@ const errorMiddleware = (err, req, res, _next) => {
     body: req.body,
   })
 
+  if (err.status === 404) {
+    return res.status(404).json({ message: err.message || 'Not Found' })
+  }
+
+  if (err.status || err.statusCode) {
+    return res.status(err.status || err.statusCode).json({ message: err.message })
+  }
+
   if (err instanceof SpecificError) {
     return res.status(err.statusCode || 500).json({ message: err.message })
   }
@@ -25,7 +33,7 @@ const errorMiddleware = (err, req, res, _next) => {
     return res.status(401).json({ message: 'Unauthorized: Token Expired' })
   }
 
-  return res.status(500).json({ message: 'Oops, something went wrong.' })
+  return res.status(500).json({ message: err.message })
 }
 
 class SpecificError extends Error {

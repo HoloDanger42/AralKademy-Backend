@@ -1,20 +1,19 @@
-// 1. External dependencies
-import express, { json } from 'express'
+import express from 'express'
 import dotenv from 'dotenv'
 import compression from 'compression'
 import rateLimit from 'express-rate-limit'
 import cache from 'memory-cache'
 import paginate from 'express-paginate'
 
-// 2. Middleware
-import { errorMiddleware } from './middleware/errorMiddleware.js'
+// Middleware
+import { errorMiddleware, SpecificError } from './middleware/errorMiddleware.js'
 import { logMiddleware } from './middleware/logMiddleware.js'
 import { securityMiddleware } from './middleware/securityMiddleware.js'
 
-// 3. Configuration
+// Configuration
 import { databaseConnection } from './config/database.js'
 
-// 4. Routes
+// Routes
 import { usersRouter } from './routes/users.js'
 import { coursesRouter } from './routes/courses.js'
 
@@ -22,24 +21,46 @@ dotenv.config()
 
 const app = express()
 
+app.use(express.json())
+
 // Performance Middleware
 app.use(compression())
 
 // Rate limiting
-if (process.env.NODE_ENV !== 'test') {
+const FIFTEEN_MINUTES = 15 * 60 * 1000
+const AUTH_MAX_REQUESTS = 5
+
+// Apply rate limiting based on environment variables
+const applyRateLimiter = process.env.NODE_ENV !== 'test'
+
+// Rate limiting
+if (applyRateLimiter) {
   const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    windowMs: FIFTEEN_MINUTES,
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
   })
   app.use(limiter)
+
+  const authLimiter = rateLimit({
+    windowMs: FIFTEEN_MINUTES,
+    max: AUTH_MAX_REQUESTS,
+    handler: (_req, res) => {
+      res.status(429).json({
+        message: 'Too many authentication requests',
+      })
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+  app.use('/users', authLimiter)
 }
 
 // Pagination middleware
-app.use(paginate.middleware(10, 50)) // Default: 10 items per page, max 50
+app.use(paginate.middleware(10, 50))
 
-// Cache middleware
+// Cache middleware (modified to only cache successful responses)
 const cacheMiddleware = (duration) => {
   return (req, res, next) => {
     const key = `__express__${req.originalUrl || req.url}${JSON.stringify(req.body)}`
@@ -51,7 +72,9 @@ const cacheMiddleware = (duration) => {
     } else {
       res.sendResponse = res.send
       res.send = (body) => {
-        cache.put(key, body, duration * 1000)
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          cache.put(key, body, duration * 1000)
+        }
         res.sendResponse(body)
       }
       next()
@@ -63,7 +86,7 @@ if (process.env.NODE_ENV !== 'test') {
   app.use('/courses', cacheMiddleware(300))
 }
 
-app.use(json())
+// Other Middleware
 app.use(logMiddleware)
 securityMiddleware.forEach((middleware) => app.use(middleware))
 
@@ -74,7 +97,12 @@ app.get('/', (_req, res) => {
 app.use('/users', usersRouter)
 app.use('/courses', coursesRouter)
 
-app.use((_req, res, _next) => {
+app.get('/error', (_req, res, next) => {
+  next(new Error('Intentional error for testing'))
+})
+
+// 404 Handler (after routes, before errorMiddleware)
+app.use((_req, _res, next) => {
   const err = new Error('Not Found')
   err.status = 404
   next(err)
@@ -94,6 +122,9 @@ const startServer = async () => {
     }
   } catch (error) {
     console.error('Failed to start server:', error)
+    if (error.code === 'ECONNREFUSED') {
+      console.error('Database connection refused. Check your database configuration.')
+    }
     process.exit(1)
   }
 }

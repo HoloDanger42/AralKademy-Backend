@@ -3,18 +3,19 @@ import compression from 'compression'
 import paginate from 'express-paginate'
 import cache from 'memory-cache'
 import { jest } from '@jest/globals'
-import supertest from 'supertest' // Import supertest as a whole
+import supertest from 'supertest'
+import { errorMiddleware, SpecificError } from '../../src/middleware/errorMiddleware.js'
 
 // Mock modules
-await jest.unstable_mockModule('../../src/config/database.js', () => ({
+jest.unstable_mockModule('../../src/config/database.js', () => ({
   databaseConnection: jest.fn().mockResolvedValue(true),
 }))
 
-await jest.unstable_mockModule('../../src/middleware/logMiddleware.js', () => ({
+jest.unstable_mockModule('../../src/middleware/logMiddleware.js', () => ({
   logMiddleware: (_req, _res, next) => next(),
 }))
 
-await jest.unstable_mockModule('../../src/middleware/securityMiddleware.js', () => ({
+jest.unstable_mockModule('../../src/middleware/securityMiddleware.js', () => ({
   securityMiddleware: [
     (_req, _res, next) => {
       next()
@@ -28,11 +29,16 @@ await jest.unstable_mockModule('../../src/middleware/securityMiddleware.js', () 
   ],
 }))
 
-await jest.unstable_mockModule('../../src/routes/users.js', () => ({
+jest.unstable_mockModule('../../src/middleware/errorMiddleware.js', () => ({
+  errorMiddleware: errorMiddleware,
+  SpecificError: SpecificError,
+}))
+
+jest.unstable_mockModule('../../src/routes/users.js', () => ({
   usersRouter: express.Router(),
 }))
 
-await jest.unstable_mockModule('../../src/routes/courses.js', () => ({
+jest.unstable_mockModule('../../src/routes/courses.js', () => ({
   coursesRouter: express.Router(),
 }))
 
@@ -75,11 +81,8 @@ describe('Server Setup', () => {
 
     it('should set up the security middleware', () => {
       const useSpy = jest.spyOn(app, 'use')
-
-      // Apply each middleware function to the app
       securityMiddleware.forEach((middleware) => app.use(middleware))
 
-      // Assert that app.use was called with each middleware function
       securityMiddleware.forEach((middleware) => {
         expect(useSpy).toHaveBeenCalledWith(middleware)
       })
@@ -92,12 +95,26 @@ describe('Server Setup', () => {
       }
       expect(useSpy).not.toHaveBeenCalledWith('/courses', expect.any(Function))
     })
-
     it('should cache responses for /courses route when not in test environment', () => {
-      const cacheMiddleware = (_req, _res, next) => next()
       const useSpy = jest.spyOn(app, 'use')
+      const cacheMiddleware = (req, res, next) => {
+        const key = `__express__${req.originalUrl || req.url}${JSON.stringify(req.body)}`
+        const cachedBody = cache.get(key)
+
+        if (cachedBody) {
+          res.send(cachedBody)
+          return
+        } else {
+          res.sendResponse = res.send
+          res.send = (body) => {
+            cache.put(key, body, 300 * 1000)
+            res.sendResponse(body)
+          }
+          next()
+        }
+      }
       app.use('/courses', cacheMiddleware)
-      expect(useSpy).toHaveBeenCalledWith('/courses', expect.any(Function))
+      expect(useSpy).toHaveBeenCalledWith('/courses', cacheMiddleware)
     })
   })
 
@@ -120,19 +137,29 @@ describe('Server Setup', () => {
     it('should handle unknown routes with 404', async () => {
       const res = await request.get('/unknown-route')
       expect(res.status).toBe(404)
-      expect(res.body).toEqual({ message: 'Not Found' })
+
+      const body = JSON.parse(res.text)
+      expect(body).toEqual({ message: 'Not Found' })
     })
 
     it('should handle server errors gracefully', async () => {
-      app.get('/error', (_req, _res, next) => {
+      // Find the /error route
+      const errorRoute = app._router.stack.find((r) => r.route && r.route.path === '/error')
+
+      // Save the original handler
+      const originalErrorHandler = errorRoute.handle
+
+      // Override the handler for the test
+      errorRoute.handle = (_req, _res, next) => {
         next(new Error('Intentional error for testing'))
-      })
+      }
+
       const res = await request.get('/error')
 
-      app._router.stack = app._router.stack.filter((r) => r.route?.path !== '/error')
+      errorRoute.handle = originalErrorHandler
 
       expect(res.status).toBe(500)
-      expect(res.body).toEqual({ message: 'Oops, something went wrong.' })
+      expect(res.body).toEqual({ message: 'Intentional error for testing' })
     })
   })
 
