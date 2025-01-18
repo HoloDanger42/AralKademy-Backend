@@ -9,23 +9,27 @@ const User = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
-    username: {
+    firstName: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: {
-        args: true,
-        msg: 'Username already exists',
-      },
       validate: {
         notNull: {
-          msg: 'Username is required',
+          msg: 'First name is required',
         },
         notEmpty: {
-          msg: 'Username is required',
+          msg: 'First name is required',
         },
-        len: {
-          args: [3, 255],
-          msg: 'Username must be between 3 and 255 characters',
+      },
+    },
+    lastName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: {
+          msg: 'Last name is required',
+        },
+        notEmpty: {
+          msg: 'Last name is required',
         },
       },
     },
@@ -64,6 +68,22 @@ const User = sequelize.define(
         },
       },
     },
+    birthDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    contact_no: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    school_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'School',
+        key: 'id',
+      },
+    },
   },
   {
     tableName: 'users',
@@ -71,5 +91,12 @@ const User = sequelize.define(
     underscored: true,
   }
 )
+User.associate = (models) => {
+  User.belongsTo(models.School, { foreignKey: 'school_id' })
+  User.hasOne(models.StudentTeacher, { foreignKey: 'user_id' })
+  User.hasOne(models.Teacher, { foreignKey: 'user_id' })
+  User.hasOne(models.Admin, { foreignKey: 'user_id' })
+  User.hasOne(models.Learner, { foreignKey: 'user_id' })
+}
 
 export { User }

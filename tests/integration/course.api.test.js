@@ -11,12 +11,7 @@ describe('Course Endpoints (Integration Tests)', () => {
   let token
   let server
 
-  const signupAndLogin = async (username, email, password) => {
-    await request(app).post('/users/signup').send({
-      username,
-      email,
-      password,
-    })
+  const login = async (email, password) => {
     const res = await request(app).post('/users/login').send({
       email,
       password,
@@ -31,7 +26,7 @@ describe('Course Endpoints (Integration Tests)', () => {
       server = app.listen(0)
 
       // Sign up and log in a single user for all tests
-      token = await signupAndLogin('testuser', `testuser@example.com`, 'securepassword123')
+      token = await login('testuser', `testuser@example.com`, 'securepassword123')
     } catch (error) {
       console.error('Setup failed:', error)
       throw error

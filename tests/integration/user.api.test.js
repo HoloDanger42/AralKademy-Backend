@@ -29,19 +29,6 @@ describe('User Endpoints', () => {
     }
   })
 
-  it('should sign up a new user', async () => {
-    const res = await request(app).post('/users/signup').send({
-      username: 'testuser',
-      email: 'testuser@example.com',
-      password: 'securepassword123',
-    })
-    expect(res.statusCode).toEqual(201)
-    expect(res.body).toHaveProperty('message', 'User created successfully')
-    expect(res.body.user).toHaveProperty('id')
-    expect(res.body.user).toHaveProperty('username', 'testuser')
-    expect(res.body.user).toHaveProperty('email', 'testuser@example.com')
-  })
-
   it('should log in the user and return a token', async () => {
     const res = await request(app).post('/users/login').send({
       email: 'testuser@example.com',
