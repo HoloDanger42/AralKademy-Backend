@@ -47,9 +47,15 @@ aralkademy-backend/
 │   ├── middleware/             # Middleware functions
 │   │   ├── authMiddleware.js  # Auth middleware
 │   │   ├── errorMiddleware.js # Error handling
-│   │   └── logMiddleware.js  # Logging requests and responses
+│   │   ├── logMiddleware.js  # Logging requests and responses
+│   │   └── securityMiddleware.js  # Security configs
 │   ├── models/                 # Database Models
 │   │   ├── User.js
+│   │   ├── Admin.js
+│   │   ├── StudentTeacher.js
+│   │   ├── Teacher.js
+│   │   ├── Learner.js
+│   │   ├── School.js
 │   │   └── Course.js
 │   ├── routes/                 # API endpoint definitions
 │   │   ├── users.js
@@ -62,6 +68,7 @@ aralkademy-backend/
 ├── tests/
 │   ├── fixtures/               # Reusable test data
 │   │   ├── userData.js
+│   │   ├── schoolData.js
 │   │   └── courseData.js
 │   ├── helpers/                # Test utility functions
 │   │   ├── testData.js
@@ -74,10 +81,14 @@ aralkademy-backend/
 │   │   ├── middleware/
 │   │   │   ├── authMiddleware.test.js
 │   │   │   ├── errorMiddleware.test.js
-│   │   │   └── logMiddleware.test.js
+│   │   │   ├── logMiddleware.test.js
+│   │   │   └── securityMiddleware.test.js
 │   │   ├── models/
 │   │   │   ├── User.test.js
+│   │   │   ├── School.test.js
 │   │   │   └── Course.test.js
+│   │   ├── setup/
+│   │   │   └── server.test.js
 │   │   ├── services/
 │   │   │   ├── userService.test.js
 │   │   │   └── courseService.test.js

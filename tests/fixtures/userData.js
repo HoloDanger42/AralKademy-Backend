@@ -4,7 +4,7 @@ export const validUsers = [
     lastName: 'Doe',
     email: 'john@example.com',
     password: 'securepassword',
-    school_id: 1,
+    schoolId: 1,
     learner: {
       section: 'A',
       year_level: 1,
@@ -16,7 +16,7 @@ export const validUsers = [
     lastName: 'Smith',
     email: 'jane@example.com',
     password: 'anothersecurepassword',
-    school_id: 2,
+    schoolId: 2,
     teacher: {
       department: 'Math',
       emp_status: 'Full-time',
@@ -30,7 +30,7 @@ export const invalidUsers = [
     lastName: 'Doe',
     email: 'missingfirstname@example.com',
     password: 'password123',
-    school_id: 1,
+    schoolId: 1,
     admin: {
       position: 'Manager',
       emp_status: 'Full-time',
@@ -42,7 +42,7 @@ export const invalidUsers = [
     lastName: 'Email',
     email: 'invalid-email',
     password: 'password123',
-    school_id: 2,
+    schoolId: 2,
     teacher: {
       department: 'Science',
       emp_status: 'Part-time',
@@ -54,7 +54,7 @@ export const invalidUsers = [
     lastName: 'Password',
     email: 'shortpassword@example.com',
     password: 'short',
-    school_id: 1,
+    schoolId: 1,
     learner: {
       section: 'B',
       year_level: 2,
@@ -62,7 +62,7 @@ export const invalidUsers = [
     },
   },
   {
-    // Missing school_id
+    // Missing schoolId
     firstName: 'NoSchool',
     lastName: 'User',
     email: 'noschool@example.com',

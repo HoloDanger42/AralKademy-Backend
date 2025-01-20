@@ -32,4 +32,4 @@ const getAllUsers = async (_req, res) => {
   }
 }
 
-export { signup, login, getAllUsers }
+export { login, getAllUsers }
