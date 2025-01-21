@@ -1,9 +1,13 @@
 import { User } from '../../../src/models/User.js'
 import { School } from '../../../src/models/School.js'
+import { Teacher } from '../../../src/models/Teacher.js'
+import { Learner } from '../../../src/models/Learner.js'
 import { validUsers, invalidUsers } from '../../fixtures/userData.js'
 import { validSchools } from '../../fixtures/schoolData.js'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../helpers/testSetup.js'
 import { hashPassword } from '../../helpers/testUtils.js'
+import { createTestUser } from '../../helpers/testData.js'
+import { StudentTeacher } from '../../../src/models/StudentTeacher.js'
 
 describe('User Model', () => {
   beforeAll(async () => {
@@ -28,6 +32,21 @@ describe('User Model', () => {
       expect(user.role).toBe(userData.role)
       expect(user.school_id).toBe(userData.school_id)
     })
+
+    it('should create user with valid birthdate in past', async () => {
+      const pastDate = new Date()
+      pastDate.setFullYear(pastDate.getFullYear() - 20)
+
+      const userData = {
+        ...validUsers[0],
+        email: `user${Date.now()}@example.com`,
+        birth_date: pastDate,
+      }
+      const hashedPassword = await hashPassword(userData.password)
+
+      const user = await User.create({ ...userData, password: hashedPassword })
+      expect(user.birth_date).toEqual(pastDate)
+    })
   })
 
   describe('Invalid Users', () => {
@@ -41,14 +60,36 @@ describe('User Model', () => {
         }
       })
     })
+
+    it('should not create user with future birthdate', async () => {
+      const futureDate = new Date()
+      futureDate.setFullYear(futureDate.getFullYear() + 1)
+
+      await expect(
+        User.create({
+          ...validUsers[0],
+          birth_date: futureDate,
+        })
+      ).rejects.toThrow('Birthdate must be in the past')
+    })
+
+    it('should not create user with today as birthdate', async () => {
+      const today = new Date()
+
+      await expect(
+        User.create({
+          ...validUsers[0],
+          email: `user${Date.now()}@example.com`,
+          birth_date: today,
+        })
+      ).rejects.toThrow('Birthdate must be in the past')
+    })
   })
 
   describe('Associations', () => {
     it('should belong to a school', async () => {
       const school = await School.create(validSchools[0])
-      const userData = validUsers[0]
-      console.log('userData:', userData)
-      const user = await User.create(userData)
+      const user = await createTestUser({}, 'learner', school)
       const userSchool = await user.getSchool()
 
       expect(userSchool.id).toBe(school.id)
@@ -56,22 +97,31 @@ describe('User Model', () => {
     })
 
     it('should have one StudentTeacher', async () => {
-      const userData = validUsers[2]
-      const user = await User.create(userData)
-      const studentTeacher = await user.createStudentTeacher()
+      const user = await createTestUser({}, 'student_teacher')
 
-      expect(studentTeacher.userId).toBe(user.id)
+      const studentTeacher = await StudentTeacher.findOne({
+        where: { user_id: user.id },
+      })
+
+      expect(studentTeacher).toBeTruthy()
+      expect(studentTeacher.user_id).toBe(user.id)
     })
 
     it('should have one Teacher', async () => {
-      const userData = validUsers[1]
-      const user = await User.create(userData)
-      const teacher = await user.createTeacher({
-        department: 'Math',
-        emp_status: 'Full-time',
+      const user = await createTestUser(
+        {
+          email: `teacher${Date.now()}@example.com`,
+          role: 'teacher',
+        },
+        'teacher'
+      )
+
+      const teacher = await Teacher.findOne({
+        where: { user_id: user.id },
       })
 
-      expect(teacher.userId).toBe(user.id)
+      expect(teacher).toBeTruthy()
+      expect(teacher.user_id).toBe(user.id)
     })
 
     it('should have one Admin', async () => {
@@ -79,15 +129,23 @@ describe('User Model', () => {
       const user = await User.create(userData)
       const admin = await user.createAdmin()
 
-      expect(admin.userId).toBe(user.id)
+      expect(admin.user_id).toBe(user.id)
     })
 
     it('should have one Learner', async () => {
-      const userData = validUsers[0]
-      const user = await User.create(userData)
-      const learner = await user.createLearner()
+      const user = await createTestUser(
+        {
+          email: `learner${Date.now()}@example.com`,
+          role: 'learner',
+        },
+        'learner'
+      )
+      const learner = await Learner.findOne({
+        where: { user_id: user.id },
+      })
 
-      expect(learner.userId).toBe(user.id)
+      expect(learner).toBeTruthy()
+      expect(learner.user_id).toBe(user.id)
     })
   })
 })

@@ -78,8 +78,15 @@ const User = sequelize.define(
       allowNull: true,
       validate: {
         isBeforeToday(value) {
-          if (value && new Date(value) >= new Date()) {
-            throw new Error('Birthdate must be in the past')
+          if (value) {
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            const birthDate = new Date(value)
+            birthDate.setHours(0, 0, 0, 0)
+
+            if (birthDate >= today) {
+              throw new Error('Birthdate must be in the past')
+            }
           }
         },
       },

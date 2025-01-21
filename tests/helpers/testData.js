@@ -63,13 +63,17 @@ export const createTestUser = async (overrides = {}, role) => {
     const user = await User.create(formattedUserData)
 
     if (role === 'learner') {
-      await Learner.create({ user_id: user.user_id })
+      await Learner.create({ user_id: user.id, year_level: 3 })
     } else if (role === 'teacher') {
-      await Teacher.create({ user_id: user.user_id })
+      await Teacher.create({ user_id: user.id })
     } else if (role === 'admin') {
-      await Admin.create({ user_id: user.user_id })
+      await Admin.create({ user_id: user.id })
     } else if (role === 'student_teacher') {
-      await StudentTeacher.create({ user_id: user.user_id })
+      await StudentTeacher.create({
+        user_id: user.id,
+        section: 'Test Section',
+        department: 'Test Department',
+      })
     }
 
     return user
@@ -123,6 +127,31 @@ export const createTestCourse = async (overrides = {}) => {
     return await Course.create(courseData)
   } catch (error) {
     console.error('Error creating test course:', error)
+    throw error
+  }
+}
+
+/**
+ * Creates a test group.
+ * @param {Object} overrides - Fields to override in the group data.
+ * @returns {Promise<Group>} The created group.
+ */
+export const createTestGroup = async (overrides = {}) => {
+  try {
+    const timestamp = Date.now()
+    const groupData = {
+      name: `Test Group ${timestamp}`,
+      description: 'Test group description',
+      group_type: 'learner',
+      ...overrides,
+    }
+
+    const group = await Group.create(groupData)
+    if (!group) {
+      throw new Error('Failed to create test group')
+    }
+  } catch (error) {
+    console.error('Error creating test group:', error)
     throw error
   }
 }
