@@ -34,6 +34,16 @@ const User = sequelize.define(
         },
       },
     },
+    role: {
+      type: DataTypes.ENUM('admin', 'teacher', 'student_teacher', 'learner'),
+      allowNull: false,
+      validate: {
+        isIn: {
+          args: [['admin', 'teacher', 'student_teacher', 'learner']],
+          msg: 'Role must be one of the predefined types.',
+        },
+      },
+    },
     email: {
       type: DataTypes.STRING,
       allowNull: false,

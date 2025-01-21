@@ -34,6 +34,15 @@ const Learner = sequelize.define(
         },
       },
     },
+    enrollment_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'enrollments',
+        key: 'enrollment_id',
+      },
+      onDelete: 'CASCADE',
+    },
     learner_group_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
