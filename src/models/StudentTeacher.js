@@ -39,9 +39,9 @@ const StudentTeacher = sequelize.define(
         },
       },
     },
-    group_id: {
+    student_teacher_group_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'groups',
         key: 'group_id',
@@ -59,7 +59,7 @@ const StudentTeacher = sequelize.define(
 
 StudentTeacher.associate = (models) => {
   StudentTeacher.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' })
-  StudentTeacher.belongsTo(models.Group, { foreignKey: 'group_id', as: 'group' })
+  StudentTeacher.belongsTo(models.Group, { foreignKey: 'student_teacher_group_id', as: 'group' })
 }
 
 export { StudentTeacher }

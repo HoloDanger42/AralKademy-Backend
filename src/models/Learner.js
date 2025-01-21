@@ -16,18 +16,6 @@ const Learner = sequelize.define(
       unique: true,
       onDelete: 'CASCADE',
     },
-    section: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notNull: {
-          msg: 'Section is required.',
-        },
-        notEmpty: {
-          msg: 'Section cannot be empty.',
-        },
-      },
-    },
     year_level: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -39,14 +27,14 @@ const Learner = sequelize.define(
           msg: 'Year level must be an integer.',
         },
         min: {
-          args: [1],
-          msg: 'Year level must be at least 1.',
+          args: [1, 6],
+          msg: 'Year level must be between 1 and 6.',
         },
       },
     },
-    group_id: {
+    learner_group_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'groups',
         key: 'group_id',
@@ -63,7 +51,7 @@ const Learner = sequelize.define(
 
 Learner.associate = (models) => {
   Learner.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' })
-  Learner.belongsTo(models.Group, { foreignKey: 'group_id', as: 'group' })
+  Learner.belongsTo(models.Group, { foreignKey: 'learner_group_id', as: 'group' })
 }
 
 export { Learner }

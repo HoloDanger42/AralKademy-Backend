@@ -75,7 +75,7 @@ const User = sequelize.define(
     },
     birth_date: {
       type: DataTypes.DATE,
-      allowNull: true,
+      allowNull: false,
       validate: {
         isBeforeToday(value) {
           if (value && new Date(value) >= new Date()) {
@@ -86,14 +86,14 @@ const User = sequelize.define(
     },
     contact_no: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
       validate: {
         notEmpty: {
           msg: 'Contact number is required',
         },
         is: {
-          args: /^[0-9\s\-\(\)]+$/,
-          msg: 'Contact number must be a number',
+          args: /^(?:\+63|0)?9\d{2}[-\s]?\d{3}[-\s]?\d{4}$/,
+          msg: 'Contact number must be valid',
         },
       },
     },
@@ -122,16 +122,10 @@ const User = sequelize.define(
   }
 )
 
-import { School } from './School.js'
-import { StudentTeacher } from './StudentTeacher.js'
-import { Teacher } from './Teacher.js'
-import { Admin } from './Admin.js'
-import { Learner } from './Learner.js'
-
-User.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
-User.hasOne(StudentTeacher, { foreignKey: 'user_id', as: 'studentTeacher' })
-User.hasOne(Teacher, { foreignKey: 'user_id', as: 'teacher' })
-User.hasOne(Admin, { foreignKey: 'user_id', as: 'admin' })
-User.hasOne(Learner, { foreignKey: 'user_id', as: 'learner' })
+User.belongsTo(models.School, { foreignKey: 'school_id', as: 'school' })
+User.hasOne(models.StudentTeacher, { foreignKey: 'user_id', as: 'studentTeacher' })
+User.hasOne(models.Teacher, { foreignKey: 'user_id', as: 'teacher' })
+User.hasOne(models.Admin, { foreignKey: 'user_id', as: 'admin' })
+User.hasOne(models.Learner, { foreignKey: 'user_id', as: 'learner' })
 
 export { User }

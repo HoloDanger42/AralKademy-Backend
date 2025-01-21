@@ -35,10 +35,15 @@ const School = sequelize.define(
     },
     contact_no: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
       validate: {
-        is: /^[0-9-+\s]+$/,
-        msg: 'Contact number must be valid',
+        notEmpty: {
+          msg: 'Contact number is required',
+        },
+        is: {
+          args: /^(?:\+63|0)?(?:2|3\d{2})[-\s]?\d{3,4}[-\s]?\d{4}$/,
+          msg: 'Contact number must be valid',
+        },
       },
     },
   },

@@ -15,40 +15,17 @@ const Teacher = sequelize.define(
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     },
-    department: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notNull: {
-          msg: 'Department is required.',
-        },
-        notEmpty: {
-          msg: 'Department cannot be empty.',
-        },
-      },
-    },
-    emp_status: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notNull: {
-          msg: 'Employment status is required.',
-        },
-        notEmpty: {
-          msg: 'Employment status cannot be empty.',
-        },
-      },
-    },
   },
   {
     tableName: 'teachers',
     timestamps: true,
     underscored: true,
   }
-)
+) 
 
 Teacher.associate = (models) => {
   Teacher.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' })
+  Teacher.hasMany(models.Course, { foreignKey: 'user_id', as: 'courses' })
 }
 
 export { Teacher }
