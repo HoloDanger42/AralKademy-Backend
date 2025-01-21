@@ -55,7 +55,8 @@ const School = sequelize.define(
 )
 
 School.associate = (models) => {
-  School.hasMany(models.User, { foreignKey: 'school_id' })
+  School.hasMany(models.User, { foreignKey: 'school_id', as: 'users' })
+  School.hasMany(models.Enrollment, { foreignKey: 'school_id', as: 'enrollments' })
 }
 
 export { School }

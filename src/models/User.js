@@ -34,6 +34,16 @@ const User = sequelize.define(
         },
       },
     },
+    role: {
+      type: DataTypes.ENUM('admin', 'teacher', 'student_teacher', 'learner'),
+      allowNull: false,
+      validate: {
+        isIn: {
+          args: [['admin', 'teacher', 'student_teacher', 'learner']],
+          msg: 'Role must be one of the predefined types.',
+        },
+      },
+    },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -122,10 +132,16 @@ const User = sequelize.define(
   }
 )
 
-User.belongsTo(models.School, { foreignKey: 'school_id', as: 'school' })
-User.hasOne(models.StudentTeacher, { foreignKey: 'user_id', as: 'studentTeacher' })
-User.hasOne(models.Teacher, { foreignKey: 'user_id', as: 'teacher' })
-User.hasOne(models.Admin, { foreignKey: 'user_id', as: 'admin' })
-User.hasOne(models.Learner, { foreignKey: 'user_id', as: 'learner' })
+import { School } from './School.js'
+import { StudentTeacher } from './StudentTeacher.js'
+import { Teacher } from './Teacher.js'
+import { Admin } from './Admin.js'
+import { Learner } from './Learner.js'
+
+User.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
+User.hasOne(StudentTeacher, { foreignKey: 'user_id', as: 'studentTeacher' })
+User.hasOne(Teacher, { foreignKey: 'user_id', as: 'teacher' })
+User.hasOne(Admin, { foreignKey: 'user_id', as: 'admin' })
+User.hasOne(Learner, { foreignKey: 'user_id', as: 'learner' })
 
 export { User }
