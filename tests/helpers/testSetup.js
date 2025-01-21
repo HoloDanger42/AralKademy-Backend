@@ -1,5 +1,5 @@
 import { sequelize } from '../../src/config/database.js'
-import { clearUsers, clearCourses } from './testData.js'
+import { clearUsers, clearCourses, createTestSchool } from './testData.js'
 import { createTestUser, createTestCourse } from './testData.js'
 
 /**

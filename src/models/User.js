@@ -75,7 +75,7 @@ const User = sequelize.define(
     },
     birth_date: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
       validate: {
         isBeforeToday(value) {
           if (value && new Date(value) >= new Date()) {
@@ -86,14 +86,14 @@ const User = sequelize.define(
     },
     contact_no: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       validate: {
         notEmpty: {
           msg: 'Contact number is required',
         },
         is: {
-          args: /^(?:\+63|0)?9\d{2}[-\s]?\d{3}[-\s]?\d{4}$/,
-          msg: 'Contact number must be valid',
+          args: /^[0-9\s\-\(\)]+$/,
+          msg: 'Contact number must be a number',
         },
       },
     },
@@ -103,6 +103,19 @@ const User = sequelize.define(
       references: {
         model: 'schools',
         key: 'school_id',
+      },
+    },
+    role: {
+      type: DataTypes.ENUM('learner', 'teacher', 'admin', 'student_teacher'),
+      allowNull: false,
+      validate: {
+        notNull: {
+          msg: 'Role cannot be null.',
+        },
+        isIn: {
+          args: [['learner', 'teacher', 'admin', 'student_teacher']],
+          msg: 'Invalid role type',
+        },
       },
     },
   },
@@ -122,10 +135,16 @@ const User = sequelize.define(
   }
 )
 
-User.belongsTo(models.School, { foreignKey: 'school_id', as: 'school' })
-User.hasOne(models.StudentTeacher, { foreignKey: 'user_id', as: 'studentTeacher' })
-User.hasOne(models.Teacher, { foreignKey: 'user_id', as: 'teacher' })
-User.hasOne(models.Admin, { foreignKey: 'user_id', as: 'admin' })
-User.hasOne(models.Learner, { foreignKey: 'user_id', as: 'learner' })
+import { School } from './School.js'
+import { StudentTeacher } from './StudentTeacher.js'
+import { Teacher } from './Teacher.js'
+import { Admin } from './Admin.js'
+import { Learner } from './Learner.js'
+
+User.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
+User.hasOne(StudentTeacher, { foreignKey: 'user_id', as: 'studentTeacher' })
+User.hasOne(Teacher, { foreignKey: 'user_id', as: 'teacher' })
+User.hasOne(Admin, { foreignKey: 'user_id', as: 'admin' })
+User.hasOne(Learner, { foreignKey: 'user_id', as: 'learner' })
 
 export { User }

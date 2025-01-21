@@ -1,10 +1,11 @@
 import { User } from '../../src/models/User.js'
 import { Course } from '../../src/models/Course.js'
 import { School } from '../../src/models/School.js'
-// import { StudentTeacher } from '../../src/models/StudentTeacher.js'
-// import { Teacher } from '../../src/models/Teacher.js'
-// import { Admin } from '../../src/models/Admin.js'
-// import { Learner } from '../../src/models/Learner.js'
+import { StudentTeacher } from '../../src/models/StudentTeacher.js'
+import { Teacher } from '../../src/models/Teacher.js'
+import { Admin } from '../../src/models/Admin.js'
+import { Learner } from '../../src/models/Learner.js'
+import { Group } from '../../src/models/Group.js'
 import { validUsers } from '../fixtures/userData.js'
 import { validCourses } from '../fixtures/courseData.js'
 import { validSchools } from '../fixtures/schoolData.js'
@@ -17,8 +18,18 @@ import jwt from 'jsonwebtoken'
  * @returns {Promise<School>} The created school.
  */
 export const createTestSchool = async (overrides = {}) => {
-  const schoolData = { ...validSchools[0], ...overrides }
-  return await School.create(schoolData)
+  try {
+    const schoolData = { ...validSchools[0], ...overrides }
+
+    const school = await School.create(schoolData)
+    if (!school) {
+      throw new Error('Failed to create test school')
+    }
+    return school
+  } catch (error) {
+    console.error('Error creating test school:', error)
+    throw error
+  }
 }
 
 /**
@@ -27,23 +38,45 @@ export const createTestSchool = async (overrides = {}) => {
  * @returns {Promise<User>} The created user.
  */
 export const createTestUser = async (overrides = {}, role) => {
-  const userData = { ...validUsers[0], ...overrides }
-  userData.password = await bcrypt.hash(userData.password, 10)
-  const user = await User.create(userData)
-  const school = await createTestSchool()
-  user.school_id = school.id
-  await user.save()
+  try {
+    const school = await createTestSchool()
+    const timestamp = Date.now()
+    const userData = {
+      ...validUsers[0],
+      email: `test${timestamp}@example.com`,
+      ...overrides,
+      role: role || 'learner',
+    }
 
-  if (role === 'learner') {
-    await Learner.create({ user_id: user.user_id })
-  } else if (role === 'teacher') {
-    await Teacher.create({ user_id: user.user_id })
-  } else if (role === 'admin') {
-    await Admin.create({ user_id: user.user_id })
-  } else if (role === 'student_teacher') {
-    await StudentTeacher.create({ user_id: user.user_id })
+    // Map camelCase to snake_case
+    const formattedUserData = {
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      email: userData.email,
+      password: await bcrypt.hash(userData.password, 10),
+      role: userData.role,
+      school_id: school.school_id,
+      birth_date: userData.birth_date || null,
+      contact_no: userData.contact_no || null,
+    }
+
+    const user = await User.create(formattedUserData)
+
+    if (role === 'learner') {
+      await Learner.create({ user_id: user.user_id })
+    } else if (role === 'teacher') {
+      await Teacher.create({ user_id: user.user_id })
+    } else if (role === 'admin') {
+      await Admin.create({ user_id: user.user_id })
+    } else if (role === 'student_teacher') {
+      await StudentTeacher.create({ user_id: user.user_id })
+    }
+
+    return user
+  } catch (error) {
+    console.error('Error creating test user:', error)
+    throw error
   }
-  return user
 }
 
 /**
@@ -52,8 +85,46 @@ export const createTestUser = async (overrides = {}, role) => {
  * @returns {Promise<Course>} The created course.
  */
 export const createTestCourse = async (overrides = {}) => {
-  const courseData = { ...validCourses[0], ...overrides }
-  return await Course.create(courseData)
+  try {
+    const school = await createTestSchool()
+
+    const user = await User.create({
+      ...validUsers[1],
+      email: `test${Date.now()}@example.com`,
+      password: await bcrypt.hash('password123', 10),
+      school_id: school.school_id,
+    })
+
+    await Teacher.create({
+      user_id: user.id,
+      department: 'Test Department',
+      emp_status: 'Full-time',
+    })
+
+    const studentTeacherGroup = await Group.create({
+      name: 'Test ST Group',
+      group_type: 'student_teacher',
+    })
+
+    const learnerGroup = await Group.create({
+      name: 'Test Learner Group',
+      group_type: 'learner',
+    })
+
+    // Use fixture data with proper references
+    const courseData = {
+      ...validCourses[0],
+      user_id: user.id,
+      student_teacher_group_id: studentTeacherGroup.group_id,
+      learner_group_id: learnerGroup.group_id,
+      ...overrides,
+    }
+
+    return await Course.create(courseData)
+  } catch (error) {
+    console.error('Error creating test course:', error)
+    throw error
+  }
 }
 
 /**
