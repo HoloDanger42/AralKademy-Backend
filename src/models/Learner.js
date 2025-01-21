@@ -1,7 +1,6 @@
+// Learner.js
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../config/database.js'
-import { User } from './User.js'
-import { Group } from './Group.js'
 
 const Learner = sequelize.define(
   'Learner',
@@ -20,15 +19,18 @@ const Learner = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       validate: {
+        min: 1,
+        max: 6,
         notNull: {
           msg: 'Year level is required.',
         },
         isInt: {
           msg: 'Year level must be an integer.',
         },
-        min: {
-          args: [1, 6],
-          msg: 'Year level must be between 1 and 6.',
+        isValid(value) {
+          if (value < 1 || value > 6) {
+            throw new Error('Year level must be between 1 and 6')
+          }
         },
       },
     },
@@ -48,10 +50,5 @@ const Learner = sequelize.define(
     underscored: true,
   }
 )
-
-Learner.associate = (models) => {
-  Learner.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' })
-  Learner.belongsTo(models.Group, { foreignKey: 'learner_group_id', as: 'group' })
-}
 
 export { Learner }

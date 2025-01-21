@@ -1,17 +1,41 @@
-# Node modules
+# Dependencies
 node_modules/
-
-# Logs
-*.log
+package-lock.json
 
 # Environment files
 .env
+.env.*
+!.env.example
 
-# Build, coverage, and dist
-dist/
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Testing
 coverage/
 .nyc_output/
+*.lcov
 
-# OS-specific
+# Build & Distribution
+dist/
+build/
+
+# Database
+config/*.json
+!config/config.example.json
+
+# OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Temp files
+*.swp
+*.swo
+*~

@@ -150,6 +150,8 @@ export const createTestGroup = async (overrides = {}) => {
     if (!group) {
       throw new Error('Failed to create test group')
     }
+
+    return group
   } catch (error) {
     console.error('Error creating test group:', error)
     throw error
