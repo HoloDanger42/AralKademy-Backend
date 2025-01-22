@@ -3,20 +3,22 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('groups', {
-      group_id: {
+    await queryInterface.createTable('admins', {
+      id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
       },
-      name: {
-        type: Sequelize.STRING,
+      user_id: {
+        type: Sequelize.INTEGER,
         allowNull: false,
         unique: true,
-      },
-      group_type: {
-        type: Sequelize.ENUM('student_teacher', 'learner'),
-        allowNull: false,
+        references: {
+          model: 'users',
+          key: 'id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
       },
       created_at: {
         type: Sequelize.DATE,
@@ -30,14 +32,10 @@ module.exports = {
       },
     })
 
-    await queryInterface.addIndex('groups', ['name'])
-    await queryInterface.addIndex('groups', ['group_type'])
+    await queryInterface.addIndex('admins', ['user_id'])
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable('courses', { cascade: true })
-    await queryInterface.dropTable('student_teachers', { cascade: true })
-    await queryInterface.dropTable('learners', { cascade: true })
-    await queryInterface.dropTable('groups', { cascade: true })
+    await queryInterface.dropTable('admins')
   },
 }

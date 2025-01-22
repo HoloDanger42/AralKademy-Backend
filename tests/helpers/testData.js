@@ -1,6 +1,7 @@
 import { User } from '../../src/models/User.js'
 import { Course } from '../../src/models/Course.js'
 import { School } from '../../src/models/School.js'
+import { Enrollment } from '../../src/models/Enrollment.js'
 import { StudentTeacher } from '../../src/models/StudentTeacher.js'
 import { Teacher } from '../../src/models/Teacher.js'
 import { Admin } from '../../src/models/Admin.js'
@@ -9,9 +10,24 @@ import { Group } from '../../src/models/Group.js'
 import { validUsers } from '../fixtures/userData.js'
 import { validCourses } from '../fixtures/courseData.js'
 import { validSchools } from '../fixtures/schoolData.js'
+import { validEnrollment } from '../fixtures/enrollmentData.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
+/**
+ * Creates a test enrollment for testing.
+ * @param {Object} overrides - Fields to override in the enrollment data.
+ * @returns {Promise<Enrollment>} The created enrollment.
+ */
+export const createTestEnrollment = async (overrides = {}) => {
+  const enrollmentData = {
+    ...validEnrollment[0],
+    school_id: school.school_id,
+    handled_by_id: admin.id,
+    ...overrides,
+  }
+  return await Enrollment.create({ enrollmentData })
+}
 /**
  * Creates a test school.
  * @param {Object} overrides - Fields to override in the school data.
@@ -63,7 +79,14 @@ export const createTestUser = async (overrides = {}, role) => {
     const user = await User.create(formattedUserData)
 
     if (role === 'learner') {
-      await Learner.create({ user_id: user.id, year_level: 3 })
+      const admin = await createTestUser({}, 'admin')
+      const enrollment = await createTestEnrollment({}, school, admin)
+
+      await Learner.create({
+        user_id: user.id,
+        year_level: 3,
+        enrollment_id: enrollment.enrollment_id,
+      })
     } else if (role === 'teacher') {
       await Teacher.create({ user_id: user.id })
     } else if (role === 'admin') {

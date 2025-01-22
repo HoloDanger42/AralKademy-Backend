@@ -1,5 +1,5 @@
 import { sequelize } from '../../src/config/database.js'
-import { clearUsers, clearCourses, createTestSchool } from './testData.js'
+import { clearUsers, clearCourses } from './testData.js'
 import { createTestUser, createTestCourse } from './testData.js'
 
 /**
@@ -21,12 +21,18 @@ export const setupTestEnvironment = async () => {
  */
 export const teardownTestEnvironment = async () => {
   try {
-    await sequelize.query('TRUNCATE TABLE users CASCADE')
-    await clearUsers()
-    await clearCourses()
+    const tables = await sequelize.getQueryInterface().showAllTables()
+
+    if (tables.includes('courses')) await clearCourses()
+    if (tables.includes('users')) {
+      await sequelize.query('TRUNCATE TABLE users CASCADE')
+      await clearUsers()
+    }
     await sequelize.close()
   } catch (error) {
     console.error('Test teardown failed:', error)
-    throw error
+    if (!error.original || error.original.code !== '42P01') {
+      throw error
+    }
   }
 }

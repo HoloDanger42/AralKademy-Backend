@@ -35,6 +35,14 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable('schools')
+    try {
+      // Drop dependent tables first
+      await queryInterface.dropTable('users', { cascade: true })
+      await queryInterface.dropTable('schools', { cascade: true })
+    } catch (error) {
+      if (!error.message.includes('does not exist')) {
+        throw error
+      }
+    }
   },
 }

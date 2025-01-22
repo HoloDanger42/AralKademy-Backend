@@ -65,6 +65,20 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable('users')
+    try {
+      // Remove indexes first
+      await queryInterface.removeIndex('users', ['email'])
+      await queryInterface.removeIndex('users', 'idx_users_school_id')
+
+      // Drop dependent tables in order
+      await queryInterface.dropTable('student_teachers', { cascade: true })
+      await queryInterface.dropTable('teachers', { cascade: true })
+      await queryInterface.dropTable('admins', { cascade: true })
+      await queryInterface.dropTable('users', { cascade: true })
+    } catch (error) {
+      if (!error.message.includes('does not exist')) {
+        throw error
+      }
+    }
   },
 }
