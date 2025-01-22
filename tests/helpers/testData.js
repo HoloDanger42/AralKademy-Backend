@@ -2,17 +2,44 @@ import { User } from '../../src/models/User.js'
 import { Course } from '../../src/models/Course.js'
 import { School } from '../../src/models/School.js'
 import { Enrollment } from '../../src/models/Enrollment.js'
-import { StudentTeacher } from '../../src/models/StudentTeacher.js'
 import { Teacher } from '../../src/models/Teacher.js'
 import { Admin } from '../../src/models/Admin.js'
-import { Learner } from '../../src/models/Learner.js'
 import { Group } from '../../src/models/Group.js'
 import { validUsers } from '../fixtures/userData.js'
 import { validCourses } from '../fixtures/courseData.js'
 import { validSchools } from '../fixtures/schoolData.js'
-import { validEnrollment } from '../fixtures/enrollmentData.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+
+let cachedSchool = null
+let cachedAdmin = null
+
+const createAdminDirectly = async (school) => {
+  try {
+    if (cachedAdmin) return cachedAdmin
+
+    const adminData = {
+      ...validUsers[3],
+      email: `admin${Date.now()}@example.com`,
+      password: await bcrypt.hash('password123', 10),
+      school_id: school.school_id,
+      role: 'admin',
+    }
+
+    const admin = await User.create(adminData)
+    const adminRole = await Admin.create({ user_id: admin.id })
+
+    if (!admin || !adminRole) {
+      throw new Error('Failed to create admin user or role')
+    }
+
+    cachedAdmin = admin
+    return admin
+  } catch (error) {
+    console.error('Error in createAdminDirectly:', error)
+    throw error
+  }
+}
 
 /**
  * Creates a test enrollment for testing.
@@ -20,14 +47,53 @@ import jwt from 'jsonwebtoken'
  * @returns {Promise<Enrollment>} The created enrollment.
  */
 export const createTestEnrollment = async (overrides = {}) => {
-  const enrollmentData = {
-    ...validEnrollment[0],
-    school_id: school.school_id,
-    handled_by_id: admin.id,
-    ...overrides,
+  try {
+    // Get or create school
+    const school = cachedSchool || (await createTestSchool())
+    if (!school?.school_id) {
+      throw new Error('Invalid school created')
+    }
+    cachedSchool = school
+
+    // Create admin directly
+    const admin = await createAdminDirectly(school)
+    if (!admin?.id) {
+      throw new Error('Invalid admin created')
+    }
+
+    // Create enrollment
+    const enrollmentData = {
+      first_name: 'Test',
+      last_name: 'Student',
+      email: `student${Date.now()}@example.com`,
+      password: await bcrypt.hash('password123', 10),
+      birth_date: new Date('2000-01-01'),
+      contact_no: '09123456789',
+      year_level: 3,
+      status: 'approved',
+      enrollment_date: new Date(),
+      school_id: school.school_id,
+      handled_by_id: admin.id,
+      ...overrides,
+    }
+
+    // Validate data
+    if (!enrollmentData.school_id) throw new Error('school_id is required')
+    if (!enrollmentData.handled_by_id) throw new Error('handled_by_id is required')
+    if (!enrollmentData.enrollment_date) throw new Error('enrollment_date is required')
+
+    const enrollment = await Enrollment.create(enrollmentData)
+    if (!enrollment?.enrollment_id) {
+      throw new Error('Failed to create enrollment')
+    }
+
+    return enrollment
+  } catch (error) {
+    console.error('Error creating test enrollment:', error)
+    throw error
   }
-  return await Enrollment.create({ enrollmentData })
 }
+
 /**
  * Creates a test school.
  * @param {Object} overrides - Fields to override in the school data.
@@ -53,15 +119,17 @@ export const createTestSchool = async (overrides = {}) => {
  * @param {Object} overrides - Fields to override in the user data.
  * @returns {Promise<User>} The created user.
  */
-export const createTestUser = async (overrides = {}, role) => {
+export const createTestUser = async (overrides = {}, role = 'learner') => {
   try {
     const school = await createTestSchool()
     const timestamp = Date.now()
+
     const userData = {
       ...validUsers[0],
       email: `test${timestamp}@example.com`,
+      role: role,
+      school_id: school.school_id,
       ...overrides,
-      role: role || 'learner',
     }
 
     // Map camelCase to snake_case
@@ -71,33 +139,14 @@ export const createTestUser = async (overrides = {}, role) => {
       email: userData.email,
       password: await bcrypt.hash(userData.password, 10),
       role: userData.role,
-      school_id: school.school_id,
+      school_id: userData.school_id,
       birth_date: userData.birth_date || null,
       contact_no: userData.contact_no || null,
     }
 
     const user = await User.create(formattedUserData)
 
-    if (role === 'learner') {
-      const admin = await createTestUser({}, 'admin')
-      const enrollment = await createTestEnrollment({}, school, admin)
-
-      await Learner.create({
-        user_id: user.id,
-        year_level: 3,
-        enrollment_id: enrollment.enrollment_id,
-      })
-    } else if (role === 'teacher') {
-      await Teacher.create({ user_id: user.id })
-    } else if (role === 'admin') {
-      await Admin.create({ user_id: user.id })
-    } else if (role === 'student_teacher') {
-      await StudentTeacher.create({
-        user_id: user.id,
-        section: 'Test Section',
-        department: 'Test Department',
-      })
-    }
+    // await createUserRole(user, role, school)
 
     return user
   } catch (error) {

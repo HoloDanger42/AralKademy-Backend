@@ -4,13 +4,9 @@ export const validUsers = [
     last_name: 'Doe',
     email: 'john@example.com',
     password: 'securepassword',
-    school_id: 1,
+    birth_date: new Date('2000-01-01'),
+    contact_no: '639123456789',
     role: 'learner',
-    learner: {
-      section: 'A',
-      year_level: 1,
-      learner_group_id: 1,
-    },
   },
   {
     first_name: 'Jane',

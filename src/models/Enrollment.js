@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs'
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../config/database.js'
 
@@ -92,7 +93,7 @@ const Enrollment = sequelize.define(
           msg: 'Contact number is required',
         },
         is: {
-          args: /^(?:\+63|0)?9\d{2}[-\s]?\d{3}[-\s]?\d{4}$/,
+          args: /^(?:\+63|0)?(?:90[5-9]|91[0-9]|92[0-9]|93[0-9]|94[2-9]|95[0-9]|96[1-3,5-9]|97[0-9]|98[1,5,9]|99[5-9])\d{7}$/,
           msg: 'Contact number must be valid',
         },
       },
