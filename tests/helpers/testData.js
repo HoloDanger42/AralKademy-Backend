@@ -4,6 +4,7 @@ import { School } from '../../src/models/School.js'
 import { Enrollment } from '../../src/models/Enrollment.js'
 import { Teacher } from '../../src/models/Teacher.js'
 import { Admin } from '../../src/models/Admin.js'
+import { Learner } from '../../src/models/Learner.js'
 import { Group } from '../../src/models/Group.js'
 import { validUsers } from '../fixtures/userData.js'
 import { validCourses } from '../fixtures/courseData.js'
@@ -14,10 +15,8 @@ import jwt from 'jsonwebtoken'
 let cachedSchool = null
 let cachedAdmin = null
 
-const createAdminDirectly = async (school) => {
+export const createAdminDirectly = async (school) => {
   try {
-    if (cachedAdmin) return cachedAdmin
-
     const adminData = {
       ...validUsers[3],
       email: `admin${Date.now()}@example.com`,
@@ -27,13 +26,10 @@ const createAdminDirectly = async (school) => {
     }
 
     const admin = await User.create(adminData)
-    const adminRole = await Admin.create({ user_id: admin.id })
+    const adminRole = await Admin.create({
+      user_id: admin.id,
+    })
 
-    if (!admin || !adminRole) {
-      throw new Error('Failed to create admin user or role')
-    }
-
-    cachedAdmin = admin
     return admin
   } catch (error) {
     console.error('Error in createAdminDirectly:', error)
@@ -48,20 +44,13 @@ const createAdminDirectly = async (school) => {
  */
 export const createTestEnrollment = async (overrides = {}) => {
   try {
-    // Get or create school
-    const school = cachedSchool || (await createTestSchool())
-    if (!school?.school_id) {
-      throw new Error('Invalid school created')
-    }
-    cachedSchool = school
+    const school = overrides.school_id
+      ? await School.findByPk(overrides.school_id)
+      : await createTestSchool()
 
-    // Create admin directly
+    // Use createAdminDirectly instead of createTestUser
     const admin = await createAdminDirectly(school)
-    if (!admin?.id) {
-      throw new Error('Invalid admin created')
-    }
 
-    // Create enrollment
     const enrollmentData = {
       first_name: 'Test',
       last_name: 'Student',
@@ -73,21 +62,11 @@ export const createTestEnrollment = async (overrides = {}) => {
       status: 'approved',
       enrollment_date: new Date(),
       school_id: school.school_id,
-      handled_by_id: admin.id,
+      handled_by_id: admin.id, // Use admin.id from createAdminDirectly
       ...overrides,
     }
 
-    // Validate data
-    if (!enrollmentData.school_id) throw new Error('school_id is required')
-    if (!enrollmentData.handled_by_id) throw new Error('handled_by_id is required')
-    if (!enrollmentData.enrollment_date) throw new Error('enrollment_date is required')
-
-    const enrollment = await Enrollment.create(enrollmentData)
-    if (!enrollment?.enrollment_id) {
-      throw new Error('Failed to create enrollment')
-    }
-
-    return enrollment
+    return await Enrollment.create(enrollmentData)
   } catch (error) {
     console.error('Error creating test enrollment:', error)
     throw error
@@ -132,7 +111,6 @@ export const createTestUser = async (overrides = {}, role = 'learner') => {
       ...overrides,
     }
 
-    // Map camelCase to snake_case
     const formattedUserData = {
       first_name: userData.first_name,
       last_name: userData.last_name,
@@ -146,11 +124,42 @@ export const createTestUser = async (overrides = {}, role = 'learner') => {
 
     const user = await User.create(formattedUserData)
 
-    // await createUserRole(user, role, school)
-
     return user
   } catch (error) {
     console.error('Error creating test user:', error)
+    throw error
+  }
+}
+
+/**
+ * Creates a test learner with associated user and enrollment.
+ * @param {Object} overrides - Fields to override in the learner data.
+ * @returns {Promise<Learner>} The created learner.
+ */
+export const createTestLearner = async (overrides = {}) => {
+  try {
+    // Create user with learner role
+    const user = await createTestUser({ role: 'learner' })
+
+    // Create enrollment
+    const enrollment = await createTestEnrollment()
+
+    // Create learner
+    const learnerData = {
+      user_id: user.id,
+      year_level: 3,
+      enrollment_id: enrollment.enrollment_id,
+      ...overrides,
+    }
+
+    const learner = await Learner.create(learnerData)
+    if (!learner) {
+      throw new Error('Failed to create test learner')
+    }
+
+    return learner
+  } catch (error) {
+    console.error('Error creating test learner:', error)
     throw error
   }
 }

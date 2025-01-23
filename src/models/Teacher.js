@@ -20,8 +20,9 @@ const Teacher = sequelize.define(
     tableName: 'teachers',
     timestamps: true,
     underscored: true,
+    paranoid: true,
   }
-) 
+)
 
 Teacher.associate = (models) => {
   Teacher.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' })

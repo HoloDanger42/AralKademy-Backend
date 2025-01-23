@@ -1,10 +1,13 @@
 import { User } from '../../../src/models/User.js'
 import { School } from '../../../src/models/School.js'
+import { Teacher } from '../../../src/models/Teacher.js'
+import { Learner } from '../../../src/models/Learner.js'
 import { validUsers, invalidUsers } from '../../fixtures/userData.js'
 import { validSchools } from '../../fixtures/schoolData.js'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../helpers/testSetup.js'
 import { hashPassword } from '../../helpers/testUtils.js'
 import { createTestUser, createTestSchool, createTestEnrollment } from '../../helpers/testData.js'
+import models from '../../../src/models/associate.js'
 
 describe('User Model', () => {
   beforeAll(async () => {
@@ -136,32 +139,131 @@ describe('User Model', () => {
     })
 
     it('should have one Learner', async () => {
-      try {
-        const school = await createTestSchool()
-        const enrollment = await createTestEnrollment({
-          email: `learner${Date.now()}@example.com`,
-          school_id: school.school_id,
-          enrollment_date: new Date(),
-        })
+      const school = await createTestSchool()
+      const enrollment = await createTestEnrollment({
+        email: `learner${Date.now()}@example.com`,
+        school_id: school.school_id,
+        enrollment_date: new Date(),
+      })
 
-        const userData = {
-          ...validUsers[0],
-          email: `user${Date.now()}@example.com`,
-          school_id: school.school_id,
-        }
-        const user = await User.create(userData)
-        const learner = await user.createLearner({
-          year_level: 3,
-          enrollment_id: enrollment.enrollment_id,
-        })
-
-        expect(learner).toBeTruthy()
-        expect(learner.user_id).toBe(user.id)
-        expect(learner.enrollment_id).toBe(enrollment.enrollment_id)
-      } catch (error) {
-        console.log(error)
-        throw error
+      const userData = {
+        ...validUsers[0],
+        email: `user${Date.now()}@example.com`,
+        school_id: school.school_id,
+        role: 'learner',
       }
+      const user = await User.create(userData)
+
+      const learner = await Learner.create({
+        user_id: user.id,
+        year_level: 3,
+        enrollment_id: enrollment.enrollment_id,
+      })
+
+      expect(learner).toBeTruthy()
+      expect(learner.user_id).toBe(user.id)
+      expect(learner.enrollment_id).toBe(enrollment.enrollment_id)
+    })
+
+    it('should cascade soft delete to associated roles', async () => {
+      const user = await createTestUser({}, 'teacher')
+
+      // Create teacher role
+      const teacher = await user.createTeacher({
+        department: 'Test Department',
+        emp_status: 'Full-time',
+      })
+      expect(teacher).toBeTruthy()
+
+      // Soft delete user
+      await user.destroy()
+
+      // Check teacher soft deleted
+      const deletedTeacher = await Teacher.findOne({
+        where: { user_id: user.id },
+        paranoid: false,
+      })
+
+      expect(deletedTeacher).toBeTruthy()
+      expect(deletedTeacher.deletedAt).toBeDefined()
+    })
+  })
+
+  describe('Password Management', () => {
+    it('should hash password on create', async () => {
+      const user = await createTestUser()
+      expect(user.password).not.toBe('securepassword')
+      expect(user.password).toMatch(/^\$2[aby]\$\d+\$/)
+    })
+
+    it('should rehash password on update', async () => {
+      const user = await createTestUser()
+      const oldHash = user.password
+      await user.update({ password: 'newpassword123' })
+      expect(user.password).not.toBe(oldHash)
+    })
+  })
+
+  describe('Data Validation', () => {
+    it('should enforce contact number format', async () => {
+      await expect(
+        createTestUser({
+          contact_no: 'invalid',
+        })
+      ).rejects.toThrow()
+    })
+
+    it('should enforce unique email', async () => {
+      const user1 = await createTestUser()
+      await expect(
+        createTestUser({
+          email: user1.email,
+        })
+      ).rejects.toThrow('Email already exists')
+    })
+
+    it('should validate email format', async () => {
+      await expect(
+        createTestUser({
+          email: 'invalid-email',
+        })
+      ).rejects.toThrow()
+    })
+
+    it('should require school_id', async () => {
+      await expect(
+        createTestUser({
+          school_id: null,
+        })
+      ).rejects.toThrow()
+    })
+  })
+
+  describe('Role Management', () => {
+    it('should enforce valid role types', async () => {
+      await expect(
+        createTestUser({
+          role: 'invalid',
+        })
+      ).rejects.toThrow('Invalid role type')
+    })
+  })
+
+  describe('Soft Delete', () => {
+    it('should soft delete user', async () => {
+      const user = await createTestUser()
+      await user.destroy()
+      const deletedUser = await User.findByPk(user.id, { paranoid: false })
+      expect(deletedUser.deletedAt).toBeDefined()
+    })
+
+    it('should restore soft deleted user', async () => {
+      const user = await createTestUser()
+      await user.destroy()
+      await user.restore()
+      const restoredUser = await User.findByPk(user.id)
+      expect(restoredUser).toBeTruthy()
+      expect(restoredUser.deletedAt).toBeNull()
     })
   })
 })

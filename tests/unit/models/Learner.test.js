@@ -1,13 +1,30 @@
 import { User } from '../../../src/models/User.js'
 import { Learner } from '../../../src/models/Learner.js'
 import { Group } from '../../../src/models/Group.js'
+import { Enrollment } from '../../../src/models/Enrollment.js'
 import { sequelize } from '../../../src/config/database.js'
-import { createTestUser, createTestGroup } from '../../helpers/testData.js'
+import {
+  createTestUser,
+  createTestGroup,
+  createTestEnrollment,
+  createTestSchool,
+  createAdminDirectly,
+} from '../../helpers/testData.js'
 import models from '../../../src/models/associate.js'
 
 describe('Learner Model', () => {
+  let enrollment
+  let school
+  let admin
+
   beforeEach(async () => {
     await sequelize.sync({ force: true })
+    school = await createTestSchool()
+    admin = await createAdminDirectly(school)
+    enrollment = await createTestEnrollment({
+      school_id: school.school_id,
+      handled_by_id: admin.id,
+    })
   })
 
   afterAll(async () => {
@@ -28,11 +45,13 @@ describe('Learner Model', () => {
       const learner = await Learner.create({
         user_id: foundUser.id,
         year_level: 3,
+        enrollment_id: enrollment.enrollment_id,
       })
 
       expect(learner).toHaveProperty('id')
       expect(learner.user_id).toBe(foundUser.id)
       expect(learner.year_level).toBe(3)
+      expect(learner.enrollment_id).toBe(enrollment.enrollment_id)
     })
 
     it('should fail with invalid year level', async () => {
@@ -41,33 +60,56 @@ describe('Learner Model', () => {
         Learner.create({
           user_id: user.id,
           year_level: 7,
+          enrollment_id: enrollment.enrollment_id,
         })
       ).rejects.toThrow('Year level must be between 1 and 6')
+    })
+
+    it('should fail without enrollment_id', async () => {
+      const user = await createTestUser()
+      await expect(
+        Learner.create({
+          user_id: user.id,
+          year_level: 3,
+        })
+      ).rejects.toThrow('notNull Violation: Learner.enrollment_id cannot be null')
     })
   })
 
   describe('Associations', () => {
+    it('should associate with enrollment', async () => {
+      const user = await createTestUser()
+      const learner = await Learner.create({
+        user_id: user.id,
+        year_level: 3,
+        enrollment_id: enrollment.enrollment_id,
+      })
+
+      const found = await Learner.findOne({
+        where: { id: learner.id },
+        include: [{ model: Enrollment, as: 'enrollment' }],
+      })
+
+      expect(found.enrollment.enrollment_id).toBe(enrollment.enrollment_id)
+    })
+
     it('should associate with user', async () => {
-      try {
-        const user = await createTestUser()
-        const learner = await Learner.create({
-          user_id: user.id,
-          year_level: 3,
-        })
-        const found = await Learner.findOne({
-          where: { id: learner.id },
-          include: [
-            {
-              model: User,
-              as: 'user',
-            },
-          ],
-        })
-        expect(found.user.id).toBe(user.id)
-      } catch (error) {
-        console.log(error)
-        throw error
-      }
+      const user = await createTestUser()
+      const learner = await Learner.create({
+        user_id: user.id,
+        year_level: 3,
+        enrollment_id: enrollment.enrollment_id,
+      })
+      const found = await Learner.findOne({
+        where: { id: learner.id },
+        include: [
+          {
+            model: User,
+            as: 'user',
+          },
+        ],
+      })
+      expect(found.user.id).toBe(user.id)
     })
 
     it('should allow null group association', async () => {
@@ -75,6 +117,7 @@ describe('Learner Model', () => {
       const learner = await Learner.create({
         user_id: user.id,
         year_level: 3,
+        enrollment_id: enrollment.enrollment_id,
       })
       expect(learner.learner_group_id).toBeNull()
     })
@@ -84,6 +127,8 @@ describe('Learner Model', () => {
       const learner = await Learner.create({
         user_id: user.id,
         year_level: 3,
+
+        enrollment_id: enrollment.enrollment_id,
       })
 
       const foundLearner = await Learner.findOne({
@@ -103,6 +148,7 @@ describe('Learner Model', () => {
         user_id: user.id,
         year_level: 3,
         learner_group_id: group.group_id,
+        enrollment_id: enrollment.enrollment_id,
       })
 
       const foundLearner = await Learner.findOne({
@@ -119,7 +165,11 @@ describe('Learner Model', () => {
       await Learner.create({
         user_id: user.id,
         year_level: 3,
+        enrollment_id: enrollment.enrollment_id,
       })
+
+      // Force sync to ensure CASCADE is in place
+      await sequelize.sync({ force: true })
 
       await user.destroy()
       const learnerCount = await Learner.count()
@@ -133,13 +183,49 @@ describe('Learner Model', () => {
       await Learner.create({
         user_id: user.id,
         year_level: 3,
+        enrollment_id: enrollment.enrollment_id,
       })
       await expect(
         Learner.create({
           user_id: user.id,
           year_level: 4,
+          enrollment_id: enrollment.enrollment_id,
         })
       ).rejects.toThrow()
+    })
+  })
+
+  describe('Validation', () => {
+    it('should fail with zero year level', async () => {
+      const user = await createTestUser()
+      await expect(
+        Learner.create({
+          user_id: user.id,
+          year_level: 0,
+          enrollment_id: enrollment.enrollment_id,
+        })
+      ).rejects.toThrow('Year level must be between 1 and 6')
+    })
+
+    it('should fail with non-existent user_id', async () => {
+      await expect(
+        Learner.create({
+          user_id: 99999,
+          year_level: 3,
+          enrollment_id: enrollment.enrollment_id,
+        })
+      ).rejects.toThrow('foreign key constraint')
+    })
+
+    it('should fail with non-existent enrollment_id', async () => {
+      const user = await createTestUser()
+      await expect(
+        Learner.create({
+          user_id: user.id,
+          year_level: 3,
+          enrollment_id: 99999,
+        })
+      ).rejects.toThrow('foreign key constraint')
     })
   })
 })

@@ -140,6 +140,7 @@ const User = sequelize.define(
     tableName: 'users',
     timestamps: true,
     underscored: true,
+    paranoid: true,
     indexes: [
       {
         unique: true,
@@ -151,17 +152,5 @@ const User = sequelize.define(
     ],
   }
 )
-
-import { School } from './School.js'
-import { StudentTeacher } from './StudentTeacher.js'
-import { Teacher } from './Teacher.js'
-import { Admin } from './Admin.js'
-import { Learner } from './Learner.js'
-
-User.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
-User.hasOne(StudentTeacher, { foreignKey: 'user_id', as: 'studentTeacher' })
-User.hasOne(Teacher, { foreignKey: 'user_id', as: 'teacher' })
-User.hasOne(Admin, { foreignKey: 'user_id', as: 'admin' })
-User.hasOne(Learner, { foreignKey: 'user_id', as: 'learner' })
 
 export { User }
