@@ -22,19 +22,32 @@ const models = {
 
 // Initialize associations after all models are loaded
 User.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
-User.hasOne(StudentTeacher, { foreignKey: 'user_id', as: 'studentTeacher' })
-User.hasOne(Teacher, { foreignKey: 'user_id', as: 'teacher' })
-User.hasOne(Admin, { foreignKey: 'user_id', as: 'admin' })
-User.hasOne(Learner, {
+User.hasOne(StudentTeacher, {
   foreignKey: 'user_id',
-  as: 'learnerProfile',
+  as: 'studentTeacher',
   onDelete: 'CASCADE',
   hooks: true,
 })
-Teacher.hasMany(Course, {
+User.hasOne(Teacher, {
   foreignKey: 'user_id',
-  as: 'courses',
+  as: 'teacher',
+  onDelete: 'CASCADE',
+  hooks: true,
 })
+User.hasOne(Admin, {
+  foreignKey: 'user_id',
+  as: 'admin',
+  onDelete: 'CASCADE',
+  hooks: true,
+})
+User.hasOne(Learner, {
+  foreignKey: 'user_id',
+  as: 'learner',
+  onDelete: 'CASCADE',
+  hooks: true,
+})
+Teacher.hasMany(Course, { foreignKey: 'user_id', as: 'courses', onDelete: 'CASCADE' })
+Teacher.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
 Learner.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
 Learner.belongsTo(Group, { foreignKey: 'learner_group_id', as: 'group' })
 Learner.belongsTo(Enrollment, { foreignKey: 'enrollment_id', as: 'enrollment' })

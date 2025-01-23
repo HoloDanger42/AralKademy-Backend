@@ -71,6 +71,26 @@ describe('School Model', () => {
         expect(school.contact_no).toBe(contact_no)
       }
     })
+
+    it('should validate name length', async () => {
+      await expect(
+        School.create({
+          name: 'a'.repeat(256),
+          address: 'Test Address',
+          contact_no: '02-8123-4567',
+        })
+      ).rejects.toThrow('School name must be between 1 and 255 characters')
+    })
+
+    it('should not allow empty contact number', async () => {
+      await expect(
+        School.create({
+          name: 'Test School',
+          address: 'Test Address',
+          contact_no: '',
+        })
+      ).rejects.toThrow('Contact number is required')
+    })
   })
 
   describe('Associations', () => {
@@ -92,6 +112,77 @@ describe('School Model', () => {
 
       expect(found.Users).toBeTruthy()
       expect(found.Users[0].id).toBe(user.id)
+    })
+  })
+
+  describe('Constraints', () => {
+    it('should enforce unique school name', async () => {
+      await School.create({
+        name: 'Test School',
+        address: 'Test Address',
+        contact_no: '02-8123-4567',
+      })
+
+      await expect(
+        School.create({
+          name: 'Test School',
+          address: 'Different Address',
+          contact_no: '02-8123-4567',
+        })
+      ).rejects.toThrow('School name must be unique')
+    })
+  })
+
+  describe('Soft Deletion', () => {
+    it('should soft delete school', async () => {
+      const school = await School.create({
+        name: 'Test School',
+        address: 'Test Address',
+        contact_no: '02-8123-4567',
+      })
+
+      await school.destroy()
+
+      const found = await School.findOne({
+        where: { school_id: school.school_id },
+        paranoid: false,
+      })
+      expect(found.deletedAt).toBeTruthy()
+    })
+  })
+
+  describe('Updates', () => {
+    it('should update school details', async () => {
+      const school = await School.create({
+        name: 'Old Name',
+        address: 'Old Address',
+        contact_no: '02-8123-4567',
+      })
+
+      await school.update({
+        name: 'New Name',
+        address: 'New Address',
+      })
+
+      const updated = await School.findByPk(school.school_id)
+      expect(updated.name).toBe('New Name')
+      expect(updated.address).toBe('New Address')
+    })
+  })
+
+  describe('Cascade Behavior', () => {
+    it('should not delete school with active users', async () => {
+      const school = await createTestSchool()
+      await User.create({
+        email: 'test@example.com',
+        first_name: 'Test',
+        last_name: 'User',
+        role: 'admin',
+        password: 'password123',
+        school_id: school.school_id,
+      })
+
+      await expect(school.destroy()).rejects.toThrow()
     })
   })
 })

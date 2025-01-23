@@ -174,4 +174,62 @@ describe('Course Model', () => {
       expect(courseCount).toBe(0)
     })
   })
+
+  describe('Soft Deletion', () => {
+    it('should soft delete course', async () => {
+      const course = await Course.create({
+        name: 'Test Course',
+        user_id: teacher.id,
+        student_teacher_group_id: stGroup.group_id,
+        learner_group_id: learnerGroup.group_id,
+      })
+
+      await course.destroy()
+
+      const found = await Course.findOne({
+        where: { id: course.id },
+        paranoid: false,
+      })
+      expect(found.deletedAt).toBeTruthy()
+    })
+  })
+
+  describe('Multiple Courses', () => {
+    it('should allow multiple courses per teacher', async () => {
+      await Course.create({
+        name: 'Course 1',
+        user_id: teacher.id,
+        student_teacher_group_id: stGroup.group_id,
+        learner_group_id: learnerGroup.group_id,
+      })
+
+      await Course.create({
+        name: 'Course 2',
+        user_id: teacher.id,
+        student_teacher_group_id: stGroup.group_id,
+        learner_group_id: learnerGroup.group_id,
+      })
+
+      const courses = await Course.findAll({
+        where: { user_id: teacher.id },
+      })
+      expect(courses.length).toBe(2)
+    })
+  })
+
+  describe('Updates', () => {
+    it('should update course details', async () => {
+      const course = await Course.create({
+        name: 'Old Name',
+        user_id: teacher.id,
+        student_teacher_group_id: stGroup.group_id,
+        learner_group_id: learnerGroup.group_id,
+      })
+
+      await course.update({ name: 'New Name' })
+
+      const updated = await Course.findByPk(course.id)
+      expect(updated.name).toBe('New Name')
+    })
+  })
 })

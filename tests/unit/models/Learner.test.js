@@ -228,4 +228,52 @@ describe('Learner Model', () => {
       ).rejects.toThrow('foreign key constraint')
     })
   })
+
+  describe('Query Operations', () => {
+    it('should find learner with associations', async () => {
+      const user = await createTestUser()
+      const learner = await Learner.create({
+        user_id: user.id,
+        year_level: 3,
+        enrollment_id: enrollment.enrollment_id,
+      })
+
+      const found = await Learner.findByPk(learner.id, {
+        include: ['user', 'enrollment', 'group'],
+      })
+
+      expect(found).toBeTruthy()
+      expect(found.user.id).toBe(user.id)
+      expect(found.enrollment_id).toBe(enrollment.enrollment_id)
+    })
+  })
+
+  describe('Update Operations', () => {
+    it('should update year level', async () => {
+      const user = await createTestUser()
+      const learner = await Learner.create({
+        user_id: user.id,
+        year_level: 3,
+        enrollment_id: enrollment.enrollment_id,
+      })
+
+      await learner.update({ year_level: 4 })
+      expect(learner.year_level).toBe(4)
+    })
+  })
+
+  describe('Data Integrity', () => {
+    it('should cascade delete when enrollment is deleted', async () => {
+      const user = await createTestUser()
+      await Learner.create({
+        user_id: user.id,
+        year_level: 3,
+        enrollment_id: enrollment.enrollment_id,
+      })
+
+      await enrollment.destroy()
+      const learnerCount = await Learner.count()
+      expect(learnerCount).toBe(0)
+    })
+  })
 })

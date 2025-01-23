@@ -80,7 +80,12 @@ export const createTestEnrollment = async (overrides = {}) => {
  */
 export const createTestSchool = async (overrides = {}) => {
   try {
-    const schoolData = { ...validSchools[0], ...overrides }
+    const timestamp = Date.now()
+    const schoolData = {
+      ...validSchools[0],
+      name: `Test School ${timestamp}`,
+      ...overrides,
+    }
 
     const school = await School.create(schoolData)
     if (!school) {
@@ -115,7 +120,7 @@ export const createTestUser = async (overrides = {}, role = 'learner') => {
       first_name: userData.first_name,
       last_name: userData.last_name,
       email: userData.email,
-      password: await bcrypt.hash(userData.password, 10),
+      password: userData.password,
       role: userData.role,
       school_id: userData.school_id,
       birth_date: userData.birth_date || null,
@@ -123,7 +128,6 @@ export const createTestUser = async (overrides = {}, role = 'learner') => {
     }
 
     const user = await User.create(formattedUserData)
-
     return user
   } catch (error) {
     console.error('Error creating test user:', error)

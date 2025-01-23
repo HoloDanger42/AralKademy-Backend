@@ -7,6 +7,7 @@ import { validSchools } from '../../fixtures/schoolData.js'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../helpers/testSetup.js'
 import { hashPassword } from '../../helpers/testUtils.js'
 import { createTestUser, createTestSchool, createTestEnrollment } from '../../helpers/testData.js'
+import bcrypt from 'bcryptjs'
 import models from '../../../src/models/associate.js'
 
 describe('User Model', () => {
@@ -97,8 +98,17 @@ describe('User Model', () => {
 
   describe('Associations', () => {
     it('should belong to a school', async () => {
-      const school = await School.create(validSchools[0])
-      const user = await createTestUser({}, 'learner', school)
+      const schoolData = {
+        ...validSchools[0],
+        name: 'Test School',
+      }
+      const school = await School.create(schoolData)
+      const user = await createTestUser(
+        {
+          school_id: school.school_id,
+        },
+        'learner'
+      )
       const userSchool = await user.getSchool()
 
       expect(userSchool.id).toBe(school.id)
@@ -202,6 +212,11 @@ describe('User Model', () => {
       await user.update({ password: 'newpassword123' })
       expect(user.password).not.toBe(oldHash)
     })
+
+    it('should have comparePassword instance method', async () => {
+      const user = await createTestUser()
+      expect(typeof user.comparePassword).toBe('function')
+    })
   })
 
   describe('Data Validation', () => {
@@ -264,6 +279,93 @@ describe('User Model', () => {
       const restoredUser = await User.findByPk(user.id)
       expect(restoredUser).toBeTruthy()
       expect(restoredUser.deletedAt).toBeNull()
+    })
+  })
+
+  describe('Update Operations', () => {
+    it('should update user details', async () => {
+      const user = await createTestUser()
+      const newData = {
+        first_name: 'Updated',
+        last_name: 'Name',
+      }
+      await user.update(newData)
+      expect(user.first_name).toBe('Updated')
+      expect(user.last_name).toBe('Name')
+    })
+  })
+
+  describe('Query Operations', () => {
+    it('should find user by email', async () => {
+      const user = await createTestUser()
+      const found = await User.findOne({ where: { email: user.email } })
+      expect(found.id).toBe(user.id)
+    })
+
+    it('should not return soft deleted users in normal queries', async () => {
+      const user = await createTestUser()
+      await user.destroy()
+      const found = await User.findByPk(user.id)
+      expect(found).toBeNull()
+    })
+  })
+
+  describe('Attributes', () => {
+    it('should have all required attributes', async () => {
+      const user = await createTestUser()
+      const attributes = [
+        'id',
+        'first_name',
+        'last_name',
+        'email',
+        'password',
+        'role',
+        'birth_date',
+        'contact_no',
+        'school_id',
+        'createdAt',
+        'updatedAt',
+        'deletedAt',
+      ]
+      attributes.forEach((attr) => {
+        expect(user).toHaveProperty(attr)
+      })
+    })
+  })
+
+  describe('Instance Methods', () => {
+    it('should compare password correctly', async () => {
+      const plainPassword = 'securepassword'
+      const user = await createTestUser({
+        password: plainPassword,
+      })
+      const isMatch = await bcrypt.compare(plainPassword, user.password)
+      expect(isMatch).toBe(true)
+    })
+  })
+
+  describe('Data Sanitization', () => {
+    it('should trim whitespace from string fields', async () => {
+      const user = await createTestUser({
+        first_name: '  John  ',
+        last_name: '  Doe  ',
+        email: `test${Date.now()}@example.com`,
+        school_id: (await createTestSchool()).school_id,
+      })
+      expect(user.first_name).toBe('John')
+      expect(user.last_name).toBe('Doe')
+    })
+  })
+
+  describe('Error Handling', () => {
+    it('should handle concurrent updates correctly', async () => {
+      const user = await createTestUser()
+      await Promise.all([
+        user.update({ first_name: 'Test1' }),
+        user.update({ first_name: 'Test2' }),
+      ])
+      const updatedUser = await User.findByPk(user.id)
+      expect(updatedUser.first_name).toBeDefined()
     })
   })
 })

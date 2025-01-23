@@ -12,6 +12,10 @@ const School = sequelize.define(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: {
+        args: true,
+        msg: 'School name must be unique',
+      },
       validate: {
         notNull: {
           msg: 'School name is required',
@@ -51,6 +55,7 @@ const School = sequelize.define(
     tableName: 'schools',
     timestamps: true,
     underscored: true,
+    paranoid: true,
   }
 )
 

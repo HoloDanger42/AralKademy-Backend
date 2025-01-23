@@ -21,6 +21,9 @@ const User = sequelize.define(
           msg: 'First name cannot be empty.',
         },
       },
+      set(value) {
+        this.setDataValue('first_name', value.trim())
+      },
     },
     last_name: {
       type: DataTypes.STRING,
@@ -32,6 +35,9 @@ const User = sequelize.define(
         notEmpty: {
           msg: 'Last name cannot be empty.',
         },
+      },
+      set(value) {
+        this.setDataValue('last_name', value.trim())
       },
     },
     role: {
@@ -152,5 +158,9 @@ const User = sequelize.define(
     ],
   }
 )
+
+User.prototype.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password)
+}
 
 export { User }
