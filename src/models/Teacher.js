@@ -27,9 +27,4 @@ const Teacher = sequelize.define(
   }
 )
 
-Teacher.associate = (models) => {
-  Teacher.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' })
-  Teacher.hasMany(models.Course, { foreignKey: 'user_id', as: 'courses' })
-}
-
 export { Teacher }

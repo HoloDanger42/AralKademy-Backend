@@ -134,4 +134,12 @@ describe('Teacher Model', () => {
       expect(courseCount).toBe(0)
     })
   })
+
+  describe('Query Operations', () => {
+    it('should find active teachers', async () => {
+      const teacher = await Teacher.create({ user_id: user.id })
+      const found = await Teacher.findAll({ where: { deletedAt: null } })
+      expect(found).toHaveLength(1)
+    })
+  })
 })
