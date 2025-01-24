@@ -170,4 +170,25 @@ describe('Enrollment Model', () => {
       expect(enrollment.last_name).toBe('Name')
     })
   })
+
+  describe('Data Integrity', () => {
+    it('should enforce unique email', async () => {
+      await Enrollment.create(validEnrollmentData)
+      await expect(
+        Enrollment.create({
+          ...validEnrollmentData,
+          email: validEnrollmentData.email,
+        })
+      ).rejects.toThrow()
+    })
+
+    it('should validate contact number format', async () => {
+      await expect(
+        Enrollment.create({
+          ...validEnrollmentData,
+          contact_no: 'invalid',
+        })
+      ).rejects.toThrow()
+    })
+  })
 })

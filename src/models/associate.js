@@ -69,6 +69,12 @@ Enrollment.belongsTo(Admin, {
 })
 
 Group.hasMany(Learner, { foreignKey: 'learner_group_id', as: 'learners' })
+Group.hasMany(StudentTeacher, {
+  foreignKey: 'student_teacher_group_id',
+  as: 'studentTeachers',
+})
+Group.hasOne(Course, { foreignKey: 'student_teacher_group_id', as: 'studentTeacherCourse' })
+Group.hasOne(Course, { foreignKey: 'learner_group_id', as: 'learnerCourse' })
 
 School.hasMany(User, { foreignKey: 'school_id' })
 
