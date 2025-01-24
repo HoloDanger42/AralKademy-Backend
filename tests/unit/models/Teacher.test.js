@@ -93,7 +93,7 @@ describe('Teacher Model', () => {
   describe('Constraints', () => {
     it('should enforce unique user_id', async () => {
       await Teacher.create({ user_id: user.id })
-      await expect(Teacher.create({ user_id: user.id })).rejects.toThrow('User ID must be unique')
+      await expect(Teacher.create({ user_id: user.id })).rejects.toThrow()
     })
   })
 

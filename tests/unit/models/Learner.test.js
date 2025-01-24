@@ -271,7 +271,7 @@ describe('Learner Model', () => {
         enrollment_id: enrollment.enrollment_id,
       })
 
-      await enrollment.destroy()
+      await enrollment.destroy({ force: true })
       const learnerCount = await Learner.count()
       expect(learnerCount).toBe(0)
     })
