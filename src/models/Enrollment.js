@@ -109,7 +109,11 @@ const Enrollment = sequelize.define(
           msg: 'Year level must be an integer.',
         },
         min: {
-          args: [1, 6],
+          args: 1,
+          msg: 'Year level must be between 1 and 6.',
+        },
+        max: {
+          args: 6,
           msg: 'Year level must be between 1 and 6.',
         },
       },
@@ -145,13 +149,8 @@ const Enrollment = sequelize.define(
     tableName: 'enrollments',
     timestamps: true,
     underscored: true,
+    paranoid: true,
   }
 )
-
-Enrollment.associate = (models) => {
-  Enrollment.belongsTo(models.School, { foreignKey: 'school_id', as: 'school' })
-  Enrollment.belongsTo(models.Admin, { foreignKey: 'user_id', as: 'admin' })
-  Enrollment.hasOne(models.Learner, { foreignKey: 'enrollment_id', as: 'learner' })
-}
 
 export { Enrollment }

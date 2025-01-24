@@ -46,16 +46,32 @@ User.hasOne(Learner, {
   onDelete: 'CASCADE',
   hooks: true,
 })
+
 Teacher.hasMany(Course, { foreignKey: 'user_id', as: 'courses', onDelete: 'CASCADE' })
 Teacher.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
+
 Learner.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
 Learner.belongsTo(Group, { foreignKey: 'learner_group_id', as: 'group' })
 Learner.belongsTo(Enrollment, { foreignKey: 'enrollment_id', as: 'enrollment' })
+
 StudentTeacher.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
 StudentTeacher.belongsTo(Group, { foreignKey: 'student_teacher_group_id', as: 'group' })
+
+Admin.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
+Admin.hasMany(Enrollment, { foreignKey: 'handled_by_id', as: 'enrollments' })
+
 Enrollment.hasOne(Learner, { foreignKey: 'enrollment_id', as: 'learner' })
+Enrollment.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
+Enrollment.belongsTo(Admin, {
+  foreignKey: 'handled_by_id',
+  targetKey: 'user_id',
+  as: 'admin',
+})
+
 Group.hasMany(Learner, { foreignKey: 'learner_group_id', as: 'learners' })
+
 School.hasMany(User, { foreignKey: 'school_id' })
+
 Course.belongsTo(models.Teacher, { foreignKey: 'user_id', as: 'teacher', onDelete: 'CASCADE' })
 Course.belongsTo(models.Group, {
   foreignKey: 'student_teacher_group_id',
