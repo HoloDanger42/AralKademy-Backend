@@ -40,5 +40,4 @@ desktop.ini
 *~
 
 # Migration archives
-migration_files/migration_files/*
-migration_files/*
+/migration_files/
