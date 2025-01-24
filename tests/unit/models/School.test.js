@@ -185,4 +185,41 @@ describe('School Model', () => {
       await expect(school.destroy()).rejects.toThrow()
     })
   })
+
+  describe('Query Operations', () => {
+    it('should find schools with pagination', async () => {
+      // Create multiple schools
+      for (let i = 0; i < 5; i++) {
+        await School.create({
+          name: `School ${i}`,
+          address: `Address ${i}`,
+          contact_no: '02-8123-4567',
+        })
+      }
+
+      const { count, rows } = await School.findAndCountAll({
+        limit: 2,
+        offset: 0,
+      })
+
+      expect(count).toBe(5)
+      expect(rows.length).toBe(2)
+    })
+
+    it('should search schools by name', async () => {
+      await School.create({
+        name: 'Target School',
+        address: 'Test Address',
+        contact_no: '02-8123-4567',
+      })
+
+      const found = await School.findOne({
+        where: {
+          name: 'Target School',
+        },
+      })
+      expect(found).toBeTruthy()
+      expect(found.name).toBe('Target School')
+    })
+  })
 })

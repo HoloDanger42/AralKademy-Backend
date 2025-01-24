@@ -232,4 +232,26 @@ describe('Course Model', () => {
       expect(updated.name).toBe('New Name')
     })
   })
+
+  describe('Query Operations', () => {
+    it('should find courses with pagination', async () => {
+      // Create multiple courses
+      const coursesData = Array.from({ length: 5 }, (_, i) => ({
+        name: `Course ${i}`,
+        user_id: teacher.id,
+        student_teacher_group_id: stGroup.group_id,
+        learner_group_id: learnerGroup.group_id,
+      }))
+
+      await Promise.all(coursesData.map((data) => Course.create(data)))
+
+      const { count, rows } = await Course.findAndCountAll({
+        limit: 2,
+        offset: 0,
+      })
+
+      expect(count).toBe(5)
+      expect(rows.length).toBe(2)
+    })
+  })
 })

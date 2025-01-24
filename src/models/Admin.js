@@ -19,6 +19,7 @@ const Admin = sequelize.define(
     tableName: 'admins',
     timestamps: true,
     underscored: true,
+    paranoid: true,
   }
 )
 

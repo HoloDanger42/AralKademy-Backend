@@ -38,3 +38,6 @@ desktop.ini
 *.swp
 *.swo
 *~
+
+# Migration archives
+migration_files/
