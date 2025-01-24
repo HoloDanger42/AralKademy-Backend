@@ -36,14 +36,8 @@ const Group = sequelize.define(
     tableName: 'groups',
     timestamps: true,
     underscored: true,
+    paranoid: true,
   }
 )
-
-Group.associate = (models) => {
-  Group.hasMany(models.Learner, { foreignKey: 'learner_group_id', as: 'learners' })
-  Group.hasMany(models.StudentTeacher, { foreignKey: 'student_teacher_group_id', as: 'studentTeachers' });
-  Group.hasOne(models.Course, { foreignKey: 'student_teacher_group_id', as: 'studentTeacherCourse' });
-  Group.hasOne(models.Course, { foreignKey: 'learner_group_id', as: 'learnerCourse' });
-}
 
 export { Group }

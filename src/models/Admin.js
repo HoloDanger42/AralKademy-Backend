@@ -19,12 +19,8 @@ const Admin = sequelize.define(
     tableName: 'admins',
     timestamps: true,
     underscored: true,
+    paranoid: true,
   }
 )
-
-Admin.associate = (models) => {
-  Admin.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' })
-  Admin.hasMany(models.Enrollment, { foreignKey: 'user_id', as: 'enrollment' })
-}
 
 export { Admin }

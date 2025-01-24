@@ -65,13 +65,8 @@ const Course = sequelize.define(
     tableName: 'courses',
     timestamps: true,
     underscored: true,
+    paranoid: true,
   }
 )
-
-Course.associate = (models) => {
-  Course.belongsTo(models.Teacher, { foreignKey: 'user_id', as: 'teacher' });
-  Course.belongsTo(models.Group, { foreignKey: 'student_teacher_group_id', as: 'studentTeacherGroup' });
-  Course.belongsTo(models.Group, { foreignKey: 'learner_group_id', as: 'learnerGroup' });
-};
 
 export { Course }
