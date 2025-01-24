@@ -9,7 +9,7 @@ class UserService {
     this.StudentTeacherModel = StudentTeacherModel;
   }
 
-  async createUser(email, password, firstName, lastName, birthDate, contactNo, schoolId, role, department = null, section = null) {
+  async createUser(email, password, firstName, lastName, birthDate, contactNo, schoolId, role, department = null, section = null, groupId = null) {
     const transaction = await this.UserModel.sequelize.transaction();
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -31,7 +31,7 @@ class UserService {
       } else if (role === 'admin') {
         await this.AdminModel.create({ user_id: user.id }, { transaction });
       } else if (role === 'student_teacher') {
-        await this.StudentTeacherModel.create({ user_id: user.id, department, section }, { transaction });
+        await this.StudentTeacherModel.create({ user_id: user.id, department, section, group_id: groupId }, { transaction });
       }
 
       await transaction.commit();

@@ -12,6 +12,10 @@ const School = sequelize.define(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: {
+        args: true,
+        msg: 'School already exists',
+      },
       validate: {
         notNull: {
           msg: 'School name is required',

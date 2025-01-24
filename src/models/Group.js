@@ -40,8 +40,8 @@ const Group = sequelize.define(
 )
 
 Group.associate = (models) => {
-  Group.hasMany(models.Learner, { foreignKey: 'learner_group_id', as: 'learners' })
-  Group.hasMany(models.StudentTeacher, { foreignKey: 'student_teacher_group_id', as: 'studentTeachers' });
+  Group.hasMany(models.Learner, { foreignKey: 'group_id', as: 'learners' })
+  Group.hasMany(models.StudentTeacher, { foreignKey: 'group_id', as: 'studentTeachers' });
   Group.hasOne(models.Course, { foreignKey: 'student_teacher_group_id', as: 'studentTeacherCourse' });
   Group.hasOne(models.Course, { foreignKey: 'learner_group_id', as: 'learnerCourse' });
 }

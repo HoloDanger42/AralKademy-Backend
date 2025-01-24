@@ -23,8 +23,8 @@ const login = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const { email, password, firstName, lastName, birthDate, contactNo, schoolId, userType, department, section } = req.body;
-    const user = await userService.createUser(email, password, firstName, lastName, birthDate, contactNo, schoolId, userType, department, section);
+    const { email, password, firstName, lastName, birthDate, contactNo, schoolId, userType, department, section, groupId } = req.body;
+    const user = await userService.createUser(email, password, firstName, lastName, birthDate, contactNo, schoolId, userType, department, section, groupId);
 
     res.status(201).json({
       message: 'User created successfully',

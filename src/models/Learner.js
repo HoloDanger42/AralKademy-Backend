@@ -39,7 +39,7 @@ const Learner = sequelize.define(
       },
       onDelete: 'CASCADE',
     },
-    learner_group_id: {
+    group_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
@@ -58,7 +58,7 @@ const Learner = sequelize.define(
 
 Learner.associate = (models) => {
   Learner.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' })
-  Learner.belongsTo(models.Group, { foreignKey: 'learner_group_id', as: 'group' })
+  Learner.belongsTo(models.Group, { foreignKey: 'group_id', as: 'group' })
   Learner.belongsTo(models.Enrollment, { foreignKey: 'enrollment_id', as: 'enrollment'})
 }
 
