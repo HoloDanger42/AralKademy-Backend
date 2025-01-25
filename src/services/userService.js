@@ -63,6 +63,18 @@ class UserService {
   async getAllUsers() {
     return await this.UserModel.findAll();
   }
+
+  async getUserById(userId) {
+    try {
+      const user = await this.UserModel.findByPk(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      return user;
+    } catch (error) {
+      throw new Error('Failed to fetch user');
+    }
+  }
 }
 
 export default UserService;

@@ -5,9 +5,45 @@ class EnrollmentService {
     this.EnrollmentModel = EnrollmentModel;
   }
 
+  async approveEnrollment(enrollmentId, adminId) {
+    try {
+      const enrollment = await this.EnrollmentModel.findByPk(enrollmentId);
+      if (!enrollment) {
+        throw new Error('Enrollment not found');
+      }
+      enrollment.status = 'approved';
+      enrollment.handled_by_id = adminId;
+      await enrollment.save();
+      return enrollment;
+    } catch (error) {
+      throw new Error('Failed to approve enrollment');
+    }
+  }
+
+  async rejectEnrollment(enrollmentId, adminId) {
+    try {
+      const enrollment = await this.EnrollmentModel.findByPk(enrollmentId);
+      if (!enrollment) {
+        throw new Error('Enrollment not found');
+      }
+      enrollment.status = 'rejected';
+      enrollment.handled_by_id = adminId;
+      await enrollment.save();
+      return enrollment;
+    } catch (error) {
+      throw new Error('Failed to reject enrollment');
+    }
+  }
+
   async enroll(email, password, firstName, lastName, birthDate, contactNo, schoolId, yearLevel, handledById = null, status = 'pending') {
     try {
-      const hashedPassword = await bcrypt.hash(password, 10)
+
+      if (!email || !password || !firstName || !lastName || !birthDate || !contactNo || !schoolId || !yearLevel) {
+        throw new Error('All fields are required');
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       return await this.EnrollmentModel.create({
         email,
         password: hashedPassword,
@@ -19,19 +55,35 @@ class EnrollmentService {
         year_level: yearLevel,
         handled_by_id: handledById,
         status
-      })
+      });
     } catch (error) {
       if (error.name === 'SequelizeUniqueConstraintError') {
         if (error.errors[0].path === 'email') {
-          throw new Error('Email already exists')
+          throw new Error('Email already exists');
         }
       }
-      throw error
+      throw error;
     }
   }
 
   async getAllEnrollments() {
-    return await this.EnrollmentModel.findAll();
+    try {
+      return await this.EnrollmentModel.findAll();
+    } catch (error) {
+      throw new Error('Failed to fetch enrollments');
+    }
+  }
+
+  async getEnrollmentById(enrollmentId) {
+    try {
+      const enrollment = await this.EnrollmentModel.findByPk(enrollmentId);
+      if (!enrollment) {
+        throw new Error('Enrollment not found');
+      }
+      return enrollment;
+    } catch (error) {
+      throw new Error('Failed to fetch enrollment');
+    }
   }
 }
 

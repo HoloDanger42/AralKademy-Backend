@@ -17,9 +17,12 @@ const login = async (req, res) => {
     log.info(`User ${email} logged in successfully`);
   } catch (error) {
     log.error('Login error:', error);
+    if (error.message === 'Invalid credentials') {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
     return res.status(500).json({ message: 'Authentication failed' });
   }
-}
+};
 
 const createUser = async (req, res) => {
   try {
@@ -38,7 +41,7 @@ const createUser = async (req, res) => {
     }
     return res.status(500).json({ message: 'Failed to create user' });
   }
-}
+};
 
 const getAllUsers = async (_req, res) => {
   try {
@@ -49,8 +52,20 @@ const getAllUsers = async (_req, res) => {
     log.error('Get all users error:', error);
     return res.status(500).json({ message: 'Failed to retrieve users' });
   }
-}
+};
 
+const getUserById = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await userService.getUserById(userId);
+    res.status(200).json(user);
+  } catch (error) {
+    log.error('Get user by ID error:', error);
+    if (error.message === 'User not found') {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.status(500).json({ message: 'Failed to retrieve user' });
+  }
+};
 
-
-export { login, getAllUsers, createUser };
+export { login, createUser, getAllUsers, getUserById };

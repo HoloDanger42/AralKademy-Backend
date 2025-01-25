@@ -48,15 +48,21 @@ describe('Course Service', () => {
   describe('createCourse', () => {
     test('should create a course successfully', async () => {
       // Arrange
-      const courseData = validCourses[0]
-      mockCourseModel.create.mockResolvedValue({ id: 1, ...courseData })
+      const courseData = validCourses[0];
+      const expectedData = {
+        ...courseData,
+        learner_group_id: null, // Align with the implementation
+        student_teacher_group_id: null,
+        user_id: null,
+      };
+      mockCourseModel.create.mockResolvedValue({ id: 1, ...expectedData });
 
       // Act
       const course = await courseService.createCourse(courseData.name, courseData.description)
 
       // Assert
-      expect(course).toEqual({ id: 1, ...courseData })
-      expect(mockCourseModel.create).toHaveBeenCalledWith(courseData)
+      expect(course).toEqual({ id: 1, ...expectedData });
+      expect(mockCourseModel.create).toHaveBeenCalledWith(expectedData);
     })
 
     test('should throw error when course name is empty', async () => {
@@ -79,4 +85,162 @@ describe('Course Service', () => {
       ).rejects.toThrow('Course name is too long')
     })
   })
+  describe('getCourseById', () => {
+    test('should return the course when it exists', async () => {
+      // Arrange
+      const courseId = 1;
+      const expectedCourse = { id: courseId, name: 'Test Course' };
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(expectedCourse);
+  
+      // Act
+      const course = await courseService.getCourseById(courseId);
+  
+      // Assert
+      expect(course).toEqual(expectedCourse);
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error when the course does not exist', async () => {
+      // Arrange
+      const courseId = 1;
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(null);
+  
+      // Act & Assert
+      await expect(courseService.getCourseById(courseId)).rejects.toThrow('Failed to fetch course');
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error when the query fails', async () => {
+      // Arrange
+      const courseId = 1;
+      mockCourseModel.findByPk = jest.fn().mockRejectedValue(new Error('Database error'));
+  
+      // Act & Assert
+      await expect(courseService.getCourseById(courseId)).rejects.toThrow('Failed to fetch course');
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  });
+  describe('assignStudentTeacherGroupCourse', () => {
+    test('should successfully assign student teacher group to a course', async () => {
+      // Arrange
+      const courseId = 1;
+      const studentTeacherGroupId = 101;
+      const course = { id: courseId, save: jest.fn() };
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+  
+      // Act
+      const updatedCourse = await courseService.assignStudentTeacherGroupCourse(courseId, studentTeacherGroupId);
+  
+      // Assert
+      expect(course.student_teacher_group_id).toBe(studentTeacherGroupId);
+      expect(course.save).toHaveBeenCalled();
+      expect(updatedCourse).toEqual(course);
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error if the course does not exist', async () => {
+      // Arrange
+      const courseId = 1;
+      const studentTeacherGroupId = 101;
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(null);
+  
+      // Act & Assert
+      await expect(courseService.assignStudentTeacherGroupCourse(courseId, studentTeacherGroupId)).rejects.toThrow('Failed to assign student teacher group to course');
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error if saving the course fails', async () => {
+      // Arrange
+      const courseId = 1;
+      const studentTeacherGroupId = 101;
+      const course = { id: courseId, save: jest.fn().mockRejectedValue(new Error('Save error')) };
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+  
+      // Act & Assert
+      await expect(courseService.assignStudentTeacherGroupCourse(courseId, studentTeacherGroupId)).rejects.toThrow('Failed to assign student teacher group to course');
+      expect(course.save).toHaveBeenCalled();
+    });
+  });
+  describe('assignLearnerGroupCourse', () => {
+    test('should successfully assign learner group to a course', async () => {
+      // Arrange
+      const courseId = 1;
+      const learnerGroupId = 101;
+      const course = { id: courseId, save: jest.fn() };
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+  
+      // Act
+      const updatedCourse = await courseService.assignLearnerGroupCourse(courseId, learnerGroupId);
+  
+      // Assert
+      expect(course.learner_group_id).toBe(learnerGroupId);
+      expect(course.save).toHaveBeenCalled();
+      expect(updatedCourse).toEqual(course);
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error if the course does not exist', async () => {
+      // Arrange
+      const courseId = 1;
+      const learnerGroupId = 101;
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(null);
+  
+      // Act & Assert
+      await expect(courseService.assignLearnerGroupCourse(courseId, learnerGroupId)).rejects.toThrow('Failed to assign learner group to course');
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error if saving the course fails', async () => {
+      // Arrange
+      const courseId = 1;
+      const learnerGroupId = 101;
+      const course = { id: courseId, save: jest.fn().mockRejectedValue(new Error('Save error')) };
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+  
+      // Act & Assert
+      await expect(courseService.assignLearnerGroupCourse(courseId, learnerGroupId)).rejects.toThrow('Failed to assign learner group to course');
+      expect(course.save).toHaveBeenCalled();
+    });
+  });
+  describe('assignTeacherCourse', () => {
+    test('should successfully assign teacher to a course', async () => {
+      // Arrange
+      const courseId = 1;
+      const userId = 101;
+      const course = { id: courseId, save: jest.fn() };
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+  
+      // Act
+      const updatedCourse = await courseService.assignTeacherCourse(courseId, userId);
+  
+      // Assert
+      expect(course.user_id).toBe(userId);
+      expect(course.save).toHaveBeenCalled();
+      expect(updatedCourse).toEqual(course);
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error if the course does not exist', async () => {
+      // Arrange
+      const courseId = 1;
+      const userId = 101;
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(null);
+  
+      // Act & Assert
+      await expect(courseService.assignTeacherCourse(courseId, userId)).rejects.toThrow('Failed to assign teacher to course');
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error if saving the course fails', async () => {
+      // Arrange
+      const courseId = 1;
+      const userId = 101;
+      const course = { id: courseId, save: jest.fn().mockRejectedValue(new Error('Save error')) };
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+  
+      // Act & Assert
+      await expect(courseService.assignTeacherCourse(courseId, userId)).rejects.toThrow('Failed to assign teacher to course');
+      expect(course.save).toHaveBeenCalled();
+    });
+  });
 })

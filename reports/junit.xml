@@ -1,3 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="0" failures="0" errors="0" time="0.862">
+<testsuites name="jest tests" tests="7" failures="0" errors="0" time="5.095">
+  <testsuite name="Enrollment Service" errors="0" failures="0" skipped="0" timestamp="2025-01-24T23:40:02" time="3.511" tests="7">
+    <testcase classname="Enrollment Service enroll should enroll a new user successfully" name="Enrollment Service enroll should enroll a new user successfully" time="0.014">
+    </testcase>
+    <testcase classname="Enrollment Service enroll should throw an error if required fields are missing" name="Enrollment Service enroll should throw an error if required fields are missing" time="0.033">
+    </testcase>
+    <testcase classname="Enrollment Service enroll should throw an error if email already exists" name="Enrollment Service enroll should throw an error if email already exists" time="0.026">
+    </testcase>
+    <testcase classname="Enrollment Service enroll should throw an error for other Sequelize errors" name="Enrollment Service enroll should throw an error for other Sequelize errors" time="0.006">
+    </testcase>
+    <testcase classname="Enrollment Service getAllEnrollments should retrieve all enrollments successfully" name="Enrollment Service getAllEnrollments should retrieve all enrollments successfully" time="0.006">
+    </testcase>
+    <testcase classname="Enrollment Service getAllEnrollments should return an empty array when no enrollments exist" name="Enrollment Service getAllEnrollments should return an empty array when no enrollments exist" time="0.008">
+    </testcase>
+    <testcase classname="Enrollment Service getAllEnrollments should throw an error when fetching enrollments fails" name="Enrollment Service getAllEnrollments should throw an error when fetching enrollments fails" time="0.008">
+    </testcase>
+  </testsuite>
 </testsuites>
