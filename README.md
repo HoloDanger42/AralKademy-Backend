@@ -66,7 +66,8 @@ aralkademy-backend/
 │   │   └── courses.js
 │   ├── services/               # Business logic and services
 │   │   ├── userService.js
-│   │   └── courseService.js
+│   │   ├── courseService.js
+│   │   └── roleService.js
 │   └── utils/                  # Utility functions
 │       └── logger.js
 ├── tests/
@@ -101,7 +102,8 @@ aralkademy-backend/
 │   │   │   └── server.test.js
 │   │   ├── services/
 │   │   │   ├── userService.test.js
-│   │   │   └── courseService.test.js
+│   │   │   ├── courseService.test.js
+│   │   │   └── roleService.test.js
 │   │   └── utils/
 │   │       └── logger.test.js
 │   ├── integration/            # Integration tests

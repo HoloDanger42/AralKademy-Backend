@@ -7,7 +7,7 @@ class CourseService {
     return await this.CourseModel.findAll()
   }
 
-  async createCourse(name, description) {
+  async createCourse(name, description, user_id, learner_group_id, student_teacher_group_id) {
     if (!name || name.trim() === '') {
       throw new Error('Course name is required')
     }
@@ -16,7 +16,13 @@ class CourseService {
       throw new Error('Course name is too long')
     }
 
-    return await this.CourseModel.create({ name, description })
+    return await this.CourseModel.create({
+      name,
+      description,
+      user_id,
+      learner_group_id,
+      student_teacher_group_id,
+    })
   }
 }
 

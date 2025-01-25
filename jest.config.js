@@ -22,7 +22,7 @@ export default {
     },
   },
   reporters: [
-    'default', // Output to console
+    'default',
     ['jest-junit', { outputDirectory: 'reports', outputName: 'junit.xml' }], // Generate JUnit XML report
   ],
   verbose: true,
