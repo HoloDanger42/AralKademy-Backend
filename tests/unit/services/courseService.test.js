@@ -243,4 +243,111 @@ describe('Course Service', () => {
       expect(course.save).toHaveBeenCalled();
     });
   });
+
+  describe('softDeleteCourse', () => {
+    test('should successfully soft delete a course', async () => {
+      // Arrange
+      const courseId = 1;
+      const course = { id: courseId, destroy: jest.fn() };
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+  
+      // Act
+      await courseService.softDeleteCourse(courseId);
+  
+      // Assert
+      expect(course.destroy).toHaveBeenCalled();
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error if the course does not exist', async () => {
+      // Arrange
+      const courseId = 1;
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(null);
+  
+      // Act & Assert
+      await expect(courseService.softDeleteCourse(courseId)).rejects.toThrow('Failed to soft delete course');
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error if deleting the course fails', async () => {
+      // Arrange
+      const courseId = 1;
+      const course = { id: courseId, destroy: jest.fn().mockRejectedValue(new Error('Delete error')) };
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+  
+      // Act & Assert
+      await expect(courseService.softDeleteCourse(courseId)).rejects.toThrow('Failed to soft delete course');
+      expect(course.destroy).toHaveBeenCalled();
+    });
+  });
+
+  describe('editCourse', () => {
+    test('should successfully edit a course', async () => {
+      // Arrange
+      const courseId = 1;
+      const name = 'New Course Name';
+      const description = 'New Course Description';
+      const course = { id: courseId, save: jest.fn() };
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+  
+      // Act
+      const updatedCourse = await courseService.editCourse(courseId, name, description);
+  
+      // Assert
+      expect(course.name).toBe(name);
+      expect(course.description).toBe(description);
+      expect(course.save).toHaveBeenCalled();
+      expect(updatedCourse).toEqual(course);
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error if the course does not exist', async () => {
+      // Arrange
+      const courseId = 1;
+      const name = 'New Course Name';
+      const description = 'New Course Description';
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(null);
+  
+      // Act & Assert
+      await expect(courseService.editCourse(courseId, name, description)).rejects.toThrow('Failed to edit course');
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error if saving the course fails', async () => {
+      // Arrange
+      const courseId = 1;
+      const name = 'New Course Name';
+      const description = 'New Course Description';
+      const course = { id: courseId, save: jest.fn().mockRejectedValue(new Error('Save error')) };
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+  
+      // Act & Assert
+      await expect(courseService.editCourse(courseId, name, description)).rejects.toThrow('Failed to edit course');
+      expect(course.save).toHaveBeenCalled();
+    });
+
+    test('should throw an error if the course name is empty', async () => {
+      // Arrange
+      const courseId = 1;
+      const name = '';
+      const description = 'New Course Description';
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue({ id: courseId });
+  
+      // Act & Assert
+      await expect(courseService.editCourse(courseId, name, description)).rejects.toThrow('Course name is required');
+      expect(mockCourseModel.findByPk).not.toHaveBeenCalled();
+    });
+
+    test('should throw an error if the course name is too long', async () => {
+      // Arrange
+      const courseId = 1;
+      const name = 'a'.repeat(256);
+      const description = 'New Course Description';
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue({ id: courseId });
+  
+      // Act & Assert
+      await expect(courseService.editCourse(courseId, name, description)).rejects.toThrow('Course name is too long');
+      expect(mockCourseModel.findByPk).not.toHaveBeenCalled();
+    });
+  });
 })

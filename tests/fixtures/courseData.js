@@ -1,35 +1,33 @@
 export const validCourses = [
   {
-    name: 'Introduction to Programming',
-    description: 'Learn the basics of programming.',
-    user_id: 1,
-    student_teacher_group_id: 3,
-    learner_group_id: 2
+    name: 'Introduction to JavaScript',
+    description: 'A beginner-friendly course on JavaScript programming.',
   },
   {
-    name: 'Advanced JavaScript',
-    description: 'Deep dive into JavaScript and its frameworks.',
-    user_id: 1,
-    student_teacher_group_id: 3,
-    learner_group_id: 2
+    name: 'Advanced Node.js',
+    description: 'A deep dive into Node.js for experienced developers.',
   },
   {
-    name: 'Database Management System',
-    description: 'Understand the fundamentals of database design and SQL.',
-    user_id: 1,
-    student_teacher_group_id: 3,
-    learner_group_id: 2
+    name: 'Web Development with React',
+    description: 'Learn to build modern web apps using React.',
   },
-]
+  {
+    name: 'Data Science Basics',
+    description: 'An introduction to data science concepts and tools.',
+  },
+];
 
 export const invalidCourses = [
   {
-    // Missing name
-    description: 'Course without a name.',
+    name: '', // Empty course name
+    description: 'This course has no name.',
   },
   {
-    // Name too long (assuming max length is 255)
-    name: 'A'.repeat(256),
-    description: 'Course with a very long name.',
+    name: 'a'.repeat(256), // Too long course name (greater than 255 characters)
+    description: 'This course name exceeds the length limit.',
   },
-]
+  {
+    name: 'Valid Name But No Description', // Valid name but no description
+    description: '', 
+  },
+];

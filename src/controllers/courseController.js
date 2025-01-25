@@ -116,4 +116,47 @@ const getCourseById = async (req, res) => {
   }
 };
 
-export { getAllCourses, createCourse, assignStudentTeacherGroupCourse, assignLearnerGroupCourse, assignTeacherCourse, getCourseById}
+const softDeleteCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const course = await courseService.softDeleteCourse(courseId);
+    res.status(200).json({
+      message: 'Course deleted successfully',
+      course,
+    });
+    log.info(`Course ${courseId} was successfully deleted`);
+  } catch (error) {
+    log.error('Soft delete course error:', error);
+    if (error.message === 'Course not found') {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    return res.status(500).json({ message: 'Error deleting course' });
+  }
+};
+
+const editCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { name, description } = req.body;
+    const course = await courseService.editCourse(courseId, name, description);
+    res.status(200).json({
+      message: 'Course edited successfully',
+      course,
+    });
+    log.info(`Course ${courseId} was successfully edited`);
+  } catch (error) {
+    log.error('Edit course error:', error);
+    if (error.message === 'Course not found') {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    if (error.message === 'Course name is required') {
+      return res.status(400).json({ message: 'Course name is required' });
+    }
+    if (error.message === 'Course name is too long') {
+      return res.status(400).json({ message: 'Course name is too long' });
+    }
+    return res.status(500).json({ message: 'Error editing course' });
+  }
+};
+
+export { getAllCourses, createCourse, assignStudentTeacherGroupCourse, assignLearnerGroupCourse, assignTeacherCourse, getCourseById, softDeleteCourse, editCourse };

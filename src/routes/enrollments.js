@@ -4,8 +4,9 @@ import { getAllEnrollments, enroll, getEnrollmentById, approveEnrollment, reject
 const enrollmentsRouter = express.Router()
 
 enrollmentsRouter.get('/', getAllEnrollments)
+enrollmentsRouter.get('/:enrollmentId', getEnrollmentById)
 enrollmentsRouter.post('/', enroll)
-enrollmentsRouter.get('/:id', getEnrollmentById)
-enrollmentsRouter.put('/:id/approve', approveEnrollment)
-enrollmentsRouter.put('/:id/reject', rejectEnrollment)
+enrollmentsRouter.post('/approve', approveEnrollment)
+enrollmentsRouter.post('/reject', rejectEnrollment)
+
 export { enrollmentsRouter }

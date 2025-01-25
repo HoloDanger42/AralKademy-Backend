@@ -1,45 +1,46 @@
 export const validEnrollments = [
   {
-    email: 'john.doe@example.com',
-    password: 'securepassword',
+    email: 'testuser1@example.com',
+    password: 'password123',
     firstName: 'John',
     lastName: 'Doe',
-    birthDate: '1990-01-01',
+    birthDate: '2000-01-01',
     contactNo: '1234567890',
-    schoolId: 1,
-    yearLevel: 3
+    schoolId: 'school123',
+    yearLevel: 'Freshman',
   },
   {
-    email: 'jane.smith@example.com',
-    password: 'anothersecurepassword',
+    email: 'testuser2@example.com',
+    password: 'password456',
     firstName: 'Jane',
     lastName: 'Smith',
-    birthDate: '1995-05-15',
+    birthDate: '1999-02-02',
     contactNo: '0987654321',
-    schoolId: 2,
-    yearLevel: 2
-  }
+    schoolId: 'school456',
+    yearLevel: 'Sophomore',
+  },
 ];
+
 
 export const invalidEnrollments = [
   {
-    email: null,
-    password: 'short',
-    firstName: 'Invalid',
-    lastName: 'User',
-    birthDate: '2000-12-12',
-    contactNo: '0000000000',
-    schoolId: null,
-    yearLevel: null
+    email: null, // Missing email
+    password: 'password123',
+    firstName: 'John',
+    lastName: 'Doe',
+    birthDate: '2000-01-01',
+    contactNo: '1234567890',
+    schoolId: 'school123',
+    yearLevel: 'Freshman',
   },
   {
-    email: 'no.password@example.com',
-    password: '',
-    firstName: '',
-    lastName: '',
-    birthDate: '',
-    contactNo: '',
-    schoolId: 1,
-    yearLevel: 1
-  }
+    email: 'testuser@example.com', // Email already exists
+    password: 'password456',
+    firstName: 'Jane',
+    lastName: 'Smith',
+    birthDate: '1999-02-02',
+    contactNo: '0987654321',
+    schoolId: 'school456',
+    yearLevel: 'Sophomore',
+  },
 ];
