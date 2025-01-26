@@ -1,0 +1,283 @@
+import { afterEach, jest, describe, test, beforeEach, expect } from '@jest/globals';
+import { enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getAllEnrollments } from '../../../src/controllers/enrollmentController.js';
+import EnrollmentService from '../../../src/services/enrollmentService.js';
+import { log } from '../../../src/utils/logger.js';
+import { validEnrollments } from '../../fixtures/enrollmentData.js';
+
+describe('Enrollment Controller', () => {
+  let mockReq;
+  let mockRes;
+  let enrollSpy;
+  let getEnrollmentByIdSpy;
+  let approveEnrollmentSpy;
+  let rejectEnrollmentSpy;
+  let getAllEnrollmentsSpy;
+
+  beforeEach(() => {
+    mockReq = { body: {}, params: {} };
+    mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    enrollSpy = jest.spyOn(EnrollmentService.prototype, 'enroll');
+    getEnrollmentByIdSpy = jest.spyOn(EnrollmentService.prototype, 'getEnrollmentById');
+    approveEnrollmentSpy = jest.spyOn(EnrollmentService.prototype, 'approveEnrollment');
+    rejectEnrollmentSpy = jest.spyOn(EnrollmentService.prototype, 'rejectEnrollment');
+    getAllEnrollmentsSpy = jest.spyOn(EnrollmentService.prototype, 'getAllEnrollments');
+
+    jest.spyOn(log, 'info');
+    jest.spyOn(log, 'error');
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('enroll', () => {
+    test('should create enrollment successfully (enroll)', async () => {
+      // Arrange
+      const enrollmentData = validEnrollments[0];
+      mockReq.body = enrollmentData;
+      const mockEnrollment = { id: 1, ...enrollmentData };
+      enrollSpy.mockResolvedValue(mockEnrollment);
+
+      // Act
+      await enroll(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Enrollment created successfully',
+        enrollment: mockEnrollment,
+      });
+      expect(log.info).toHaveBeenCalled();
+    });
+
+    test('should handle missing required fields (enroll)', async () => {
+      // Arrange
+      mockReq.body = { email: 'test@example.com' }; // Missing required fields
+      const error = new Error('All fields are required');
+      enrollSpy.mockRejectedValue(error);
+
+      // Act
+      await enroll(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'All fields are required' });
+      expect(log.error).toHaveBeenCalledWith('Create enrollment error:', error);
+    });
+
+    test('should handle duplicate email error (enroll)', async () => {
+      // Arrange
+      const enrollmentData = validEnrollments[0];
+      mockReq.body = enrollmentData;
+      const error = new Error('Email already exists');
+      enrollSpy.mockRejectedValue(error);
+
+      // Act
+      await enroll(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Email already exists' });
+      expect(log.error).toHaveBeenCalledWith('Create enrollment error:', error);
+    });
+
+    test('should handle unexpected server errors during enrollment (enroll)', async () => {
+      // Arrange
+      mockReq.body = validEnrollments[0];
+      const error = new Error('Unexpected error');
+      enrollSpy.mockRejectedValue(error);
+
+      // Act
+      await enroll(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to create enrollment' });
+      expect(log.error).toHaveBeenCalledWith('Create enrollment error:', error);
+    });
+  });
+
+  describe('getEnrollmentById', () => {
+    test('should retrieve enrollment by ID successfully (get enrollment by id)', async () => {
+      // Arrange
+      mockReq.params.id = '1';
+      const mockEnrollment = { id: 1, ...validEnrollments[0] };
+      getEnrollmentByIdSpy.mockResolvedValue(mockEnrollment);
+
+      // Act
+      await getEnrollmentById(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockEnrollment);
+      expect(log.info).toHaveBeenCalled();
+    });
+
+    test('should handle enrollment not found (get enrollment by id)', async () => {
+      // Arrange
+      mockReq.params.id = '99';
+      const error = new Error('Enrollment not found');
+      getEnrollmentByIdSpy.mockRejectedValue(error);
+
+      // Act
+      await getEnrollmentById(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Enrollment not found' });
+      expect(log.error).toHaveBeenCalledWith('Get enrollment by ID error:', error);
+    });
+
+    test('should handle unexpected server errors during retrieval (get enrollment by id)', async () => {
+      // Arrange
+      mockReq.params.id = '1';
+      const error = new Error('Unexpected error');
+      getEnrollmentByIdSpy.mockRejectedValue(error);
+
+      // Act
+      await getEnrollmentById(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to retrieve enrollment' });
+      expect(log.error).toHaveBeenCalledWith('Get enrollment by ID error:', error);
+    });
+  });
+
+  describe('approveEnrollment', () => {
+    test('should approve enrollment successfully (approve enrollment)', async () => {
+      // Arrange
+      mockReq.params.id = '1';
+      mockReq.user = { id: 1 };  // Ensure user ID is set for admin
+      const mockEnrollment = { id: 1, status: 'approved' };
+      approveEnrollmentSpy.mockResolvedValue(mockEnrollment);
+  
+      // Act
+      await approveEnrollment(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockEnrollment);
+      expect(log.info).toHaveBeenCalledWith('Enrollment with ID: 1 was approved');
+    });
+  
+    test('should handle enrollment not found (approve enrollment)', async () => {
+      // Arrange
+      mockReq.params.id = '99';
+      mockReq.user = { id: 1 };  // Ensure user ID is set for admin
+      const error = new Error('Enrollment not found');
+      approveEnrollmentSpy.mockRejectedValue(error);
+  
+      // Act
+      await approveEnrollment(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Enrollment not found' });
+      expect(log.error).toHaveBeenCalledWith('Approve enrollment error:', error);
+    });
+  
+    test('should handle unexpected server errors during approval (approve enrollment)', async () => {
+      // Arrange
+      mockReq.params.id = '1';
+      mockReq.user = { id: 1 };  // Ensure user ID is set for admin
+      const error = new TypeError('Unexpected error');
+      approveEnrollmentSpy.mockRejectedValue(error);
+  
+      // Act
+      await approveEnrollment(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to approve enrollment' });
+      expect(log.error).toHaveBeenCalledWith('Approve enrollment error:', error);
+    });
+  });
+  
+  describe('rejectEnrollment', () => {
+    test('should reject enrollment successfully (reject enrollment)', async () => {
+      // Arrange
+      mockReq.params.id = '1';
+      mockReq.user = { id: 1 };  // Ensure user ID is set for admin
+      const mockEnrollment = { id: 1, status: 'rejected' };
+      rejectEnrollmentSpy.mockResolvedValue(mockEnrollment);
+  
+      // Act
+      await rejectEnrollment(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockEnrollment);
+      expect(log.info).toHaveBeenCalledWith('Enrollment with ID: 1 was rejected');
+    });
+  
+    test('should handle enrollment not found during rejection (reject enrollment)', async () => {
+      // Arrange
+      mockReq.params.id = '99';
+      mockReq.user = { id: 1 };  // Ensure user ID is set for admin
+      const error = new Error('Enrollment not found');
+      rejectEnrollmentSpy.mockRejectedValue(error);
+  
+      // Act
+      await rejectEnrollment(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Enrollment not found' });
+      expect(log.error).toHaveBeenCalledWith('Reject enrollment error:', error);
+    });
+  
+    test('should handle unexpected server errors during rejection (reject enrollment)', async () => {
+      // Arrange
+      mockReq.params.id = '1';
+      mockReq.user = { id: 1 };  // Ensure user ID is set for admin
+      const error = new TypeError('Unexpected error');
+      rejectEnrollmentSpy.mockRejectedValue(error);
+  
+      // Act
+      await rejectEnrollment(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to reject enrollment' });
+      expect(log.error).toHaveBeenCalledWith('Reject enrollment error:', error);
+    });
+  });
+
+  describe('getAllEnrollments', () => {
+    test('should retrieve all enrollments successfully (get all enrollments)', async () => {
+      // Arrange
+      const mockEnrollments = validEnrollments.map((enrollment, index) => ({
+        id: index + 1,
+        ...enrollment,
+      }));
+      getAllEnrollmentsSpy.mockResolvedValue(mockEnrollments);
+
+      // Act
+      await getAllEnrollments(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockEnrollments);
+      expect(log.info).toHaveBeenCalled();
+    });
+
+    test('should handle unexpected server errors during retrieving all enrollments (get all enrollments)', async () => {
+      // Arrange
+      const error = new Error('Unexpected error');
+      getAllEnrollmentsSpy.mockRejectedValue(error);
+
+      // Act
+      await getAllEnrollments(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to retrieve enrollments' });
+      expect(log.error).toHaveBeenCalledWith('Get all enrollments error:', error);
+    });
+  });
+});

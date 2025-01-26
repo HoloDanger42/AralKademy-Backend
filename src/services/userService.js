@@ -40,19 +40,8 @@ class UserService {
     }
   }
 
-  async createUser(
-    email,
-    password,
-    firstName,
-    lastName,
-    birthDate,
-    contactNo,
-    schoolId,
-    role,
-    department = null,
-    section = null
-  ) {
-    const transaction = await this.UserModel.sequelize.transaction()
+  async createUser(email, password, firstName, lastName, birthDate, contactNo, schoolId, role, department = null, section = null, groupId = null) {
+    const transaction = await this.UserModel.sequelize.transaction();
     try {
       const userData = {
         email,
@@ -76,10 +65,8 @@ class UserService {
       } else if (role === 'admin') {
         await this.AdminModel.create({ user_id: user.id }, { transaction })
       } else if (role === 'student_teacher') {
-        await this.StudentTeacherModel.create(
-          { user_id: user.id, department, section },
-          { transaction }
-        )
+        await this.StudentTeacherModel.create({ user_id: user.id, department, section, group_id: groupId }, { transaction });
+
       }
 
       await transaction.commit()
@@ -229,6 +216,18 @@ class UserService {
       where: { school_id: schoolId },
       attributes: { exclude: ['password'] },
     })
+  }
+
+  async getUserById(userId) {
+    try {
+      const user = await this.UserModel.findByPk(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      return user;
+    } catch (error) {
+      throw new Error('Failed to fetch user');
+    }
   }
 }
 

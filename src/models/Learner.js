@@ -42,7 +42,7 @@ const Learner = sequelize.define(
       },
       onDelete: 'CASCADE',
     },
-    learner_group_id: {
+    group_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
@@ -58,5 +58,4 @@ const Learner = sequelize.define(
     underscored: true,
   }
 )
-
 export { Learner }
