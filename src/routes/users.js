@@ -6,6 +6,6 @@ const usersRouter = express.Router()
 
 usersRouter.post('/login', authLimiter, login)
 usersRouter.get('/', getAllUsers)
-usersRouter.get('/:userId', getUserById)
+usersRouter.get('/:id', authMiddleware, getUserById)
 
 export { usersRouter }

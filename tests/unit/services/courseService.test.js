@@ -2,17 +2,19 @@ import { beforeEach, describe, expect, jest } from '@jest/globals'
 import CourseService from '../../../src/services/courseService'
 import { validCourses, invalidCourses } from '../../fixtures/courseData'
 
-const mockCourseModel = {
-  create: jest.fn(),
-  findAll: jest.fn(),
-}
-
 describe('Course Service', () => {
   let courseService
+  let mockCourseModel
 
   beforeEach(() => {
+    mockCourseModel = {
+      create: jest.fn(),
+      findAll: jest.fn(),
+      findByPk: jest.fn(),
+      update: jest.fn(),
+      destroy: jest.fn(),
+    }
     courseService = new CourseService(mockCourseModel)
-    jest.resetAllMocks()
   })
 
   describe('getAllCourses', () => {
@@ -58,7 +60,13 @@ describe('Course Service', () => {
       mockCourseModel.create.mockResolvedValue({ id: 1, ...expectedData });
 
       // Act
-      const course = await courseService.createCourse(courseData.name, courseData.description)
+      const course = await courseService.createCourse(
+        courseData.name,
+        courseData.description,
+        courseData.user_id,
+        courseData.learner_group_id,
+        courseData.student_teacher_group_id
+      )
 
       // Assert
       expect(course).toEqual({ id: 1, ...expectedData });

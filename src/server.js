@@ -97,7 +97,7 @@ app.get('/', (_req, res) => {
 app.use('/users', usersRouter)
 app.use('/courses', coursesRouter)
 
-app.get('/error', (_req, res, next) => {
+app.get('/error', (_req, _res, next) => {
   next(new Error('Intentional error for testing'))
 })
 

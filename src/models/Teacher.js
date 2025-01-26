@@ -7,11 +7,11 @@ const Teacher = sequelize.define(
     user_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      unique: true,
       references: {
         model: 'users',
         key: 'id',
       },
-      unique: true,
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     },
@@ -20,12 +20,8 @@ const Teacher = sequelize.define(
     tableName: 'teachers',
     timestamps: true,
     underscored: true,
+    paranoid: true,
   }
-) 
-
-Teacher.associate = (models) => {
-  Teacher.belongsTo(models.User, { foreignKey: 'user_id', as: 'user' })
-  Teacher.hasMany(models.Course, { foreignKey: 'user_id', as: 'courses' })
-}
+)
 
 export { Teacher }

@@ -21,6 +21,9 @@ const User = sequelize.define(
           msg: 'First name cannot be empty.',
         },
       },
+      set(value) {
+        this.setDataValue('first_name', value.trim())
+      },
     },
     last_name: {
       type: DataTypes.STRING,
@@ -33,15 +36,8 @@ const User = sequelize.define(
           msg: 'Last name cannot be empty.',
         },
       },
-    },
-    role: {
-      type: DataTypes.ENUM('admin', 'teacher', 'student_teacher', 'learner'),
-      allowNull: false,
-      validate: {
-        isIn: {
-          args: [['admin', 'teacher', 'student_teacher', 'learner']],
-          msg: 'Role must be one of the predefined types.',
-        },
+      set(value) {
+        this.setDataValue('last_name', value.trim())
       },
     },
     email: {
@@ -85,25 +81,32 @@ const User = sequelize.define(
     },
     birth_date: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
       validate: {
         isBeforeToday(value) {
-          if (value && new Date(value) >= new Date()) {
-            throw new Error('Birthdate must be in the past')
+          if (value) {
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            const birthDate = new Date(value)
+            birthDate.setHours(0, 0, 0, 0)
+
+            if (birthDate >= today) {
+              throw new Error('Birthdate must be in the past')
+            }
           }
         },
       },
     },
     contact_no: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       validate: {
         notEmpty: {
           msg: 'Contact number is required',
         },
         is: {
-          args: /^(?:\+63|0)?9\d{2}[-\s]?\d{3}[-\s]?\d{4}$/,
-          msg: 'Contact number must be valid',
+          args: /^[0-9\s\-\(\)]+$/,
+          msg: 'Contact number must be a number',
         },
       },
     },
@@ -115,11 +118,25 @@ const User = sequelize.define(
         key: 'school_id',
       },
     },
+    role: {
+      type: DataTypes.ENUM('learner', 'teacher', 'admin', 'student_teacher'),
+      allowNull: false,
+      validate: {
+        notNull: {
+          msg: 'Role cannot be null.',
+        },
+        isIn: {
+          args: [['learner', 'teacher', 'admin', 'student_teacher']],
+          msg: 'Invalid role type',
+        },
+      },
+    },
   },
   {
     tableName: 'users',
     timestamps: true,
     underscored: true,
+    paranoid: true,
     indexes: [
       {
         unique: true,
@@ -132,16 +149,8 @@ const User = sequelize.define(
   }
 )
 
-import { School } from './School.js'
-import { StudentTeacher } from './StudentTeacher.js'
-import { Teacher } from './Teacher.js'
-import { Admin } from './Admin.js'
-import { Learner } from './Learner.js'
-
-User.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
-User.hasOne(StudentTeacher, { foreignKey: 'user_id', as: 'studentTeacher' })
-User.hasOne(Teacher, { foreignKey: 'user_id', as: 'teacher' })
-User.hasOne(Admin, { foreignKey: 'user_id', as: 'admin' })
-User.hasOne(Learner, { foreignKey: 'user_id', as: 'learner' })
+User.prototype.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password)
+}
 
 export { User }

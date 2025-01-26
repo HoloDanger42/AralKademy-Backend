@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../config/database.js'
+import { User } from './User.js'
 
 const School = sequelize.define(
   'School',
@@ -14,7 +15,7 @@ const School = sequelize.define(
       allowNull: false,
       unique: {
         args: true,
-        msg: 'School already exists',
+        msg: 'School name must be unique',
       },
       validate: {
         notNull: {
@@ -22,6 +23,10 @@ const School = sequelize.define(
         },
         notEmpty: {
           msg: 'School name is required',
+        },
+        len: {
+          args: [1, 255],
+          msg: 'School name must be between 1 and 255 characters',
         },
       },
     },
@@ -55,12 +60,21 @@ const School = sequelize.define(
     tableName: 'schools',
     timestamps: true,
     underscored: true,
+    paranoid: true,
+    hooks: {
+      beforeDestroy: async (school) => {
+        const userCount = await User.count({
+          where: {
+            school_id: school.school_id,
+            deletedAt: null,
+          },
+        })
+        if (userCount > 0) {
+          throw new Error('Cannot delete school with active users')
+        }
+      },
+    },
   }
 )
-
-School.associate = (models) => {
-  School.hasMany(models.User, { foreignKey: 'school_id', as: 'users' })
-  School.hasMany(models.Enrollment, { foreignKey: 'school_id', as: 'enrollments' })
-}
 
 export { School }

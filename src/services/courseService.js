@@ -60,7 +60,7 @@ class CourseService {
       throw new Error('Failed to assign student teacher group to course');
     }
   }
-
+  
   async assignLearnerGroupCourse(courseId, learnerGroupId) {
     try {
       const course = await this.CourseModel.findByPk(courseId);
@@ -109,15 +109,7 @@ class CourseService {
     }
   }
 
-  async editCourse(courseId, name, description) {
-    if (!name || name.trim() === '') {
-      throw new Error('Course name is required');
-    }
-
-    if (name.length > 255) {
-      throw new Error('Course name is too long');
-    }
-
+   async editCourse(courseId, name, description) {
     try {
       const course = await this.CourseModel.findByPk(courseId);
       if (!course) {

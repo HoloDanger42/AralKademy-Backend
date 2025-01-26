@@ -1,3 +1,4 @@
+
 export const validEnrollments = [
   {
     email: 'testuser1@example.com',

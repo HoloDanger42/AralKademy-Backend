@@ -1,15 +1,24 @@
 export const validCourses = [
   {
-    name: 'Introduction to JavaScript',
-    description: 'A beginner-friendly course on JavaScript programming.',
+    name: 'Introduction to Programming',
+    description: 'Learn the basics of programming.',
+    user_id: 1,
+    student_teacher_group_id: 1,
+    learner_group_id: 1,
   },
   {
-    name: 'Advanced Node.js',
-    description: 'A deep dive into Node.js for experienced developers.',
+    name: 'Advanced JavaScript',
+    description: 'Deep dive into JavaScript and its frameworks.',
+    user_id: 2,
+    student_teacher_group_id: 2,
+    learner_group_id: 2,
   },
   {
-    name: 'Web Development with React',
-    description: 'Learn to build modern web apps using React.',
+    name: 'Database Management System',
+    description: 'Understand the fundamentals of database design and SQL.',
+    user_id: 2,
+    student_teacher_group_id: 2,
+    learner_group_id: 2,
   },
   {
     name: 'Data Science Basics',
