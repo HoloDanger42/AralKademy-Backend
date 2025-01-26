@@ -3,15 +3,14 @@ import { DataTypes } from 'sequelize'
 import { sequelize } from '../config/database.js'
 
 const Enrollment = sequelize.define(
-  'Enrollment',
-  {
-    enrollment_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    first_name: {
+    'Enrollment',
+    {
+        enrollment_id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        first_name: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
@@ -144,6 +143,7 @@ const Enrollment = sequelize.define(
         },
       },
     },
+    
   },
   {
     tableName: 'enrollments',

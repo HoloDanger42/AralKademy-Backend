@@ -7,10 +7,7 @@ const Teacher = sequelize.define(
     user_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      unique: {
-        args: true,
-        msg: 'User ID must be unique',
-      },
+      unique: true,
       references: {
         model: 'users',
         key: 'id',

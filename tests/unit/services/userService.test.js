@@ -1,186 +1,400 @@
-import { jest } from '@jest/globals'
 import UserService from '../../../src/services/userService.js'
-import { validUsers } from '../../fixtures/userData.js'
-import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
+import { sequelize } from '../../../src/config/database.js'
+import { createTestSchool, createTestEnrollment } from '../../helpers/testData.js'
+import { jest } from '@jest/globals'
+import models from '../../../src/models/associate.js'
 
-// Set environment variable for JWT secret
-process.env.JWT_SECRET = 'testsecret'
-
-const mockUserModel = {
-  create: jest.fn(),
-  findOne: jest.fn(),
-  findAll: jest.fn(),
-}
-
-describe('User Service', () => {
+describe('UserService', () => {
   let userService
+  let school
+  let enrollment
 
-  beforeEach(() => {
-    userService = new UserService(mockUserModel)
-    jest.resetAllMocks()
+  beforeEach(async () => {
+    await sequelize.sync({ force: true })
+    school = await createTestSchool()
+    enrollment = await createTestEnrollment({ school_id: school.school_id })
+
+    userService = new UserService(
+      sequelize.models.User,
+      sequelize.models.Teacher,
+      sequelize.models.Admin,
+      sequelize.models.StudentTeacher,
+      sequelize.models.Learner,
+      sequelize.models.Enrollment
+    )
   })
 
-  describe('createUser', () => {
-    test('should create a user successfully with hashed password', async () => {
-      // Arrange
-      const userData = validUsers[0]
-      jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedpassword')
-      mockUserModel.create.mockResolvedValue({ id: 1, ...userData, password: 'hashedpassword' })
+  afterAll(async () => {
+    await sequelize.close()
+  })
 
-      // Act
+  describe('Validation', () => {
+    it('should validate email format', () => {
+      const validData = { email: 'test@example.com' }
+      const invalidData = { email: 'invalid-email' }
+
+      expect(() => userService.validateUserData(validData)).not.toThrow()
+      expect(() => userService.validateUserData(invalidData)).toThrow('Invalid email format')
+    })
+
+    it('should validate contact number format', () => {
+      const validData = { contact_no: '09123456789' }
+      const invalidData = { contact_no: '123456789' }
+
+      expect(() => userService.validateUserData(validData)).not.toThrow()
+      expect(() => userService.validateUserData(invalidData)).toThrow(
+        'Invalid contact number format'
+      )
+    })
+
+    it('should validate role', () => {
+      expect(() => userService.validateRole('teacher')).not.toThrow()
+      expect(() => userService.validateRole('invalid')).toThrow('Invalid role')
+    })
+
+    it('should validate password length', () => {
+      expect(() => userService.validatePassword('password123')).not.toThrow()
+      expect(() => userService.validatePassword('123')).toThrow(
+        'Password must be at least 8 characters'
+      )
+    })
+  })
+
+  describe('User Creation', () => {
+    it('should create teacher user with role data', async () => {
+      const userData = {
+        email: 'teacher@example.com',
+        password: 'password123',
+        first_name: 'Test',
+        last_name: 'Teacher',
+        birth_date: new Date('1990-01-01'),
+        contact_no: '09123456789',
+        role: 'teacher',
+        department: 'Science',
+      }
+
       const user = await userService.createUser(
-        userData.username,
         userData.email,
-        userData.password
+        userData.password,
+        userData.first_name,
+        userData.last_name,
+        userData.birth_date,
+        userData.contact_no,
+        school.school_id,
+        userData.role,
+        userData.department
       )
 
-      // Assert
-      expect(bcrypt.hash).toHaveBeenCalledWith(userData.password, 10)
-      expect(user).toHaveProperty('id')
-      expect(user.username).toBe(userData.username)
-      expect(user.email).toBe(userData.email)
-      expect(user.password).toBe('hashedpassword')
+      expect(user).toBeDefined()
+      expect(user.role).toBe('teacher')
+
+      const teacher = await sequelize.models.Teacher.findOne({
+        where: { user_id: user.id },
+      })
+      expect(teacher).toBeDefined()
     })
 
-    test('should throw an error when creating a user with existing email', async () => {
-      // Arrange
-      const userData = validUsers[0]
+    it('should fail creating user with existing email', async () => {
+      try {
+        const userData = {
+          email: 'duplicate@example.com',
+          password: 'password123',
+          first_name: 'Test',
+          last_name: 'User',
+          birth_date: new Date('1990-01-01'),
+          contact_no: '09123456789',
+          role: 'teacher',
+        }
 
-      mockUserModel.create.mockRejectedValueOnce({
-        name: 'SequelizeUniqueConstraintError',
-        errors: [
-          {
-            path: 'email',
-            message: 'email must be unique',
-          },
-        ],
-      })
+        await userService.createUser(
+          userData.email,
+          userData.password,
+          userData.first_name,
+          userData.last_name,
+          userData.birth_date,
+          userData.contact_no,
+          school.school_id,
+          userData.role
+        )
 
-      // Act & Assert
-      await expect(
-        userService.createUser('new_user', userData.email, 'newpassword')
-      ).rejects.toThrow('Email already exists')
-    })
-
-    test('should throw an error when creating a user with existing username', async () => {
-      // Arrange
-      const userData = validUsers[0]
-      mockUserModel.create.mockRejectedValueOnce({
-        name: 'SequelizeUniqueConstraintError',
-        errors: [
-          {
-            path: 'username',
-            message: 'username must be unique',
-          },
-        ],
-      })
-
-      // Act & Assert
-      await expect(
-        userService.createUser(userData.username, 'anotheremail@example.com', 'anotherpassword')
-      ).rejects.toThrow('Username already exists')
+        await expect(
+          userService.createUser(
+            userData.email,
+            userData.password,
+            userData.first_name,
+            userData.last_name,
+            userData.birth_date,
+            userData.contact_no,
+            school.school_id,
+            userData.role
+          )
+        ).rejects.toThrow('Email already exists')
+      } catch (error) {
+        console.error(error)
+        throw error
+      }
     })
   })
 
-  describe('loginUser', () => {
-    test('should login a user successfully and return user and token', async () => {
-      // Arrange
-      const userData = validUsers[0]
-      jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedpassword')
+  describe('Authentication', () => {
+    it('should login user with valid credentials', async () => {
+      const userData = {
+        email: 'test@example.com',
+        password: 'password123',
+        first_name: 'Test',
+        last_name: 'User',
+        birth_date: new Date('1990-01-01'),
+        contact_no: '09123456789',
+        role: 'teacher',
+      }
 
-      mockUserModel.findOne.mockResolvedValue({
-        id: 1,
-        ...userData,
-        password: 'hashedPassword',
-      })
-
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true)
-      jest.spyOn(jwt, 'sign').mockImplementation((payload, secret, options) => {
-        expect(payload).toEqual({ email: userData.email })
-        expect(secret).toBe(process.env.JWT_SECRET)
-        expect(options).toEqual({ expiresIn: '1h' })
-
-        return 'mockedToken'
-      })
-
-      // Act
-      const response = await userService.loginUser(userData.email, userData.password)
-
-      // Assert
-      expect(mockUserModel.findOne).toHaveBeenCalledWith({
-        where: { email: userData.email },
-      })
-      expect(bcrypt.compare).toHaveBeenCalledWith(userData.password, 'hashedPassword')
-      expect(jwt.sign).toHaveBeenCalledWith({ email: userData.email }, process.env.JWT_SECRET, {
-        expiresIn: '1h',
-      })
-      expect(response).toEqual({
-        user: expect.objectContaining({
-          id: 1,
-          email: userData.email,
-          username: userData.username,
-        }),
-        token: 'mockedToken',
-      })
-    })
-
-    test('should throw "Invalid credentials" if user does not exist', async () => {
-      mockUserModel.findOne.mockResolvedValue(null)
-
-      // Act & Assert
-      await expect(userService.loginUser('nonexistent@example.com', 'password123')).rejects.toThrow(
-        'Invalid credentials'
+      await userService.createUser(
+        userData.email,
+        userData.password,
+        userData.first_name,
+        userData.last_name,
+        userData.birth_date,
+        userData.contact_no,
+        school.school_id,
+        userData.role
       )
 
-      expect(mockUserModel.findOne).toHaveBeenCalledWith({
-        where: { email: 'nonexistent@example.com' },
-      })
+      const result = await userService.loginUser(userData.email, userData.password)
+
+      expect(result.user).toBeDefined()
+      expect(result.token).toBeDefined()
     })
 
-    test('should throw "Invalid credentials" if password is incorrect', async () => {
-      // Arrange
-      const userData = validUsers[0]
-      const hashedPassword = await bcrypt.hash(userData.password, 10)
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(false)
-      await userService.createUser(userData.username, userData.email, hashedPassword)
-
-      // Act & Assert
-      await expect(userService.loginUser(userData.email, 'wrongpassword')).rejects.toThrow(
-        'Invalid credentials'
-      )
+    it('should fail login with invalid credentials', async () => {
+      await expect(
+        userService.loginUser('nonexistent@example.com', 'wrongpassword')
+      ).rejects.toThrow('Invalid credentials')
     })
   })
 
-  describe('getAllUsers', () => {
-    test('should return all users', async () => {
-      // Arrange
-      const expectedUsers = [
-        { ...validUsers[0], id: 1 },
-        { ...validUsers[1], id: 2 },
-      ]
-
-      mockUserModel.findAll.mockResolvedValue(expectedUsers)
-
-      // Act
-      const users = await userService.getAllUsers()
-
-      // Assert
-      expect(users.length).toBe(2)
-      expect(users[0].username).toBe(validUsers[0].username)
-      expect(users[1].username).toBe(validUsers[1].username)
+  describe('User Retrieval', () => {
+    beforeEach(async () => {
+      await sequelize.models.User.create(
+        {
+          email: 'existing@example.com',
+          password: 'password123',
+          first_name: 'Test',
+          last_name: 'User',
+          birth_date: new Date('1990-01-01'),
+          contact_no: '09123456789',
+          school_id: school.school_id,
+          role: 'teacher',
+        },
+        {
+          include: [
+            {
+              model: sequelize.models.Teacher,
+              as: 'teacher',
+            },
+          ],
+        }
+      )
     })
 
-    test('should return an empty array when no users exist', async () => {
-      // Arrange
-      mockUserModel.findAll.mockResolvedValue([])
+    it('should get user by id with role details', async () => {
+      const user = await userService.createUser(
+        'test@example.com',
+        'password123',
+        'Test',
+        'User',
+        new Date('1990-01-01'),
+        '09123456789',
+        school.school_id,
+        'teacher'
+      )
 
-      // Act
-      const users = await userService.getAllUsers()
+      const retrieved = await userService.getUserById(user.id)
 
-      // Assert
-      expect(users).toEqual([])
-      expect(mockUserModel.findAll).toHaveBeenCalled()
+      expect(retrieved.id).toBe(user.id)
+      expect(retrieved.password).toBeUndefined()
+      expect(retrieved.teacher).toBeDefined()
+    })
+
+    it('should fail with non-existent user id', async () => {
+      await expect(userService.getUserById(999)).rejects.toThrow('User not found')
+    })
+
+    it('should get paginated users', async () => {
+      // Clear existing users
+      await sequelize.models.User.destroy({ where: {}, force: true })
+
+      // Create exactly 15 users
+      const createPromises = Array.from({ length: 15 }, (_, i) =>
+        userService.createUser(
+          `user${i}@example.com`,
+          'password123',
+          'Test',
+          'User',
+          new Date('1990-01-01'),
+          '09123456789',
+          school.school_id,
+          'teacher'
+        )
+      )
+
+      await Promise.all(createPromises)
+
+      // Test first page
+      const page1 = await userService.getAllUsers(1, 10)
+      expect(page1.count).toBe(15)
+      expect(page1.rows.length).toBe(10)
+
+      // Test second page
+      const page2 = await userService.getAllUsers(2, 10)
+      expect(page2.rows.length).toBe(5)
+    })
+  })
+
+  describe('User Update', () => {
+    it('should update user data', async () => {
+      const user = await userService.createUser(
+        'test@example.com',
+        'password123',
+        'Test',
+        'User',
+        new Date('1990-01-01'),
+        '09123456789',
+        school.school_id,
+        'teacher'
+      )
+
+      const updated = await userService.updateUser(user.id, {
+        first_name: 'Updated',
+        contact_no: '09987654321',
+      })
+
+      expect(updated.first_name).toBe('Updated')
+      expect(updated.contact_no).toBe('09987654321')
+    })
+  })
+
+  describe('Password Management', () => {
+    it('should change password with valid credentials', async () => {
+      const user = await userService.createUser(
+        'test@example.com',
+        'password123',
+        'Test',
+        'User',
+        new Date('1990-01-01'),
+        '09123456789',
+        school.school_id,
+        'teacher'
+      )
+
+      await expect(
+        userService.changePassword(user.id, 'password123', 'newpassword123')
+      ).resolves.toBe(true)
+    })
+
+    it('should fail password change with invalid old password', async () => {
+      const user = await userService.createUser(
+        'test@example.com',
+        'password123',
+        'Test',
+        'User',
+        new Date('1990-01-01'),
+        '09123456789',
+        school.school_id,
+        'teacher'
+      )
+
+      await expect(
+        userService.changePassword(user.id, 'wrongpassword', 'newpassword123')
+      ).rejects.toThrow('Invalid password')
+    })
+  })
+
+  describe('User Deletion', () => {
+    let testUser
+
+    beforeEach(async () => {
+      testUser = await userService.createUser(
+        'delete-test@example.com',
+        'password123',
+        'Delete',
+        'Test',
+        new Date('1990-01-01'),
+        '09123456789',
+        school.school_id,
+        'teacher'
+      )
+    })
+
+    it('should delete existing user', async () => {
+      const result = await userService.deleteUser(testUser.id)
+      expect(result).toBe(true)
+
+      const deletedUser = await sequelize.models.User.findByPk(testUser.id)
+      expect(deletedUser).toBeNull()
+
+      const teacherRecord = await sequelize.models.Teacher.findOne({
+        where: { user_id: testUser.id },
+      })
+      expect(teacherRecord).toBeNull()
+    })
+
+    it('should throw error for non-existent user', async () => {
+      await expect(userService.deleteUser(999)).rejects.toThrow('User not found')
+    })
+
+    it('should rollback transaction on error', async () => {
+      jest
+        .spyOn(sequelize.models.User.prototype, 'destroy')
+        .mockRejectedValueOnce(new Error('Database error'))
+
+      await expect(userService.deleteUser(testUser.id)).rejects.toThrow('Database error')
+
+      const user = await sequelize.models.User.findByPk(testUser.id)
+      expect(user).not.toBeNull()
+    })
+  })
+
+  describe('Role and School Queries', () => {
+    beforeEach(async () => {
+      // Clear all users
+      await sequelize.models.User.destroy({
+        where: {},
+        force: true,
+      })
+    })
+
+    it('should get users by role', async () => {
+      await userService.createUser(
+        'teacher@example.com',
+        'password123',
+        'Test',
+        'Teacher',
+        new Date('1990-01-01'),
+        '09123456789',
+        school.school_id,
+        'teacher'
+      )
+
+      const teachers = await userService.getUsersByRole('teacher')
+      expect(teachers.length).toBe(1)
+      expect(teachers[0].role).toBe('teacher')
+    })
+
+    it('should get users by school', async () => {
+      await userService.createUser(
+        'test@example.com',
+        'password123',
+        'Test',
+        'User',
+        new Date('1990-01-01'),
+        '09123456789',
+        school.school_id,
+        'teacher'
+      )
+
+      const schoolUsers = await userService.getUsersBySchool(school.school_id)
+      expect(schoolUsers.length).toBe(1)
+      expect(schoolUsers[0].school_id).toBe(school.school_id)
     })
   })
 })

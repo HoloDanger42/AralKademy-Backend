@@ -342,6 +342,25 @@ describe('User Model', () => {
       const isMatch = await bcrypt.compare(plainPassword, user.password)
       expect(isMatch).toBe(true)
     })
+
+    it('should verify correct password with comparePassword', async () => {
+      const plainPassword = 'securepassword'
+      const user = await createTestUser({
+        password: plainPassword,
+      })
+
+      const isMatch = await user.comparePassword(plainPassword)
+      expect(isMatch).toBe(true)
+    })
+
+    it('should reject incorrect password with comparePassword', async () => {
+      const user = await createTestUser({
+        password: 'correctpassword',
+      })
+
+      const isMatch = await user.comparePassword('wrongpassword')
+      expect(isMatch).toBe(false)
+    })
   })
 
   describe('Data Sanitization', () => {

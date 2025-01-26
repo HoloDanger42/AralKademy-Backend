@@ -39,7 +39,7 @@ const StudentTeacher = sequelize.define(
         },
       },
     },
-    student_teacher_group_id: {
+    group_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
@@ -57,5 +57,4 @@ const StudentTeacher = sequelize.define(
     paranoid: true,
   }
 )
-
 export { StudentTeacher }

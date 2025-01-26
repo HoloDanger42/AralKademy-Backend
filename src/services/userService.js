@@ -1,68 +1,234 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 
 class UserService {
-  constructor(UserModel, TeacherModel, AdminModel, StudentTeacherModel) {
-    this.UserModel = UserModel;
-    this.TeacherModel = TeacherModel;
-    this.AdminModel = AdminModel;
-    this.StudentTeacherModel = StudentTeacherModel;
+  constructor(
+    UserModel,
+    TeacherModel,
+    AdminModel,
+    StudentTeacherModel,
+    LearnerModel,
+    EnrollmentModel
+  ) {
+    this.UserModel = UserModel
+    this.TeacherModel = TeacherModel
+    this.AdminModel = AdminModel
+    this.StudentTeacherModel = StudentTeacherModel
+    this.LearnerModel = LearnerModel
+    this.EnrollmentModel = EnrollmentModel
   }
 
-  async createUser(email, password, firstName, lastName, birthDate, contactNo, schoolId, role, department = null, section = null) {
+  validateUserData(userData) {
+    if (userData.email && !userData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      throw new Error('Invalid email format')
+    }
+    if (userData.contact_no && !userData.contact_no.match(/^09\d{9}$/)) {
+      throw new Error('Invalid contact number format')
+    }
+  }
+
+  validateRole(role) {
+    const validRoles = ['admin', 'teacher', 'student_teacher', 'learner']
+    if (!validRoles.includes(role)) {
+      throw new Error('Invalid role.')
+    }
+  }
+
+  validatePassword(password) {
+    if (!password || password.length < 8) {
+      throw new Error('Password must be at least 8 characters')
+    }
+  }
+
+  async createUser(email, password, firstName, lastName, birthDate, contactNo, schoolId, role, department = null, section = null, groupId = null) {
     const transaction = await this.UserModel.sequelize.transaction();
     try {
-      const hashedPassword = await bcrypt.hash(password, 10);
       const userData = {
         email,
-        password: hashedPassword,
+        password: password,
         first_name: firstName,
         last_name: lastName,
         role: role,
         birth_date: birthDate,
         contact_no: contactNo,
         school_id: schoolId,
-      };
+      }
 
-      const user = await this.UserModel.create(userData, { transaction });
+      this.validateUserData(userData)
+      this.validateRole(role)
+      this.validatePassword(password)
+
+      const user = await this.UserModel.create(userData, { transaction })
 
       if (role === 'teacher') {
-        await this.TeacherModel.create({ user_id: user.id }, { transaction });
+        await this.TeacherModel.create({ user_id: user.id }, { transaction })
       } else if (role === 'admin') {
-        await this.AdminModel.create({ user_id: user.id }, { transaction });
+        await this.AdminModel.create({ user_id: user.id }, { transaction })
       } else if (role === 'student_teacher') {
-        await this.StudentTeacherModel.create({ user_id: user.id, department, section }, { transaction });
+        await this.StudentTeacherModel.create({ user_id: user.id, department, section, group_id: groupId }, { transaction });
+
       }
 
-      await transaction.commit();
-      return user;
+      await transaction.commit()
+      return user
     } catch (error) {
-      await transaction.rollback();
+      await transaction.rollback()
       if (error.name === 'SequelizeUniqueConstraintError') {
         if (error.errors[0].path === 'email') {
-          throw new Error('Email already exists');
+          throw new Error('Email already exists')
         }
       }
-      throw error;
+      throw error
     }
   }
 
   async loginUser(email, password) {
-    const user = await this.UserModel.findOne({ where: { email } });
+    const user = await this.UserModel.findOne({ where: { email } })
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new Error('Invalid credentials');
+      throw new Error('Invalid credentials')
     }
 
     const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
+      expiresIn: '15m',
+    })
 
-    return { user, token };
+    return { user, token }
   }
 
-  async getAllUsers() {
-    return await this.UserModel.findAll();
+  async getAllUsers(page = 1, limit = 10) {
+    return await this.UserModel.findAndCountAll({
+      limit,
+      offset: (page - 1) * limit,
+      attributes: { exclude: ['password'] },
+    })
+  }
+
+  async getUserById(userId) {
+    const user = await this.UserModel.findOne({
+      where: { id: userId },
+      include: [
+        {
+          model: this.TeacherModel,
+          as: 'teacher',
+          required: false,
+        },
+        {
+          model: this.AdminModel,
+          as: 'admin',
+          required: false,
+        },
+        {
+          model: this.StudentTeacherModel,
+          as: 'studentTeacher',
+          required: false,
+        },
+        {
+          model: this.LearnerModel,
+          as: 'learner',
+          required: false,
+          include: [
+            {
+              model: this.EnrollmentModel,
+              as: 'enrollment',
+            },
+          ],
+        },
+      ],
+    })
+
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    // Remove password from response
+    const { password, ...userWithoutPassword } = user.toJSON()
+    return userWithoutPassword
+  }
+
+  async updateUser(userId, userData) {
+    this.validateUserData(userData)
+    const transaction = await this.UserModel.sequelize.transaction()
+    try {
+      const user = await this.UserModel.findByPk(userId)
+      if (!user) throw new Error('User not found')
+
+      await user.update(userData, { transaction })
+      await transaction.commit()
+      return user
+    } catch (error) {
+      await transaction.rollback()
+      throw error
+    }
+  }
+
+  async deleteUser(userId) {
+    const transaction = await this.UserModel.sequelize.transaction()
+    try {
+      const user = await this.UserModel.findByPk(userId)
+      if (!user) throw new Error('User not found')
+
+      if (user.role === 'teacher') {
+        await this.TeacherModel.destroy({
+          where: { user_id: userId },
+          force: true,
+          transaction,
+        })
+      }
+
+      await user.destroy({ transaction })
+      await transaction.commit()
+      return true
+    } catch (error) {
+      await transaction.rollback()
+      throw error
+    }
+  }
+
+  async changePassword(userId, oldPassword, newPassword) {
+    const transaction = await this.UserModel.sequelize.transaction()
+    try {
+      const user = await this.UserModel.findByPk(userId)
+      if (!user) throw new Error('User not found')
+
+      const isValid = await bcrypt.compare(oldPassword, user.password)
+      if (!isValid) throw new Error('Invalid password')
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10)
+      await user.update({ password: hashedPassword }, { transaction })
+
+      await transaction.commit()
+      return true
+    } catch (error) {
+      await transaction.rollback()
+      throw error
+    }
+  }
+
+  async getUsersByRole(role) {
+    return await this.UserModel.findAll({
+      where: { role },
+      attributes: { exclude: ['password'] },
+    })
+  }
+
+  async getUsersBySchool(schoolId) {
+    return await this.UserModel.findAll({
+      where: { school_id: schoolId },
+      attributes: { exclude: ['password'] },
+    })
+  }
+
+  async getUserById(userId) {
+    try {
+      const user = await this.UserModel.findByPk(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      return user;
+    } catch (error) {
+      throw new Error('Failed to fetch user');
+    }
   }
 }
 
-export default UserService;
+export default UserService

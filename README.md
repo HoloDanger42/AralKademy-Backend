@@ -37,6 +37,7 @@ aralkademy-backend/
 ├── .prettierrc                # Prettier configuration
 ├── .env                       # Environment variables (never commit this!)
 ├── aralkademy.log             # Application log file
+├── migrations/
 ├── src/
 │   ├── server.js              # Main server file
 │   ├── config/                # Configuration files
@@ -56,13 +57,17 @@ aralkademy-backend/
 │   │   ├── Teacher.js
 │   │   ├── Learner.js
 │   │   ├── School.js
-│   │   └── Course.js
+│   │   ├── Course.js
+│   │   ├── Enrollment.js
+│   │   ├── School.js
+│   │   └── associate.js
 │   ├── routes/                 # API endpoint definitions
 │   │   ├── users.js
 │   │   └── courses.js
 │   ├── services/               # Business logic and services
 │   │   ├── userService.js
-│   │   └── courseService.js
+│   │   ├── courseService.js
+│   │   └── roleService.js
 │   └── utils/                  # Utility functions
 │       └── logger.js
 ├── tests/
@@ -86,12 +91,19 @@ aralkademy-backend/
 │   │   ├── models/
 │   │   │   ├── User.test.js
 │   │   │   ├── School.test.js
+│   │   │   ├── Admin.test.js
+│   │   │   ├── StudentTeacher.test.js
+│   │   │   ├── Teacher.test.js
+│   │   │   ├── Learner.test.js
+│   │   │   ├── Group.test.js
+│   │   │   ├── Enrollment.test.js
 │   │   │   └── Course.test.js
 │   │   ├── setup/
 │   │   │   └── server.test.js
 │   │   ├── services/
 │   │   │   ├── userService.test.js
-│   │   │   └── courseService.test.js
+│   │   │   ├── courseService.test.js
+│   │   │   └── roleService.test.js
 │   │   └── utils/
 │   │       └── logger.test.js
 │   ├── integration/            # Integration tests

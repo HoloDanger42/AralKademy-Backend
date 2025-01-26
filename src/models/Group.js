@@ -39,5 +39,4 @@ const Group = sequelize.define(
     paranoid: true,
   }
 )
-
 export { Group }

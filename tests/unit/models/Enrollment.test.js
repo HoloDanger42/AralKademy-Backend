@@ -80,6 +80,27 @@ describe('Enrollment Model', () => {
         })
       ).rejects.toThrow('Enrollment status must be one of the predefined types')
     })
+
+    it('should not allow future birth dates', async () => {
+      const futureDate = new Date()
+      futureDate.setFullYear(futureDate.getFullYear() + 1)
+
+      await expect(
+        Enrollment.create({
+          ...validEnrollmentData,
+          birth_date: futureDate,
+        })
+      ).rejects.toThrow('Birthdate must be in the past')
+    })
+
+    it('should allow valid past birth dates', async () => {
+      const pastDate = new Date('2000-01-01')
+      const enrollment = await Enrollment.create({
+        ...validEnrollmentData,
+        birth_date: pastDate,
+      })
+      expect(enrollment.birth_date).toEqual(pastDate)
+    })
   })
 
   describe('Associations', () => {
