@@ -110,6 +110,14 @@ class CourseService {
   }
 
    async editCourse(courseId, name, description) {
+    if (!name || name.trim() === '') {
+      throw new Error('Course name is required');
+    }
+
+    if (name.length > 255) {
+      throw new Error('Course name is too long');
+    }
+
     try {
       const course = await this.CourseModel.findByPk(courseId);
       if (!course) {

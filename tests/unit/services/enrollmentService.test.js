@@ -100,12 +100,10 @@ describe('Enrollment Service', () => {
       ).rejects.toThrow('Email already exists');
     });
 
-    test('should throw an error for other Sequelize errors (enroll)', async () => {
+    test('should throw an error if password hashing fails (enroll)', async () => {
       // Arrange
       const validEnrollment = validEnrollments[0];
-      const genericError = new Error('Database error');
-      bcrypt.hash.mockResolvedValue('hashed_password');
-      mockEnrollmentModel.create.mockRejectedValue(genericError);
+      bcrypt.hash.mockRejectedValue(new Error('Hashing error'));
 
       // Act & Assert
       await expect(
@@ -119,7 +117,7 @@ describe('Enrollment Service', () => {
           validEnrollment.schoolId,
           validEnrollment.yearLevel
         )
-      ).rejects.toThrow(genericError);
+      ).rejects.toThrow('Hashing error'); // Error message from bcrypt
     });
   });
 
@@ -243,6 +241,8 @@ describe('Enrollment Service', () => {
       await expect(enrollmentService.getEnrollmentById(enrollmentId)).rejects.toThrow('Failed to fetch enrollment');
       expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
     });
+
+    
   });
 
   describe('getAllEnrollments', () => {

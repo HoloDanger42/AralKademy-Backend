@@ -18,7 +18,7 @@ describe('Course Service', () => {
   })
 
   describe('getAllCourses', () => {
-    test('should retrieve all courses', async () => {
+    test('should retrieve all courses (get all courses)', async () => {
       // Arrange
       const expectedCourses = validCourses.map((course, index) => ({
         id: index + 1,
@@ -32,9 +32,9 @@ describe('Course Service', () => {
       // Assert
       expect(courses).toEqual(expectedCourses)
       expect(mockCourseModel.findAll).toHaveBeenCalled()
-    })
+    });
 
-    test('should return empty array when no courses exist', async () => {
+    test('should return empty array when no courses exist (get all courses)', async () => {
       // Arrange
       mockCourseModel.findAll.mockResolvedValue([])
 
@@ -44,11 +44,20 @@ describe('Course Service', () => {
       // Assert
       expect(courses).toEqual([])
       expect(mockCourseModel.findAll).toHaveBeenCalled()
-    })
-  })
+    });
+
+    test('should throw an error when the query fails (get all courses)', async () => {
+      // Arrange
+      mockCourseModel.findAll.mockRejectedValue(new Error('Database error'))
+
+      // Act & Assert
+      await expect(courseService.getAllCourses()).rejects.toThrow('Failed to fetch courses')
+      expect(mockCourseModel.findAll).toHaveBeenCalled()
+    });
+  });
 
   describe('createCourse', () => {
-    test('should create a course successfully', async () => {
+    test('should create a course successfully (create course)', async () => {
       // Arrange
       const courseData = validCourses[0];
       const expectedData = {
@@ -71,9 +80,9 @@ describe('Course Service', () => {
       // Assert
       expect(course).toEqual({ id: 1, ...expectedData });
       expect(mockCourseModel.create).toHaveBeenCalledWith(expectedData);
-    })
+    });
 
-    test('should throw error when course name is empty', async () => {
+    test('should throw error when course name is empty (create course)', async () => {
       // Arrange
       const invalidCourse = invalidCourses[0]
 
@@ -81,9 +90,9 @@ describe('Course Service', () => {
       await expect(courseService.createCourse('', invalidCourse.description)).rejects.toThrow(
         'Course name is required'
       )
-    })
+    });
 
-    test('should throw error when course name is too long', async () => {
+    test('should throw error when course name is too long (create course)', async () => {
       // Arrange
       const invalidCourse = invalidCourses[1]
 
@@ -91,10 +100,22 @@ describe('Course Service', () => {
       await expect(
         courseService.createCourse(invalidCourse.name, invalidCourse.description)
       ).rejects.toThrow('Course name is too long')
-    })
-  })
+    });
+
+    test('should throw error when course creation fails (create course)', async () => {
+      // Arrange
+      const courseData = validCourses[0];
+      mockCourseModel.create.mockRejectedValue(new Error('Database error'));
+
+      // Act & Assert
+      await expect(
+        courseService.createCourse(courseData.name, courseData.description)
+      ).rejects.toThrow('Failed to create course');
+    });
+  });
+
   describe('getCourseById', () => {
-    test('should return the course when it exists', async () => {
+    test('should return the course when it exists (get course by id)', async () => {
       // Arrange
       const courseId = 1;
       const expectedCourse = { id: courseId, name: 'Test Course' };
@@ -108,7 +129,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   
-    test('should throw an error when the course does not exist', async () => {
+    test('should throw an error when the course does not exist (get course by id)', async () => {
       // Arrange
       const courseId = 1;
       mockCourseModel.findByPk = jest.fn().mockResolvedValue(null);
@@ -118,7 +139,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   
-    test('should throw an error when the query fails', async () => {
+    test('should throw an error when the query fails (get course by id)', async () => {
       // Arrange
       const courseId = 1;
       mockCourseModel.findByPk = jest.fn().mockRejectedValue(new Error('Database error'));
@@ -128,8 +149,9 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   });
+
   describe('assignStudentTeacherGroupCourse', () => {
-    test('should successfully assign student teacher group to a course', async () => {
+    test('should successfully assign student teacher group to a course (assign student teacher group course)', async () => {
       // Arrange
       const courseId = 1;
       const studentTeacherGroupId = 101;
@@ -146,7 +168,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   
-    test('should throw an error if the course does not exist', async () => {
+    test('should throw an error if the course does not exist (assign student teacher group course)', async () => {
       // Arrange
       const courseId = 1;
       const studentTeacherGroupId = 101;
@@ -157,7 +179,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   
-    test('should throw an error if saving the course fails', async () => {
+    test('should throw an error if saving the course fails (assign student teacher group course)', async () => {
       // Arrange
       const courseId = 1;
       const studentTeacherGroupId = 101;
@@ -169,8 +191,9 @@ describe('Course Service', () => {
       expect(course.save).toHaveBeenCalled();
     });
   });
+
   describe('assignLearnerGroupCourse', () => {
-    test('should successfully assign learner group to a course', async () => {
+    test('should successfully assign learner group to a course (assign learner group course)', async () => {
       // Arrange
       const courseId = 1;
       const learnerGroupId = 101;
@@ -187,7 +210,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   
-    test('should throw an error if the course does not exist', async () => {
+    test('should throw an error if the course does not exist (assign learner group course)', async () => {
       // Arrange
       const courseId = 1;
       const learnerGroupId = 101;
@@ -198,7 +221,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   
-    test('should throw an error if saving the course fails', async () => {
+    test('should throw an error if saving the course fails (assign learner group course)', async () => {
       // Arrange
       const courseId = 1;
       const learnerGroupId = 101;
@@ -210,8 +233,9 @@ describe('Course Service', () => {
       expect(course.save).toHaveBeenCalled();
     });
   });
+
   describe('assignTeacherCourse', () => {
-    test('should successfully assign teacher to a course', async () => {
+    test('should successfully assign teacher to a course (assign teacher course)', async () => {
       // Arrange
       const courseId = 1;
       const userId = 101;
@@ -228,7 +252,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   
-    test('should throw an error if the course does not exist', async () => {
+    test('should throw an error if the course does not exist (assign teacher course)', async () => {
       // Arrange
       const courseId = 1;
       const userId = 101;
@@ -239,7 +263,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   
-    test('should throw an error if saving the course fails', async () => {
+    test('should throw an error if saving the course fails (assign teacher course)', async () => {
       // Arrange
       const courseId = 1;
       const userId = 101;
@@ -253,7 +277,7 @@ describe('Course Service', () => {
   });
 
   describe('softDeleteCourse', () => {
-    test('should successfully soft delete a course', async () => {
+    test('should successfully soft delete a course (soft delete course)', async () => {
       // Arrange
       const courseId = 1;
       const course = { id: courseId, destroy: jest.fn() };
@@ -267,7 +291,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   
-    test('should throw an error if the course does not exist', async () => {
+    test('should throw an error if the course does not exist (soft delete course)', async () => {
       // Arrange
       const courseId = 1;
       mockCourseModel.findByPk = jest.fn().mockResolvedValue(null);
@@ -277,7 +301,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   
-    test('should throw an error if deleting the course fails', async () => {
+    test('should throw an error if deleting the course fails (soft delete course)', async () => {
       // Arrange
       const courseId = 1;
       const course = { id: courseId, destroy: jest.fn().mockRejectedValue(new Error('Delete error')) };
@@ -290,7 +314,7 @@ describe('Course Service', () => {
   });
 
   describe('editCourse', () => {
-    test('should successfully edit a course', async () => {
+    test('should successfully edit a course (edit course)', async () => {
       // Arrange
       const courseId = 1;
       const name = 'New Course Name';
@@ -309,7 +333,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   
-    test('should throw an error if the course does not exist', async () => {
+    test('should throw an error if the course does not exist (edit course)', async () => {
       // Arrange
       const courseId = 1;
       const name = 'New Course Name';
@@ -321,7 +345,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
     });
   
-    test('should throw an error if saving the course fails', async () => {
+    test('should throw an error if saving the course fails (edit course)', async () => {
       // Arrange
       const courseId = 1;
       const name = 'New Course Name';
@@ -334,7 +358,7 @@ describe('Course Service', () => {
       expect(course.save).toHaveBeenCalled();
     });
 
-    test('should throw an error if the course name is empty', async () => {
+    test('should throw an error if the course name is empty (edit course)', async () => {
       // Arrange
       const courseId = 1;
       const name = '';
@@ -346,7 +370,7 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).not.toHaveBeenCalled();
     });
 
-    test('should throw an error if the course name is too long', async () => {
+    test('should throw an error if the course name is too long (edit course)', async () => {
       // Arrange
       const courseId = 1;
       const name = 'a'.repeat(256);
