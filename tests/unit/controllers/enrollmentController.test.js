@@ -41,10 +41,10 @@ describe('Enrollment Controller', () => {
       mockReq.body = enrollmentData;
       const mockEnrollment = { id: 1, ...enrollmentData };
       enrollSpy.mockResolvedValue(mockEnrollment);
-
+  
       // Act
       await enroll(mockReq, mockRes);
-
+  
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.json).toHaveBeenCalledWith({
@@ -53,47 +53,95 @@ describe('Enrollment Controller', () => {
       });
       expect(log.info).toHaveBeenCalled();
     });
-
+  
     test('should handle missing required fields (enroll)', async () => {
       // Arrange
       mockReq.body = { email: 'test@example.com' }; // Missing required fields
       const error = new Error('All fields are required');
       enrollSpy.mockRejectedValue(error);
-
+  
       // Act
       await enroll(mockReq, mockRes);
-
+  
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'All fields are required' });
       expect(log.error).toHaveBeenCalledWith('Create enrollment error:', error);
     });
-
+  
     test('should handle duplicate email error (enroll)', async () => {
       // Arrange
       const enrollmentData = validEnrollments[0];
       mockReq.body = enrollmentData;
       const error = new Error('Email already exists');
       enrollSpy.mockRejectedValue(error);
-
+  
       // Act
       await enroll(mockReq, mockRes);
-
+  
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Email already exists' });
       expect(log.error).toHaveBeenCalledWith('Create enrollment error:', error);
     });
-
+  
+    test('should handle invalid email format error (enroll)', async () => {
+      // Arrange
+      const invalidEmailEnrollment = { ...validEnrollments[0], email: 'invalid-email' };
+      mockReq.body = invalidEmailEnrollment;
+      const error = new Error('Invalid email format');
+      enrollSpy.mockRejectedValue(error);
+  
+      // Act
+      await enroll(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Invalid email format' });
+      expect(log.error).toHaveBeenCalledWith('Create enrollment error:', error);
+    });
+  
+    test('should handle invalid contact number format error (enroll)', async () => {
+      // Arrange
+      const invalidContactNoEnrollment = { ...validEnrollments[0], contactNo: '12345' }; // Invalid contact number
+      mockReq.body = invalidContactNoEnrollment;
+      const error = new Error('Invalid contact number format');
+      enrollSpy.mockRejectedValue(error);
+  
+      // Act
+      await enroll(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Invalid contact number format' });
+      expect(log.error).toHaveBeenCalledWith('Create enrollment error:', error);
+    });
+  
+    test('should handle short password error (enroll)', async () => {
+      // Arrange
+      const shortPasswordEnrollment = { ...validEnrollments[0], password: 'short' }; // Short password
+      mockReq.body = shortPasswordEnrollment;
+      const error = new Error('Password must be at least 8 characters long');
+      enrollSpy.mockRejectedValue(error);
+  
+      // Act
+      await enroll(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Password must be at least 8 characters long' });
+      expect(log.error).toHaveBeenCalledWith('Create enrollment error:', error);
+    });
+  
     test('should handle unexpected server errors during enrollment (enroll)', async () => {
       // Arrange
       mockReq.body = validEnrollments[0];
       const error = new Error('Unexpected error');
       enrollSpy.mockRejectedValue(error);
-
+  
       // Act
       await enroll(mockReq, mockRes);
-
+  
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to create enrollment' });

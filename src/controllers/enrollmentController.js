@@ -22,6 +22,15 @@ const enroll = async (req, res) => {
     if (error.message === 'All fields are required') {
       return res.status(400).json({ message: error.message });
     }
+    if (error.message === 'Invalid email format') {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.message === 'Invalid contact number format') {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.message === 'Password must be at least 8 characters long') {
+      return res.status(400).json({ message: error.message });
+    }
     return res.status(500).json({ message: 'Failed to create enrollment' });
   }
 };

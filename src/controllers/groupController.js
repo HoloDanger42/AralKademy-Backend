@@ -34,42 +34,59 @@ const getAllGroups = async (_req, res) => {
     }
   };
   
-  const assignStudentTeacherMembers = async (req, res) => {
+  const getGroupById = async (req, res) => {
     try {
-      const { userIds, groupId } = req.body;
-      const members = await groupService.assignStudentTeacherMembers(userIds, groupId);
+      const { groupId } = req.params;
+      const group = await groupService.getGroupById(groupId);
   
-      res.status(200).json({
-        message: 'Student teacher members assigned to group successfully',
-        members,
-      });
-      log.info(`Student teacher members assigned to group ${groupId}`);
-    } catch (error) {
-      log.error('Assign student teacher members error:', error);
-      if (error.message === 'One or more users are not student teachers') {
-        return res.status(400).json({ message: 'One or more users are not student teachers' });
+      if (!group) {
+        return res.status(404).json({ message: 'Group not found' });
       }
-      return res.status(500).json({ message: 'Failed to assign student teacher members' });
+  
+      res.status(200).json(group);
+      log.info(`Retrieved group with id ${groupId}`);
+    } catch (error) {
+      log.error('Get group by id error:', error);
+      return res.status(500).json({ message: 'Failed to retrieve group' });
     }
   };
-  
+
   const assignLearnerMembers = async (req, res) => {
     try {
       const { userIds, groupId } = req.body;
-      const members = await groupService.assignLearnerMembers(userIds, groupId);
+      const learners = await groupService.assignLearnerMembers(userIds, groupId);
   
       res.status(200).json({
-        message: 'Learner members assigned to group successfully',
-        members,
+        message: 'Learners assigned successfully',
+        learners,
       });
-      log.info(`Learner members assigned to group ${groupId}`);
+      log.info('Learners assigned successfully');
     } catch (error) {
       log.error('Assign learner members error:', error);
-      if (error.message === 'One or more users are not learners') {
-        return res.status(400).json({ message: 'One or more users are not learners' });
+      if (error.message === 'All fields are required') {
+        return res.status(400).json({ message: 'All fields are required' });
       }
       return res.status(500).json({ message: 'Failed to assign learner members' });
     }
   };
 
-export { getAllGroups, createGroup, assignLearnerMembers, assignStudentTeacherMembers }
+  const assignStudentTeacherMembers = async (req, res) => {
+    try {
+      const { userIds, groupId } = req.body;
+      const studentTeachers = await groupService.assignStudentTeacherMembers(groupId, userIds);
+  
+      res.status(200).json({
+        message: 'Student teachers assigned successfully',
+        studentTeachers,
+      });
+      log.info('Student teachers assigned successfully');
+    } catch (error) {
+      log.error('Assign student teacher members error:', error);
+      if (error.message === 'All fields are required') {
+        return res.status(400).json({ message: 'All fields are required' });
+      }
+      return res.status(500).json({ message: 'Failed to assign student teacher members' });
+    }
+  };
+
+export { getAllGroups, createGroup, assignLearnerMembers, assignStudentTeacherMembers, getGroupById }

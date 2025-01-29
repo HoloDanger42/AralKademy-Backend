@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, jest } from '@jest/globals'
 import { getAllCourses, createCourse, editCourse, assignLearnerGroupCourse, assignStudentTeacherGroupCourse, assignTeacherCourse, softDeleteCourse, getCourseById } from '../../../src/controllers/courseController.js'
 import CourseService from '../../../src/services/courseService.js'
 import { log } from '../../../src/utils/logger.js'
-import { validCourses } from '../../fixtures/courseData.js'
 
 describe('Course Controller', () => {
   let mockReq;
