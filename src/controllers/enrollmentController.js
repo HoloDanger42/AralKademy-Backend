@@ -1,8 +1,9 @@
 import EnrollmentService from '../services/enrollmentService.js';
 import { Enrollment } from '../models/Enrollment.js';
+import { School} from '../models/School.js';
 import { log } from '../utils/logger.js';
 
-const enrollmentService = new EnrollmentService(Enrollment);
+const enrollmentService = new EnrollmentService(Enrollment, School);
 
 const enroll = async (req, res) => {
   try {
@@ -93,4 +94,19 @@ const getAllEnrollments = async (_req, res) => {
   }
 };
 
-export { getAllEnrollments, enroll, getEnrollmentById, approveEnrollment, rejectEnrollment };
+const getEnrollmentsBySchool = async (req, res) => {
+  try {
+    const { schoolId } = req.params;
+    const enrollments = await enrollmentService.getEnrollmentsBySchool(schoolId);
+    res.status(200).json(enrollments);
+    log.info(`Retrieved enrollments for school ID: ${schoolId}`);
+  } catch (error) {
+    log.error('Get enrollments by school error:', error);
+    if (error.message === 'School not found') {
+      return res.status(404).json({ message: error.message });
+    }
+    return res.status(500).json({ message: 'Failed to retrieve enrollments by school' });
+  }
+};
+
+export { getAllEnrollments, enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getEnrollmentsBySchool };

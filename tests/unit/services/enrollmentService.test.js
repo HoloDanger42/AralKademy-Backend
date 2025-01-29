@@ -11,11 +11,15 @@ const mockEnrollmentModel = {
   findByPk: jest.fn(),
 };
 
+const mockSchoolModel = {
+  findByPk: jest.fn(),
+};
+
 describe('Enrollment Service', () => {
   let enrollmentService;
 
   beforeEach(() => {
-    enrollmentService = new EnrollmentService(mockEnrollmentModel);
+    enrollmentService = new EnrollmentService(mockEnrollmentModel, mockSchoolModel);
     jest.resetAllMocks();
   });
 
@@ -271,13 +275,13 @@ describe('Enrollment Service', () => {
       const enrollmentId = 1;
       const expectedEnrollment = { id: enrollmentId, ...validEnrollments[0] };
       mockEnrollmentModel.findByPk.mockResolvedValue(expectedEnrollment);
-
+    
       // Act
       const enrollment = await enrollmentService.getEnrollmentById(enrollmentId);
-
+    
       // Assert
       expect(enrollment).toEqual(expectedEnrollment);
-      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
+      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId, { attributes: { exclude: ['password'] } });
     });
 
     test('should throw an error when the enrollment does not exist (get enrollment by id)', async () => {
@@ -287,7 +291,7 @@ describe('Enrollment Service', () => {
 
       // Act & Assert
       await expect(enrollmentService.getEnrollmentById(enrollmentId)).rejects.toThrow('Enrollment not found');
-      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
+      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId, { attributes: { exclude: ['password'] } });
     });
 
     test('should throw an error when fetching of enrollment fails (get enrollment by id)', async () => {
@@ -297,7 +301,7 @@ describe('Enrollment Service', () => {
 
       // Act & Assert
       await expect(enrollmentService.getEnrollmentById(enrollmentId)).rejects.toThrow('Failed to fetch enrollment');
-      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
+      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId, { attributes: { exclude: ['password'] } });
     });
   });
 
@@ -325,6 +329,57 @@ describe('Enrollment Service', () => {
       // Act & Assert
       await expect(enrollmentService.getAllEnrollments()).rejects.toThrow('Failed to fetch enrollments');
       expect(mockEnrollmentModel.findAll).toHaveBeenCalled();
+    });
+
+    test('should return an empty list if no enrollments exist (get all enrollments)', async () => {
+      // Arrange
+      mockEnrollmentModel.findAll.mockResolvedValue([]);
+    
+      // Act
+      const enrollments = await enrollmentService.getAllEnrollments();
+    
+      // Assert
+      expect(enrollments).toEqual([]);
+      expect(mockEnrollmentModel.findAll).toHaveBeenCalled();
+    });
+  });
+
+  describe('getEnrollmentsBySchool', () => {
+    test('should retrieve enrollments by school successfully (get enrollments by school)', async () => {
+      // Arrange
+      const schoolId = 1;
+      const expectedEnrollments = [{ id: 1, school_id: schoolId, status: 'pending' }];
+      mockSchoolModel.findByPk.mockResolvedValue({ id: schoolId });
+      mockEnrollmentModel.findAll.mockResolvedValue(expectedEnrollments);
+  
+      // Act
+      const enrollments = await enrollmentService.getEnrollmentsBySchool(schoolId);
+  
+      // Assert
+      expect(enrollments).toEqual(expectedEnrollments);
+      expect(mockEnrollmentModel.findAll).toHaveBeenCalledWith({
+        where: { school_id: schoolId },
+        attributes: { exclude: ['password'] },
+      });
+    });
+  
+    test('should throw an error if the school does not exist (get enrollments by school)', async () => {
+      // Arrange
+      const schoolId = 1;
+      mockSchoolModel.findByPk.mockResolvedValue(null);
+  
+      // Act & Assert
+      await expect(enrollmentService.getEnrollmentsBySchool(schoolId)).rejects.toThrow('School not found');
+    });
+  
+    test('should throw an error if fetching enrollments by school fails (get enrollments by school)', async () => {
+      // Arrange
+      const schoolId = 1;
+      mockSchoolModel.findByPk.mockResolvedValue({ id: schoolId });
+      mockEnrollmentModel.findAll.mockRejectedValue(new Error('Database error'));
+  
+      // Act & Assert
+      await expect(enrollmentService.getEnrollmentsBySchool(schoolId)).rejects.toThrow('Failed to fetch enrollments by school');
     });
   });
 });
