@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, jest } from '@jest/globals';
+import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 import EnrollmentService from '../../../src/services/enrollmentService';
 import { validEnrollments, invalidEnrollments } from '../../fixtures/enrollmentData';
 import bcrypt from 'bcryptjs';
@@ -11,11 +11,15 @@ const mockEnrollmentModel = {
   findByPk: jest.fn(),
 };
 
+const mockSchoolModel = {
+  findByPk: jest.fn(),
+};
+
 describe('Enrollment Service', () => {
   let enrollmentService;
 
   beforeEach(() => {
-    enrollmentService = new EnrollmentService(mockEnrollmentModel);
+    enrollmentService = new EnrollmentService(mockEnrollmentModel, mockSchoolModel);
     jest.resetAllMocks();
   });
 
@@ -26,7 +30,7 @@ describe('Enrollment Service', () => {
       const hashedPassword = 'hashed_password';
       bcrypt.hash.mockResolvedValue(hashedPassword);
       mockEnrollmentModel.create.mockResolvedValue({ id: 1, ...validEnrollment, password: hashedPassword });
-
+  
       // Act
       const enrollment = await enrollmentService.enroll(
         validEnrollment.email,
@@ -38,7 +42,7 @@ describe('Enrollment Service', () => {
         validEnrollment.schoolId,
         validEnrollment.yearLevel
       );
-
+  
       // Assert
       expect(enrollment).toEqual({ id: 1, ...validEnrollment, password: hashedPassword });
       expect(bcrypt.hash).toHaveBeenCalledWith(validEnrollment.password, 10);
@@ -55,11 +59,11 @@ describe('Enrollment Service', () => {
         status: 'pending',
       });
     });
-
+  
     test('should throw an error if required fields are missing (enroll)', async () => {
       // Arrange
       const invalidEnrollment = invalidEnrollments[0];
-
+  
       // Act & Assert
       await expect(
         enrollmentService.enroll(
@@ -74,7 +78,64 @@ describe('Enrollment Service', () => {
         )
       ).rejects.toThrow('All fields are required');
     });
-
+  
+    test('should throw an error if email format is invalid (enroll)', async () => {
+      // Arrange
+      const invalidEmailEnrollment = { ...validEnrollments[0], email: 'invalid-email' };
+  
+      // Act & Assert
+      await expect(
+        enrollmentService.enroll(
+          invalidEmailEnrollment.email,
+          invalidEmailEnrollment.password,
+          invalidEmailEnrollment.firstName,
+          invalidEmailEnrollment.lastName,
+          invalidEmailEnrollment.birthDate,
+          invalidEmailEnrollment.contactNo,
+          invalidEmailEnrollment.schoolId,
+          invalidEmailEnrollment.yearLevel
+        )
+      ).rejects.toThrow('Invalid email format');
+    });
+  
+    test('should throw an error if contact number format is invalid (enroll)', async () => {
+      // Arrange
+      const invalidContactNoEnrollment = { ...validEnrollments[0], contactNo: '12345' };
+  
+      // Act & Assert
+      await expect(
+        enrollmentService.enroll(
+          invalidContactNoEnrollment.email,
+          invalidContactNoEnrollment.password,
+          invalidContactNoEnrollment.firstName,
+          invalidContactNoEnrollment.lastName,
+          invalidContactNoEnrollment.birthDate,
+          invalidContactNoEnrollment.contactNo,
+          invalidContactNoEnrollment.schoolId,
+          invalidContactNoEnrollment.yearLevel
+        )
+      ).rejects.toThrow('Invalid contact number format');
+    });
+  
+    test('should throw an error if password is too short (enroll)', async () => {
+      // Arrange
+      const shortPasswordEnrollment = { ...validEnrollments[0], password: 'short' };
+  
+      // Act & Assert
+      await expect(
+        enrollmentService.enroll(
+          shortPasswordEnrollment.email,
+          shortPasswordEnrollment.password,
+          shortPasswordEnrollment.firstName,
+          shortPasswordEnrollment.lastName,
+          shortPasswordEnrollment.birthDate,
+          shortPasswordEnrollment.contactNo,
+          shortPasswordEnrollment.schoolId,
+          shortPasswordEnrollment.yearLevel
+        )
+      ).rejects.toThrow('Password must be at least 8 characters long');
+    });
+  
     test('should throw an error if email already exists (enroll)', async () => {
       // Arrange
       const validEnrollment = validEnrollments[0];
@@ -84,7 +145,7 @@ describe('Enrollment Service', () => {
       };
       bcrypt.hash.mockResolvedValue('hashed_password');
       mockEnrollmentModel.create.mockRejectedValue(sequelizeError);
-
+  
       // Act & Assert
       await expect(
         enrollmentService.enroll(
@@ -99,14 +160,13 @@ describe('Enrollment Service', () => {
         )
       ).rejects.toThrow('Email already exists');
     });
-
-    test('should throw an error for other Sequelize errors (enroll)', async () => {
+  
+    test('should throw an error if enrollment fails (enroll)', async () => {
       // Arrange
       const validEnrollment = validEnrollments[0];
-      const genericError = new Error('Database error');
       bcrypt.hash.mockResolvedValue('hashed_password');
-      mockEnrollmentModel.create.mockRejectedValue(genericError);
-
+      mockEnrollmentModel.create.mockRejectedValue(new Error('Database error'));
+  
       // Act & Assert
       await expect(
         enrollmentService.enroll(
@@ -119,7 +179,7 @@ describe('Enrollment Service', () => {
           validEnrollment.schoolId,
           validEnrollment.yearLevel
         )
-      ).rejects.toThrow(genericError);
+      ).rejects.toThrow('Failed Enrollment');
     });
   });
 
@@ -149,7 +209,7 @@ describe('Enrollment Service', () => {
       mockEnrollmentModel.findByPk.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(enrollmentService.approveEnrollment(enrollmentId, adminId)).rejects.toThrow('Failed to approve enrollment');
+      await expect(enrollmentService.approveEnrollment(enrollmentId, adminId)).rejects.toThrow('Enrollment not found');
       expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
     });
 
@@ -157,7 +217,7 @@ describe('Enrollment Service', () => {
       // Arrange
       const enrollmentId = 1;
       const adminId = 99;
-      const enrollment = { id: enrollmentId, status: 'pending', save: jest.fn().mockRejectedValue(new Error('Save failed')) };
+      const enrollment = { id: enrollmentId, status: 'pending', save: jest.fn().mockRejectedValue(new Error('Updating failed')) };
       mockEnrollmentModel.findByPk.mockResolvedValue(enrollment);
 
       // Act & Assert
@@ -192,7 +252,7 @@ describe('Enrollment Service', () => {
       mockEnrollmentModel.findByPk.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(enrollmentService.rejectEnrollment(enrollmentId, adminId)).rejects.toThrow('Failed to reject enrollment');
+      await expect(enrollmentService.rejectEnrollment(enrollmentId, adminId)).rejects.toThrow('Enrollment not found');
       expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
     });
 
@@ -200,7 +260,7 @@ describe('Enrollment Service', () => {
       // Arrange
       const enrollmentId = 1;
       const adminId = 99;
-      const enrollment = { id: enrollmentId, status: 'pending', save: jest.fn().mockRejectedValue(new Error('Save failed')) };
+      const enrollment = { id: enrollmentId, status: 'pending', save: jest.fn().mockRejectedValue(new Error('Updating failed')) };
       mockEnrollmentModel.findByPk.mockResolvedValue(enrollment);
 
       // Act & Assert
@@ -215,13 +275,13 @@ describe('Enrollment Service', () => {
       const enrollmentId = 1;
       const expectedEnrollment = { id: enrollmentId, ...validEnrollments[0] };
       mockEnrollmentModel.findByPk.mockResolvedValue(expectedEnrollment);
-
+    
       // Act
       const enrollment = await enrollmentService.getEnrollmentById(enrollmentId);
-
+    
       // Assert
       expect(enrollment).toEqual(expectedEnrollment);
-      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
+      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId, { attributes: { exclude: ['password'] } });
     });
 
     test('should throw an error when the enrollment does not exist (get enrollment by id)', async () => {
@@ -230,18 +290,18 @@ describe('Enrollment Service', () => {
       mockEnrollmentModel.findByPk.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(enrollmentService.getEnrollmentById(enrollmentId)).rejects.toThrow('Failed to fetch enrollment');
-      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
+      await expect(enrollmentService.getEnrollmentById(enrollmentId)).rejects.toThrow('Enrollment not found');
+      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId, { attributes: { exclude: ['password'] } });
     });
 
     test('should throw an error when fetching of enrollment fails (get enrollment by id)', async () => {
       // Arrange
       const enrollmentId = 1;
-      mockEnrollmentModel.findByPk.mockRejectedValue(new Error('Database error'));
+      mockEnrollmentModel.findByPk.mockRejectedValue(new Error('Fetching error'));
 
       // Act & Assert
       await expect(enrollmentService.getEnrollmentById(enrollmentId)).rejects.toThrow('Failed to fetch enrollment');
-      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
+      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId, { attributes: { exclude: ['password'] } });
     });
   });
 
@@ -262,18 +322,6 @@ describe('Enrollment Service', () => {
       expect(mockEnrollmentModel.findAll).toHaveBeenCalled();
     });
 
-    test('should return an empty array when no enrollments exist (get all enrollments)', async () => {
-      // Arrange
-      mockEnrollmentModel.findAll.mockResolvedValue([]);
-
-      // Act
-      const enrollments = await enrollmentService.getAllEnrollments();
-
-      // Assert
-      expect(enrollments).toEqual([]);
-      expect(mockEnrollmentModel.findAll).toHaveBeenCalled();
-    });
-
     test('should throw an error when fetching enrollments fails (get all enrollments)', async () => {
       // Arrange
       mockEnrollmentModel.findAll.mockRejectedValue(new Error('Database error'));
@@ -281,6 +329,57 @@ describe('Enrollment Service', () => {
       // Act & Assert
       await expect(enrollmentService.getAllEnrollments()).rejects.toThrow('Failed to fetch enrollments');
       expect(mockEnrollmentModel.findAll).toHaveBeenCalled();
+    });
+
+    test('should return an empty list if no enrollments exist (get all enrollments)', async () => {
+      // Arrange
+      mockEnrollmentModel.findAll.mockResolvedValue([]);
+    
+      // Act
+      const enrollments = await enrollmentService.getAllEnrollments();
+    
+      // Assert
+      expect(enrollments).toEqual([]);
+      expect(mockEnrollmentModel.findAll).toHaveBeenCalled();
+    });
+  });
+
+  describe('getEnrollmentsBySchool', () => {
+    test('should retrieve enrollments by school successfully (get enrollments by school)', async () => {
+      // Arrange
+      const schoolId = 1;
+      const expectedEnrollments = [{ id: 1, school_id: schoolId, status: 'pending' }];
+      mockSchoolModel.findByPk.mockResolvedValue({ id: schoolId });
+      mockEnrollmentModel.findAll.mockResolvedValue(expectedEnrollments);
+  
+      // Act
+      const enrollments = await enrollmentService.getEnrollmentsBySchool(schoolId);
+  
+      // Assert
+      expect(enrollments).toEqual(expectedEnrollments);
+      expect(mockEnrollmentModel.findAll).toHaveBeenCalledWith({
+        where: { school_id: schoolId },
+        attributes: { exclude: ['password'] },
+      });
+    });
+  
+    test('should throw an error if the school does not exist (get enrollments by school)', async () => {
+      // Arrange
+      const schoolId = 1;
+      mockSchoolModel.findByPk.mockResolvedValue(null);
+  
+      // Act & Assert
+      await expect(enrollmentService.getEnrollmentsBySchool(schoolId)).rejects.toThrow('School not found');
+    });
+  
+    test('should throw an error if fetching enrollments by school fails (get enrollments by school)', async () => {
+      // Arrange
+      const schoolId = 1;
+      mockSchoolModel.findByPk.mockResolvedValue({ id: schoolId });
+      mockEnrollmentModel.findAll.mockRejectedValue(new Error('Database error'));
+  
+      // Act & Assert
+      await expect(enrollmentService.getEnrollmentsBySchool(schoolId)).rejects.toThrow('Failed to fetch enrollments by school');
     });
   });
 });

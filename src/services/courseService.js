@@ -15,13 +15,16 @@ class CourseService {
     try {
       const course = await this.CourseModel.findByPk(courseId);
       if (!course) {
-        throw new Error('Course not found');
+        throw new Error('Course not found'); 
       }
       return course;
     } catch (error) {
-      throw new Error('Failed to fetch course');
+      if (error.message === 'Course not found') {
+        throw error;
+      }
+      throw new Error('Failed to fetch course'); 
     }
-  }
+}
 
   async createCourse(name, description, userId = null, studentTeacherGroupId = null, learnerGroupId = null) {
     if (!name || name.trim() === '') {
@@ -57,6 +60,9 @@ class CourseService {
 
       return course;
     } catch (error) {
+      if (error.message === 'Course not found') {
+        throw error;
+      }
       throw new Error('Failed to assign student teacher group to course');
     }
   }
@@ -73,6 +79,9 @@ class CourseService {
 
       return course;
     } catch (error) {
+      if (error.message === 'Course not found') {
+        throw error;
+      }
       throw new Error('Failed to assign learner group to course');
     }
   }
@@ -89,6 +98,9 @@ class CourseService {
 
       return course;
     } catch (error) {
+      if (error.message === 'Course not found') {
+        throw error;
+      }
       throw new Error('Failed to assign teacher to course');
     }
   }
@@ -100,16 +112,26 @@ class CourseService {
         throw new Error('Course not found');
       }
 
-      // Soft delete: instead of destroying, we set the `deletedAt` field
       await course.destroy();
 
       return { message: 'Course marked as deleted' };
     } catch (error) {
+      if (error.message === 'Course not found') {
+        throw error;
+      }
       throw new Error('Failed to soft delete course');
     }
   }
 
    async editCourse(courseId, name, description) {
+    if (!name || name.trim() === '') {
+      throw new Error('Course name is required');
+    }
+
+    if (name.length > 255) {
+      throw new Error('Course name is too long');
+    }
+
     try {
       const course = await this.CourseModel.findByPk(courseId);
       if (!course) {
@@ -122,6 +144,9 @@ class CourseService {
 
       return course;
     } catch (error) {
+      if (error.message === 'Course not found') {
+        throw error;
+      }
       throw new Error('Failed to edit course');
     }
   }

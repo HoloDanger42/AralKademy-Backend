@@ -21,12 +21,13 @@ class GroupService {
     }
   }
 
-  async assignStudentTeacherMembers(userIds, groupId) {
+  async assignStudentTeacherMembers(groupId, userIds) {
+    if (!groupId || !userIds) {
+      throw new Error('All fields are required');
+    }
+
     try {
       const studentTeachers = await this.StudentTeacherModel.findAll({ where: { user_id: userIds } });
-      if (studentTeachers.length !== userIds.length) {
-        throw new Error('One or more users are not student teachers');
-      }
 
       for (const studentTeacher of studentTeachers) {
         studentTeacher.group_id = groupId;
@@ -40,11 +41,12 @@ class GroupService {
   }
 
   async assignLearnerMembers(userIds, groupId) {
+    if (!groupId || !userIds) {
+      throw new Error('All fields are required');
+    }
+
     try {
       const learners = await this.LearnerModel.findAll({ where: { user_id: userIds } });
-      if (learners.length !== userIds.length) {
-        throw new Error('One or more users are not learners');
-      }
 
       for (const learner of learners) {
         learner.group_id = groupId;
@@ -62,6 +64,18 @@ class GroupService {
       return await this.GroupModel.findAll();
     } catch (error) {
       throw new Error('Failed to fetch groups');
+    }
+  }
+
+  async getGroupById(groupId) {
+    try {
+      const group = await this.GroupModel.findByPk(groupId);
+      if (!group) {
+        throw new Error('Group not found');
+      }
+      return group;
+    } catch (error) {
+      throw new Error('Failed to fetch group');
     }
   }
 }
