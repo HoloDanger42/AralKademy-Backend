@@ -1,88 +1,107 @@
-import { User } from './User.js'
-import { Learner } from './Learner.js'
-import { StudentTeacher } from './StudentTeacher.js'
-import { Teacher } from './Teacher.js'
-import { Admin } from './Admin.js'
-import { Group } from './Group.js'
-import { Enrollment } from './Enrollment.js'
-import { Course } from './Course.js'
-import { School } from './School.js'
-
-const models = {
+import {
   User,
-  Learner,
-  Group,
-  Enrollment,
-  StudentTeacher,
   Teacher,
   Admin,
+  StudentTeacher,
+  Learner,
+  Enrollment,
   Course,
+  Group,
   School,
-}
+} from './index.js'
 
-// Initialize associations after all models are loaded
+// User associations
 User.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
-User.hasOne(StudentTeacher, {
-  foreignKey: 'user_id',
-  as: 'studentTeacher',
-  onDelete: 'CASCADE',
-  hooks: true,
-})
 User.hasOne(Teacher, {
   foreignKey: 'user_id',
   as: 'teacher',
   onDelete: 'CASCADE',
-  hooks: true,
 })
 User.hasOne(Admin, {
   foreignKey: 'user_id',
   as: 'admin',
   onDelete: 'CASCADE',
-  hooks: true,
+})
+User.hasOne(StudentTeacher, {
+  foreignKey: 'user_id',
+  as: 'studentTeacher',
+  onDelete: 'CASCADE',
 })
 User.hasOne(Learner, {
   foreignKey: 'user_id',
   as: 'learner',
   onDelete: 'CASCADE',
-  hooks: true,
 })
 
-Teacher.hasMany(Course, { foreignKey: 'user_id', as: 'courses', onDelete: 'CASCADE' })
+// Teacher associations
 Teacher.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
+Teacher.hasMany(Course, {
+  foreignKey: 'user_id',
+  as: 'courses',
+  onDelete: 'CASCADE',
+})
 
-Learner.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
-Learner.belongsTo(Group, { foreignKey: 'learner_group_id', as: 'group' })
-Learner.belongsTo(Enrollment, { foreignKey: 'enrollment_id', as: 'enrollment' })
-
-StudentTeacher.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
-StudentTeacher.belongsTo(Group, { foreignKey: 'student_teacher_group_id', as: 'group' })
-
+// Admin associations
 Admin.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
 Admin.hasMany(Enrollment, { foreignKey: 'handled_by_id', as: 'enrollments' })
 
-Enrollment.hasOne(Learner, { foreignKey: 'enrollment_id', as: 'learner' })
-Enrollment.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
-Enrollment.belongsTo(Admin, {
-  foreignKey: 'handled_by_id',
-  targetKey: 'user_id',
-  as: 'admin',
+// StudentTeacher associations
+StudentTeacher.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
+StudentTeacher.belongsTo(Group, {
+  foreignKey: 'student_teacher_group_id',
+  as: 'group',
 })
 
+// Learner associations
+Learner.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
+Learner.belongsTo(Group, { foreignKey: 'learner_group_id', as: 'group' })
+Learner.belongsTo(Enrollment, {
+  foreignKey: 'enrollment_id',
+  as: 'enrollment',
+})
+
+// Group associations
 Group.hasMany(Learner, { foreignKey: 'learner_group_id', as: 'learners' })
 Group.hasMany(StudentTeacher, {
   foreignKey: 'student_teacher_group_id',
   as: 'studentTeachers',
 })
-Group.hasOne(Course, { foreignKey: 'student_teacher_group_id', as: 'studentTeacherCourse' })
-Group.hasOne(Course, { foreignKey: 'learner_group_id', as: 'learnerCourse' })
+Group.hasOne(Course, {
+  foreignKey: 'student_teacher_group_id',
+  as: 'studentTeacherCourse',
+})
+Group.hasOne(Course, {
+  foreignKey: 'learner_group_id',
+  as: 'learnerCourse',
+})
 
-School.hasMany(User, { foreignKey: 'school_id' })
+// School associations
+School.hasMany(User, { foreignKey: 'school_id', as: 'users' })
 
-Course.belongsTo(models.Teacher, { foreignKey: 'user_id', as: 'teacher', onDelete: 'CASCADE' })
-Course.belongsTo(models.Group, {
+// Course associations
+Course.belongsTo(Teacher, {
+  foreignKey: 'user_id',
+  as: 'teacher',
+  onDelete: 'CASCADE',
+})
+Course.belongsTo(Group, {
   foreignKey: 'student_teacher_group_id',
   as: 'studentTeacherGroup',
 })
-Course.belongsTo(models.Group, { foreignKey: 'learner_group_id', as: 'learnerGroup' })
+Course.belongsTo(Group, {
+  foreignKey: 'learner_group_id',
+  as: 'learnerGroup',
+})
 
-export default models
+// Enrollment associations
+Enrollment.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
+Enrollment.belongsTo(Admin, {
+  foreignKey: 'handled_by_id',
+  as: 'admin',
+})
+Enrollment.hasOne(Learner, {
+  foreignKey: 'enrollment_id',
+  as: 'learner',
+})
+
+export { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School }

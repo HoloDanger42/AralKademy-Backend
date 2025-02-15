@@ -2,7 +2,7 @@ import UserService from '../../../src/services/userService.js'
 import { sequelize } from '../../../src/config/database.js'
 import { createTestSchool, createTestEnrollment } from '../../helpers/testData.js'
 import { jest } from '@jest/globals'
-import models from '../../../src/models/associate.js'
+import '../../../src/models/associate.js'
 
 describe('UserService', () => {
   let userService
@@ -20,7 +20,10 @@ describe('UserService', () => {
       sequelize.models.Admin,
       sequelize.models.StudentTeacher,
       sequelize.models.Learner,
-      sequelize.models.Enrollment
+      sequelize.models.Enrollment,
+      sequelize.models.Course,
+      sequelize.models.Group,
+      sequelize.models.School
     )
   })
 
@@ -95,18 +98,29 @@ describe('UserService', () => {
     })
 
     it('should fail creating user with existing email', async () => {
-      try {
-        const userData = {
-          email: 'duplicate@example.com',
-          password: 'password123',
-          first_name: 'Test',
-          last_name: 'User',
-          birth_date: new Date('1990-01-01'),
-          contact_no: '09123456789',
-          role: 'teacher',
-        }
+      const userData = {
+        email: 'duplicate@example.com',
+        password: 'password123',
+        first_name: 'Test',
+        last_name: 'User',
+        birth_date: new Date('1990-01-01'),
+        contact_no: '09123456789',
+        role: 'teacher',
+      }
 
-        await userService.createUser(
+      await userService.createUser(
+        userData.email,
+        userData.password,
+        userData.first_name,
+        userData.last_name,
+        userData.birth_date,
+        userData.contact_no,
+        school.school_id,
+        userData.role
+      )
+
+      await expect(
+        userService.createUser(
           userData.email,
           userData.password,
           userData.first_name,
@@ -116,23 +130,7 @@ describe('UserService', () => {
           school.school_id,
           userData.role
         )
-
-        await expect(
-          userService.createUser(
-            userData.email,
-            userData.password,
-            userData.first_name,
-            userData.last_name,
-            userData.birth_date,
-            userData.contact_no,
-            school.school_id,
-            userData.role
-          )
-        ).rejects.toThrow('Email already exists')
-      } catch (error) {
-        console.error(error)
-        throw error
-      }
+      ).rejects.toThrow('Email already exists')
     })
   })
 

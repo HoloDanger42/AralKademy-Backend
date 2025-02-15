@@ -3,7 +3,7 @@ import { Teacher } from '../../../src/models/Teacher.js'
 import { User } from '../../../src/models/User.js'
 import { Course } from '../../../src/models/Course.js'
 import { createTestUser, createTestGroup } from '../../helpers/testData.js'
-import models from '../../../src/models/associate.js'
+import '../../../src/models/associate.js'
 
 describe('Teacher Model', () => {
   let user

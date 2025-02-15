@@ -54,7 +54,7 @@ describe('Database Configuration', () => {
     authenticateSpy.mockRejectedValue(error)
 
     await expect(databaseConnection()).rejects.toThrow('Connection failed')
-    expect(log.error).toHaveBeenCalledWith('Database connection failed.', error)
+    expect(log.error).toHaveBeenCalledWith('Database connection failed:', error)
 
     authenticateSpy.mockRestore()
   })
@@ -68,7 +68,7 @@ describe('Database Configuration', () => {
     syncSpy.mockRejectedValue(error)
 
     await expect(databaseConnection()).rejects.toThrow('Sync failed')
-    expect(log.error).toHaveBeenCalledWith('Database connection failed.', error)
+    expect(log.error).toHaveBeenCalledWith('Database connection failed:', error)
 
     authenticateSpy.mockRestore()
     syncSpy.mockRestore()

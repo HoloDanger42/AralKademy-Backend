@@ -1,113 +1,173 @@
-// import request from 'supertest'
-// import app from '../../src/server.js'
-// import { sequelize } from '../../src/config/database.js'
-// import { expect, jest } from '@jest/globals'
-// import cache from 'memory-cache'
-// import { Course } from '../../src/models/Course.js'
+import request from 'supertest'
+import app from '../../src/server.js'
+import { sequelize } from '../../src/config/database.js'
+import { School } from '../../src/models/School.js'
+import { User } from '../../src/models/User.js'
+import { Teacher } from '../../src/models/Teacher.js'
+import { Course } from '../../src/models/Course.js'
+import '../../src/models/associate.js'
 
-// jest.setTimeout(10000)
+describe('Course Endpoints (Integration Tests)', () => {
+  let server
+  let authToken
+  let testTeacher
+  let testSchool
 
-// describe('Course Endpoints (Integration Tests)', () => {
-//   let token
-//   let server
+  beforeAll(async () => {
+    await sequelize.sync({ force: true })
 
-//   const login = async (email, password) => {
-//     const res = await request(app).post('/users/login').send({
-//       email,
-//       password,
-//     })
-//     return res.body.token
-//   }
+    // Create test school
+    testSchool = await School.create({
+      name: 'Test School',
+      address: '123 Test St., Test City',
+      contact_no: '02-8123-4567',
+    })
 
-//   // Use beforeAll to sign up and log in once
-//   beforeAll(async () => {
-//     try {
-//       await sequelize.sync({ force: true })
-//       server = app.listen(0)
+    // Create test user/teacher
+    const user = await User.create({
+      email: 'testteacher@example.com',
+      password: 'testPassword',
+      first_name: 'Test',
+      last_name: 'Teacher',
+      birth_date: new Date('1990-01-01'),
+      contact_no: '09123456789',
+      school_id: testSchool.school_id,
+      role: 'teacher',
+    })
 
-//       // Sign up and log in a single user for all tests
-//       token = await login('testuser', `testuser@example.com`, 'securepassword123')
-//     } catch (error) {
-//       console.error('Setup failed:', error)
-//       throw error
-//     }
-//   })
+    // Create teacher record
+    testTeacher = await Teacher.create({
+      user_id: user.id,
+    })
 
-//   beforeEach(async () => {
-//     // Clear cache before each test
-//     cache.clear()
-//   })
+    server = app.listen(0)
 
-//   it('should create a new course', async () => {
-//     const courseName = 'Introduction to Programming'
-//     const courseDesc = 'Learn the basics of programming.'
+    // Login to get auth token
+    const loginRes = await request(app).post('/users/login').send({
+      email: 'testteacher@example.com',
+      password: 'testPassword',
+    })
 
-//     const res = await request(app).post('/courses').set('Authorization', `Bearer ${token}`).send({
-//       name: courseName,
-//       description: courseDesc,
-//     })
+    authToken = loginRes.body.token
+  })
 
-//     expect(res.statusCode).toEqual(201)
-//     expect(res.body.course).toMatchObject({
-//       name: courseName,
-//       description: courseDesc,
-//     })
+  afterAll(async () => {
+    if (server) {
+      await server.close()
+    }
+    await sequelize.close()
+  })
 
-//     // Verify that the course was actually created in the database
-//     const createdCourse = await Course.findOne({
-//       where: { name: courseName },
-//     })
-//     expect(createdCourse).not.toBeNull()
-//   })
+  describe('POST /courses', () => {
+    it('should create a new course', async () => {
+      const courseData = {
+        name: 'Introduction to Programming',
+        description: 'Learn the basics of programming.',
+        user_id: testTeacher.user_id,
+        student_teacher_group_id: null,
+        learner_group_id: null,
+      }
 
-//   it('should handle course creation errors', async () => {
-//     const res = await request(app).post('/courses').set('Authorization', `Bearer ${token}`).send({
-//       name: '', // Invalid: empty name
-//       description: 'Invalid course',
-//     })
+      const res = await request(app)
+        .post('/courses')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(courseData)
 
-//     expect(res.statusCode).toEqual(400)
-//     expect(res.body).toHaveProperty('message')
-//   })
+      expect(res.status).toBe(201)
+      expect(res.body.course).toEqual(
+        expect.objectContaining({
+          name: courseData.name,
+          description: courseData.description,
+          user_id: testTeacher.user_id,
+        })
+      )
+    })
 
-//   it('should retrieve all courses', async () => {
-//     await Course.create({
-//       name: 'Course 1',
-//       description: 'Desc 1',
-//     })
-//     await Course.create({
-//       name: 'Course 2',
-//       description: 'Desc 2',
-//     })
+    describe('error handling', () => {
+      it('should handle empty course name', async () => {
+        const res = await request(app)
+          .post('/courses')
+          .set('Authorization', `Bearer ${authToken}`)
+          .send({
+            name: '',
+            description: 'Test description',
+            user_id: testTeacher.user_id,
+          })
 
-//     const res = await request(app).get('/courses').set('Authorization', `Bearer ${token}`)
+        expect(res.status).toBe(400)
+        expect(res.body).toEqual({
+          message: 'Course name is required',
+        })
+      })
 
-//     expect(res.statusCode).toEqual(200)
-//     expect(res.body.length).toBeGreaterThanOrEqual(2)
-//   })
+      it('should handle missing teacher ID', async () => {
+        const res = await request(app)
+          .post('/courses')
+          .set('Authorization', `Bearer ${authToken}`)
+          .send({
+            name: 'Test Course',
+            description: 'Test description',
+          })
 
-//   it('should handle errors when retrieving courses', async () => {
-//     jest.spyOn(Course, 'findAll').mockRejectedValueOnce(new Error('Database error'))
+        expect(res.status).toBe(400)
+        expect(res.body).toEqual({
+          message: 'Teacher ID is required',
+        })
+      })
 
-//     const res = await request(app).get('/courses').set('Authorization', `Bearer ${token}`)
+      it('should handle course name too long', async () => {
+        const res = await request(app)
+          .post('/courses')
+          .set('Authorization', `Bearer ${authToken}`)
+          .send({
+            name: 'a'.repeat(256),
+            description: 'Test description',
+            user_id: testTeacher.user_id,
+          })
 
-//     expect(res.statusCode).toEqual(500)
-//     expect(res.body).toHaveProperty('message')
-//     Course.findAll.mockRestore()
-//   })
+        expect(res.status).toBe(400)
+        expect(res.body).toEqual({
+          message: 'Course name is too long',
+        })
+      })
+    })
+  })
 
-//   afterEach(async () => {
-//     // Clean up the database after each test
-//     await Course.destroy({ where: {} }) // This will delete all courses
-//   })
+  describe('GET /courses', () => {
+    beforeEach(async () => {
+      await Course.destroy({ where: {} }) // Clean up before each test
+    })
 
-//   afterAll(async () => {
-//     try {
-//       if (server) await server.close()
-//       await sequelize.close()
-//     } catch (error) {
-//       console.error('Cleanup failed:', error)
-//       throw error
-//     }
-//   })
-// })
+    it('should retrieve all courses', async () => {
+      // Create test courses
+      await Course.bulkCreate([
+        {
+          name: 'Course 1',
+          description: 'Description 1',
+          user_id: testTeacher.user_id,
+        },
+        {
+          name: 'Course 2',
+          description: 'Description 2',
+          user_id: testTeacher.user_id,
+        },
+      ])
+
+      const res = await request(app).get('/courses').set('Authorization', `Bearer ${authToken}`)
+
+      expect(res.status).toBe(200)
+      expect(res.body).toEqual(
+        expect.objectContaining({
+          count: expect.any(Number),
+          rows: expect.arrayContaining([
+            expect.objectContaining({
+              name: expect.any(String),
+              description: expect.any(String),
+              user_id: testTeacher.user_id,
+            }),
+          ]),
+        })
+      )
+    })
+  })
+})

@@ -11,11 +11,12 @@ const authMiddleware = async (req, res, next) => {
         message: 'Unauthorized: No token provided or incorrect format',
       })
     }
+
     const token = authHeader.split(' ')[1]
 
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
-    const user = await User.findOne({ where: { email: decodedToken.email } })
 
+    const user = await User.findOne({ where: { email: decodedToken.email } })
     if (!user) {
       log.warn('User not found')
       return res.status(401).json({

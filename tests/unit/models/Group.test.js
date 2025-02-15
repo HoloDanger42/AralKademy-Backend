@@ -5,7 +5,7 @@ import { StudentTeacher } from '../../../src/models/StudentTeacher.js'
 import { Teacher } from '../../../src/models/Teacher.js'
 import { Course } from '../../../src/models/Course.js'
 import { createTestUser, createTestGroup, createTestEnrollment } from '../../helpers/testData.js'
-import models from '../../../src/models/associate.js'
+import '../../../src/models/associate.js'
 
 describe('Group Model', () => {
   beforeEach(async () => {

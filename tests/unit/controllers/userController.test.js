@@ -67,8 +67,8 @@ describe('User Controller', () => {
       await login(mockReq, mockRes)
 
       // Assert
-      expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Authentication failed' })
+      expect(mockRes.status).toHaveBeenCalledWith(401)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Invalid credentials' })
       expect(log.error).toHaveBeenCalledWith('Login error:', error)
     })
 

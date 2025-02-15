@@ -3,7 +3,7 @@ import { Course } from '../../../src/models/Course.js'
 import { Teacher } from '../../../src/models/Teacher.js'
 import { Group } from '../../../src/models/Group.js'
 import { createTestUser, createTestGroup } from '../../helpers/testData.js'
-import models from '../../../src/models/associate.js'
+import '../../../src/models/associate.js'
 
 describe('Course Model', () => {
   let teacher
@@ -113,6 +113,7 @@ describe('Course Model', () => {
         include: [{ model: Teacher, as: 'teacher' }],
       })
 
+      expect(found.teacher).not.toBeNull()
       expect(found.teacher.user_id).toBe(teacher.id)
     })
 

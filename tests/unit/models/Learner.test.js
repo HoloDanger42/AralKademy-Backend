@@ -10,7 +10,7 @@ import {
   createTestSchool,
   createAdminDirectly,
 } from '../../helpers/testData.js'
-import models from '../../../src/models/associate.js'
+import '../../../src/models/associate.js'
 
 describe('Learner Model', () => {
   let enrollment
