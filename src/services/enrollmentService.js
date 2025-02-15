@@ -1,28 +1,58 @@
 import bcrypt from 'bcryptjs';
 
 class EnrollmentService {
-  constructor(EnrollmentModel, SchoolModel) {
+  constructor(EnrollmentModel, SchoolModel, UserModel, LearnerModel) {
     this.EnrollmentModel = EnrollmentModel;
     this.SchoolModel = SchoolModel;
+    this.UserModel = UserModel;
+    this.LearnerModel = LearnerModel;
   }
 
   async approveEnrollment(enrollmentId, adminId) {
     try {
       const enrollment = await this.EnrollmentModel.findByPk(enrollmentId);
+  
       if (!enrollment) {
         throw new Error('Enrollment not found');
       }
+  
+      let user = await this.UserModel.findOne({ where: { email: enrollment.email } });
+  
+      if (!user) {
+        user = await this.UserModel.create({
+          first_name: enrollment.first_name,
+          last_name: enrollment.last_name,
+          email: enrollment.email,
+          password: enrollment.password, 
+          birth_date: enrollment.birth_date,
+          contact_no: enrollment.contact_no,
+          school_id: enrollment.school_id,
+          role: 'learner',
+        });
+      }
+  
+      let learner = await this.LearnerModel.findOne({ where: { user_id: user.user_id } });
+  
+      if (!learner) {
+        learner = await this.LearnerModel.create({
+          user_id: user.user_id,
+          year_level: enrollment.year_level, 
+          enrollment_id: enrollment.enrollment_id,
+        });
+      }
+  
       enrollment.status = 'approved';
       enrollment.handled_by_id = adminId;
       await enrollment.save();
-      return enrollment;
+  
+      return enrollment; 
     } catch (error) {
       if (error.message === 'Enrollment not found') {
         throw error;
       }
       throw new Error('Failed to approve enrollment');
     }
-  }
+  }  
 
   async rejectEnrollment(enrollmentId, adminId) {
     try {
