@@ -110,15 +110,28 @@ app.use((_req, _res, next) => {
 
 app.use(errorMiddleware)
 
+export const initializeApp = async () => {
+  try {
+    await databaseConnection()
+    const PORT = process.env.PORT || 3000
+    const server = app.listen(PORT, () => {
+      if (process.env.NODE_ENV !== 'test') {
+        console.log(`Server running on port ${PORT}`)
+      }
+    })
+    return server
+  } catch (error) {
+    console.error('Failed to initialize app:', error)
+    throw error
+  }
+}
+
 // Start server after database connection
 const startServer = async () => {
   try {
-    await databaseConnection()
+    // Only run database sync when not testing.
     if (process.env.NODE_ENV !== 'test') {
-      const PORT = process.env.PORT || 3000
-      app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`)
-      })
+      await initializeApp()
     }
   } catch (error) {
     console.error('Failed to start server:', error)

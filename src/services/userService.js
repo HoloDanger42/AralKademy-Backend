@@ -8,7 +8,10 @@ class UserService {
     AdminModel,
     StudentTeacherModel,
     LearnerModel,
-    EnrollmentModel
+    EnrollmentModel,
+    CourseModel,
+    GroupModel,
+    SchoolModel
   ) {
     this.UserModel = UserModel
     this.TeacherModel = TeacherModel
@@ -16,6 +19,9 @@ class UserService {
     this.StudentTeacherModel = StudentTeacherModel
     this.LearnerModel = LearnerModel
     this.EnrollmentModel = EnrollmentModel
+    this.Course = CourseModel
+    this.Group = GroupModel
+    this.School = SchoolModel
   }
 
   validateUserData(userData) {
@@ -40,8 +46,20 @@ class UserService {
     }
   }
 
-  async createUser(email, password, firstName, lastName, birthDate, contactNo, schoolId, role, department = null, section = null, groupId = null) {
-    const transaction = await this.UserModel.sequelize.transaction();
+  async createUser(
+    email,
+    password,
+    firstName,
+    lastName,
+    birthDate,
+    contactNo,
+    schoolId,
+    role,
+    department = null,
+    section = null,
+    groupId = null
+  ) {
+    const transaction = await this.UserModel.sequelize.transaction()
     try {
       const userData = {
         email,
@@ -65,8 +83,10 @@ class UserService {
       } else if (role === 'admin') {
         await this.AdminModel.create({ user_id: user.id }, { transaction })
       } else if (role === 'student_teacher') {
-        await this.StudentTeacherModel.create({ user_id: user.id, department, section, group_id: groupId }, { transaction });
-
+        await this.StudentTeacherModel.create(
+          { user_id: user.id, department, section, group_id: groupId },
+          { transaction }
+        )
       }
 
       await transaction.commit()
@@ -104,45 +124,81 @@ class UserService {
   }
 
   async getUserById(userId) {
-    const user = await this.UserModel.findOne({
-      where: { id: userId },
-      include: [
-        {
-          model: this.TeacherModel,
-          as: 'teacher',
-          required: false,
-        },
-        {
-          model: this.AdminModel,
-          as: 'admin',
-          required: false,
-        },
-        {
-          model: this.StudentTeacherModel,
-          as: 'studentTeacher',
-          required: false,
-        },
-        {
-          model: this.LearnerModel,
-          as: 'learner',
-          required: false,
-          include: [
-            {
-              model: this.EnrollmentModel,
-              as: 'enrollment',
-            },
-          ],
-        },
-      ],
-    })
+    try {
+      if (!userId) {
+        throw new Error('User ID is required')
+      }
 
-    if (!user) {
-      throw new Error('User not found')
+      // Convert to number if it's a string
+      const id = Number(userId)
+      if (isNaN(id)) {
+        throw new Error('Invalid user ID format')
+      }
+
+      const user = await this.UserModel.findOne({
+        where: { id },
+        include: [
+          {
+            model: this.TeacherModel,
+            as: 'teacher',
+            required: false,
+            include: [
+              {
+                model: this.Course,
+                as: 'courses',
+              },
+            ],
+          },
+          {
+            model: this.AdminModel,
+            as: 'admin',
+            required: false,
+            include: [
+              {
+                model: this.EnrollmentModel,
+                as: 'enrollments',
+              },
+            ],
+          },
+          {
+            model: this.StudentTeacherModel,
+            as: 'studentTeacher',
+            required: false,
+            include: [
+              {
+                model: this.Group,
+                as: 'group',
+              },
+            ],
+          },
+          {
+            model: this.LearnerModel,
+            as: 'learner',
+            required: false,
+            include: [
+              {
+                model: this.Group,
+                as: 'group',
+              },
+            ],
+          },
+          {
+            model: this.School,
+            as: 'school',
+          },
+        ],
+        attributes: { exclude: ['password'] },
+      })
+
+      if (!user) {
+        throw new Error('User not found')
+      }
+
+      return user
+    } catch (error) {
+      console.error('Error in getUserById:', error)
+      throw error
     }
-
-    // Remove password from response
-    const { password, ...userWithoutPassword } = user.toJSON()
-    return userWithoutPassword
   }
 
   async updateUser(userId, userData) {
@@ -216,18 +272,6 @@ class UserService {
       where: { school_id: schoolId },
       attributes: { exclude: ['password'] },
     })
-  }
-
-  async getUserById(userId) {
-    try {
-      const user = await this.UserModel.findByPk(userId);
-      if (!user) {
-        throw new Error('User not found');
-      }
-      return user;
-    } catch (error) {
-      throw new Error('Failed to fetch user');
-    }
   }
 }
 

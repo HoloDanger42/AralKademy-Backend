@@ -8,7 +8,7 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../helpers/tes
 import { hashPassword } from '../../helpers/testUtils.js'
 import { createTestUser, createTestSchool, createTestEnrollment } from '../../helpers/testData.js'
 import bcrypt from 'bcryptjs'
-import models from '../../../src/models/associate.js'
+import '../../../src/models/associate.js'
 
 describe('User Model', () => {
   beforeAll(async () => {

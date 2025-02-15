@@ -3,7 +3,7 @@ import { Admin } from '../../../src/models/Admin.js'
 import { User } from '../../../src/models/User.js'
 import { Enrollment } from '../../../src/models/Enrollment.js'
 import { createTestUser, createTestSchool } from '../../helpers/testData.js'
-import models from '../../../src/models/associate.js'
+import '../../../src/models/associate.js'
 
 describe('Admin Model', () => {
   let user

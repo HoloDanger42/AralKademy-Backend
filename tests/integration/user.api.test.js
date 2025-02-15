@@ -1,49 +1,116 @@
-// import request from 'supertest'
-// import app from '../../src/server.js'
-// import { sequelize } from '../../src/config/database.js'
-// import { jest } from '@jest/globals'
+import request from 'supertest'
+import app from '../../src/server.js'
+import { sequelize } from '../../src/config/database.js'
+import { School } from '../../src/models/School.js'
+import { User } from '../../src/models/User.js'
+import { Teacher } from '../../src/models/Teacher.js'
+import '../../src/models/associate.js'
 
-// jest.setTimeout(10000)
+describe('Users API Integration Tests', () => {
+  let server
+  let authToken = ''
+  let testUserId
 
-// describe('User Endpoints', () => {
-//   let token
-//   let server
+  beforeAll(async () => {
+    await sequelize.sync({ force: true })
 
-//   beforeAll(async () => {
-//     try {
-//       await sequelize.sync({ force: true })
-//       server = app.listen(0)
-//     } catch (error) {
-//       console.error('Setup failed:', error)
-//       throw error
-//     }
-//   })
+    const school = await School.create({
+      name: 'Test School',
+      address: '123 Test St., Test City',
+      contact_no: '02-8123-4567',
+    })
 
-//   afterAll(async () => {
-//     try {
-//       if (server) await server.close()
-//       await sequelize.close()
-//     } catch (error) {
-//       console.error('Cleanup failed:', error)
-//       throw error
-//     }
-//   })
+    // Create user after sync
+    const user = await User.create({
+      email: 'testUser@example.com',
+      password: 'testPassword',
+      first_name: 'Test',
+      last_name: 'User',
+      birth_date: new Date('1990-01-01'),
+      contact_no: '09123456789',
+      school_id: school.school_id,
+      role: 'teacher',
+    })
+    testUserId = user.id
 
-//   it('should log in the user and return a token', async () => {
-//     const res = await request(app).post('/users/login').send({
-//       email: 'testuser@example.com',
-//       password: 'securepassword123',
-//     })
-//     expect(res.statusCode).toEqual(200)
-//     expect(res.body).toHaveProperty('message', 'Logged in successfully')
-//     expect(res.body).toHaveProperty('token')
-//     token = res.body.token
-//   })
+    // Create teacher record
+    await Teacher.create({
+      user_id: user.id,
+    })
 
-//   it('should retrieve all users', async () => {
-//     const res = await request(app).get('/users').set('Authorization', `Bearer ${token}`)
-//     expect(res.statusCode).toEqual(200)
-//     expect(Array.isArray(res.body)).toBe(true)
-//     expect(res.body.length).toBeGreaterThan(0)
-//   })
-// })
+    server = app.listen(0)
+  })
+
+  afterAll((done) => {
+    if (server && server.close) {
+      server.close(done)
+    } else {
+      done()
+    }
+  })
+
+  describe('POST /users/login', () => {
+    it('should log in a user and return a valid token', async () => {
+      const loginData = { email: 'testUser@example.com', password: 'testPassword' }
+      const res = await request(app).post('/users/login').send(loginData).expect(200)
+
+      expect(res.body).toHaveProperty('token')
+      authToken = res.body.token
+    })
+  })
+
+  describe('GET /users', () => {
+    it('should retrieve all users', async () => {
+      const res = await request(app)
+        .get('/users')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200)
+
+      // Check paginated response structure
+      expect(res.body).toEqual(
+        expect.objectContaining({
+          count: expect.any(Number),
+          rows: expect.any(Array),
+        })
+      )
+
+      // Verify the user data
+      expect(res.body.rows.length).toBeGreaterThan(0)
+      expect(res.body.rows[0]).toEqual(
+        expect.objectContaining({
+          id: expect.any(Number),
+          email: 'testUser@example.com',
+          first_name: 'Test',
+          last_name: 'User',
+        })
+      )
+    })
+  })
+
+  describe('GET /users/:id', () => {
+    it('should retrieve a specific user when authorized', async () => {
+      console.log('Making request with test user ID:', testUserId)
+
+      const res = await request(app)
+        .get(`/users/${testUserId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+
+      console.log('Response status:', res.status)
+      console.log('Response body:', res.body)
+
+      expect(res.status).toBe(200)
+      expect(res.body).toEqual(
+        expect.objectContaining({
+          id: testUserId,
+          email: expect.any(String),
+          first_name: expect.any(String),
+          last_name: expect.any(String),
+        })
+      )
+    })
+
+    it('should return 401 Unauthorized when token is missing', async () => {
+      await request(app).get(`/users/${testUserId}`).expect(401)
+    })
+  })
+})

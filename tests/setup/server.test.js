@@ -164,8 +164,29 @@ describe('Server Setup', () => {
   })
 
   describe('Database Connection', () => {
-    it('should connect to the database on server start', () => {
+    let server
+
+    beforeEach(() => {
+      // Clear mock before each test
+      mockDatabase.databaseConnection.mockClear()
+    })
+
+    afterEach(async () => {
+      if (server) {
+        await server.close()
+      }
+    })
+
+    it('should connect to the database on server start', async () => {
+      // Import the app initialization function
+      const { initializeApp } = await import('../../src/server.js')
+
+      // Initialize the app, which should trigger database connection
+      server = await initializeApp()
+
+      // Verify database connection was attempted
       expect(mockDatabase.databaseConnection).toHaveBeenCalled()
+      expect(server.listening).toBe(true)
     })
   })
 })

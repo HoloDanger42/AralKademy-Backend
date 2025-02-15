@@ -4,7 +4,7 @@ import { School } from '../../../src/models/School.js'
 import { User } from '../../../src/models/User.js'
 import { Admin } from '../../../src/models/Admin.js'
 import { createTestSchool, createTestUser, createAdminDirectly } from '../../helpers/testData.js'
-import models from '../../../src/models/associate.js'
+import '../../../src/models/associate.js'
 
 describe('Enrollment Model', () => {
   let school

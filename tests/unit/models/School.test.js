@@ -2,7 +2,7 @@ import { sequelize } from '../../../src/config/database.js'
 import { School } from '../../../src/models/School.js'
 import { User } from '../../../src/models/User.js'
 import { createTestSchool } from '../../helpers/testData.js'
-import models from '../../../src/models/associate.js'
+import '../../../src/models/associate.js'
 
 describe('School Model', () => {
   beforeEach(async () => {
@@ -107,11 +107,11 @@ describe('School Model', () => {
 
       const found = await School.findOne({
         where: { school_id: school.school_id },
-        include: [{ model: User }],
+        include: [{ model: User, as: 'users' }],
       })
 
-      expect(found.Users).toBeTruthy()
-      expect(found.Users[0].id).toBe(user.id)
+      expect(found.users).toBeTruthy()
+      expect(found.users[0].id).toBe(user.id)
     })
   })
 
