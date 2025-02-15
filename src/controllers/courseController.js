@@ -1,9 +1,8 @@
 import CourseService from '../services/courseService.js'
 import { Course } from '../models/Course.js'
-import { Teacher } from '../models/Teacher.js'
 import { log } from '../utils/logger.js'
 
-const courseService = new CourseService(Course, Teacher)
+const courseService = new CourseService(Course)
 
 const getAllCourses = async (_req, res) => {
   try {

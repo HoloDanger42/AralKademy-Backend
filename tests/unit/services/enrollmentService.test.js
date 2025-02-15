@@ -15,11 +15,21 @@ const mockSchoolModel = {
   findByPk: jest.fn(),
 };
 
+const mockUserModel = {
+  findOne: jest.fn(),
+  create: jest.fn(),
+};
+
+const mockLearnerModel = {
+  findOne: jest.fn(),
+  create: jest.fn(),
+};
+
 describe('Enrollment Service', () => {
   let enrollmentService;
 
   beforeEach(() => {
-    enrollmentService = new EnrollmentService(mockEnrollmentModel, mockSchoolModel);
+    enrollmentService = new EnrollmentService(mockEnrollmentModel, mockSchoolModel, mockUserModel, mockLearnerModel);
     jest.resetAllMocks();
   });
 
@@ -188,41 +198,92 @@ describe('Enrollment Service', () => {
       // Arrange
       const enrollmentId = 1;
       const adminId = 99;
-      const enrollment = { id: enrollmentId, status: 'pending', save: jest.fn() };
+      const enrollment = { 
+        id: enrollmentId, 
+        enrollment_id: enrollmentId, 
+        first_name: 'John',
+        last_name: 'Doe',
+        email: 'john@example.com',
+        password: 'hashedpassword',
+        birth_date: '2000-01-01',
+        contact_no: '123456789',
+        school_id: 5,
+        year_level: '3rd Year',
+        status: 'pending',
+        save: jest.fn()
+      };
+  
+      const user = { user_id: 101, email: 'john@example.com' };
+      const learner = { user_id: 101, enrollment_id: enrollmentId };
+  
       mockEnrollmentModel.findByPk.mockResolvedValue(enrollment);
-
+      mockUserModel.findOne.mockResolvedValue(null);  
+      mockUserModel.create.mockResolvedValue(user);  
+      mockLearnerModel.findOne.mockResolvedValue(null); 
+      mockLearnerModel.create.mockResolvedValue(learner); 
+  
       // Act
       const result = await enrollmentService.approveEnrollment(enrollmentId, adminId);
-
+  
       // Assert
-      expect(result).toEqual({ id: enrollmentId, status: 'approved', handled_by_id: adminId, save: expect.any(Function) });
+      expect(result).toMatchObject({
+        id: enrollmentId,
+        status: 'approved',
+        handled_by_id: adminId
+      });
+  
       expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({ where: { email: enrollment.email } });
+      expect(mockUserModel.create).toHaveBeenCalledWith(expect.objectContaining({ email: enrollment.email }));
+      expect(mockLearnerModel.findOne).toHaveBeenCalledWith({ where: { user_id: user.user_id } });
+      expect(mockLearnerModel.create).toHaveBeenCalledWith(expect.objectContaining({ user_id: user.user_id }));
       expect(enrollment.save).toHaveBeenCalled();
-      expect(enrollment.status).toBe('approved');
-      expect(enrollment.handled_by_id).toBe(adminId);
     });
-
+  
     test('should throw an error if enrollment is not found (approve enrollment)', async () => {
       // Arrange
       const enrollmentId = 1;
       const adminId = 99;
       mockEnrollmentModel.findByPk.mockResolvedValue(null);
-
+  
       // Act & Assert
       await expect(enrollmentService.approveEnrollment(enrollmentId, adminId)).rejects.toThrow('Enrollment not found');
       expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
     });
-
+  
     test('should throw an error if updating enrollment fails (approve enrollment)', async () => {
       // Arrange
       const enrollmentId = 1;
       const adminId = 99;
-      const enrollment = { id: enrollmentId, status: 'pending', save: jest.fn().mockRejectedValue(new Error('Updating failed')) };
+      const enrollment = { 
+        id: enrollmentId, 
+        enrollment_id: enrollmentId,
+        first_name: 'John',
+        last_name: 'Doe',
+        email: 'john@example.com',
+        password: 'hashedpassword',
+        birth_date: '2000-01-01',
+        contact_no: '123456789',
+        school_id: 5,
+        year_level: '3rd Year',
+        status: 'pending',
+        save: jest.fn().mockRejectedValue(new Error('Updating failed')), 
+      };
+    
+      const user = { user_id: 101, email: 'john@example.com' };
+      const learner = { user_id: 101, enrollment_id: enrollmentId };
+    
       mockEnrollmentModel.findByPk.mockResolvedValue(enrollment);
-
+      mockUserModel.findOne.mockResolvedValue(user);
+      mockLearnerModel.findOne.mockResolvedValue(learner);
+    
       // Act & Assert
-      await expect(enrollmentService.approveEnrollment(enrollmentId, adminId)).rejects.toThrow('Failed to approve enrollment');
-      expect(enrollment.save).toHaveBeenCalled();
+      await expect(enrollmentService.approveEnrollment(enrollmentId, adminId))
+        .rejects.toThrow('Failed to approve enrollment');
+    
+      console.log('Enrollment save method should be called before this'); 
+    
+      expect(enrollment.save).toHaveBeenCalled(); 
     });
   });
 

@@ -1,7 +1,6 @@
 class CourseService {
-  constructor(CourseModel, TeacherModel) {
+  constructor(CourseModel) {
     this.CourseModel = CourseModel
-    this.TeacherModel = TeacherModel
   }
 
   async getAllCourses() {
@@ -34,7 +33,7 @@ class CourseService {
   async createCourse(
     name,
     description,
-    userId,
+    userId = null,
     studentTeacherGroupId = null,
     learnerGroupId = null
   ) {
@@ -48,25 +47,12 @@ class CourseService {
       }
 
       // Validate required fields first
-      if (!userId) {
-        throw new ValidationError('Teacher ID is required')
-      }
-
       if (!name || name.trim() === '') {
         throw new ValidationError('Course name is required')
       }
 
       if (name.length > 255) {
         throw new ValidationError('Course name is too long')
-      }
-
-      // Verify teacher exists
-      const teacher = await this.TeacherModel.findOne({
-        where: { user_id: userId },
-      })
-
-      if (!teacher) {
-        throw new ValidationError(`Teacher not found with ID: ${userId}`)
       }
 
       // Create course
@@ -87,8 +73,7 @@ class CourseService {
 
       console.error('Course creation failed:', {
         error: error.message,
-        name,
-        userId,
+        name
       })
       throw new Error(`Failed to create course: ${error.message}`)
     }
