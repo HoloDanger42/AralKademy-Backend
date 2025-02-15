@@ -124,81 +124,76 @@ class UserService {
   }
 
   async getUserById(userId) {
-    try {
-      if (!userId) {
-        throw new Error('User ID is required')
-      }
-
-      // Convert to number if it's a string
-      const id = Number(userId)
-      if (isNaN(id)) {
-        throw new Error('Invalid user ID format')
-      }
-
-      const user = await this.UserModel.findOne({
-        where: { id },
-        include: [
-          {
-            model: this.TeacherModel,
-            as: 'teacher',
-            required: false,
-            include: [
-              {
-                model: this.Course,
-                as: 'courses',
-              },
-            ],
-          },
-          {
-            model: this.AdminModel,
-            as: 'admin',
-            required: false,
-            include: [
-              {
-                model: this.EnrollmentModel,
-                as: 'enrollments',
-              },
-            ],
-          },
-          {
-            model: this.StudentTeacherModel,
-            as: 'studentTeacher',
-            required: false,
-            include: [
-              {
-                model: this.Group,
-                as: 'group',
-              },
-            ],
-          },
-          {
-            model: this.LearnerModel,
-            as: 'learner',
-            required: false,
-            include: [
-              {
-                model: this.Group,
-                as: 'group',
-              },
-            ],
-          },
-          {
-            model: this.School,
-            as: 'school',
-          },
-        ],
-        attributes: { exclude: ['password'] },
-      })
-
-      if (!user) {
-        throw new Error('User not found')
-      }
-
-      return user
-    } catch (error) {
-      console.error('Error in getUserById:', error)
-      throw error
+    if (!userId) {
+      throw new Error('User ID is required')
     }
+
+    // Convert to number if it's a string
+    const id = Number(userId)
+    if (isNaN(id)) {
+      throw new Error('Invalid user ID format')
+    }
+
+    const user = await this.UserModel.findOne({
+      where: { id },
+      include: [
+        {
+          model: this.TeacherModel,
+          as: 'teacher',
+          required: false,
+          include: [
+            {
+              model: this.Course,
+              as: 'courses',
+            },
+          ],
+        },
+        {
+          model: this.AdminModel,
+          as: 'admin',
+          required: false,
+          include: [
+            {
+              model: this.EnrollmentModel,
+              as: 'enrollments',
+            },
+          ],
+        },
+        {
+          model: this.StudentTeacherModel,
+          as: 'studentTeacher',
+          required: false,
+          include: [
+            {
+              model: this.Group,
+              as: 'group',
+            },
+          ],
+        },
+        {
+          model: this.LearnerModel,
+          as: 'learner',
+          required: false,
+          include: [
+            {
+              model: this.Group,
+              as: 'group',
+            },
+          ],
+        },
+        {
+          model: this.School,
+          as: 'school',
+        },
+      ],
+      attributes: { exclude: ['password'] },
+    })
+
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    return user
   }
 
   async updateUser(userId, userData) {
