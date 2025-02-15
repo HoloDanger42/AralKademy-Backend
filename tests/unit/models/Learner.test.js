@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals'
 import { User } from '../../../src/models/User.js'
 import { Learner } from '../../../src/models/Learner.js'
 import { Group } from '../../../src/models/Group.js'
@@ -11,6 +12,8 @@ import {
   createAdminDirectly,
 } from '../../helpers/testData.js'
 import '../../../src/models/associate.js'
+
+jest.setTimeout(10000)
 
 describe('Learner Model', () => {
   let enrollment

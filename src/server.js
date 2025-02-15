@@ -46,7 +46,9 @@ if (applyRateLimiter) {
   const authLimiter = rateLimit({
     windowMs: FIFTEEN_MINUTES,
     max: AUTH_MAX_REQUESTS,
-    handler: (_req, res) => {
+    handler: (req, res) => {
+      res.setHeader('ratelimit-remaining', options.max - req.rateLimit.current)
+      res.setHeader('ratelimit-reset', Math.ceil(options.windowMs / 1000))
       res.status(429).json({
         message: 'Too many authentication requests',
       })
@@ -111,23 +113,20 @@ app.use((_req, _res, next) => {
 app.use(errorMiddleware)
 
 export const initializeApp = async () => {
-  try {
+  if (process.env.NODE_ENV !== 'test') {
     await databaseConnection()
-    const PORT = process.env.PORT || 3000
-    const server = app.listen(PORT, () => {
-      if (process.env.NODE_ENV !== 'test') {
-        console.log(`Server running on port ${PORT}`)
-      }
-    })
-    return server
-  } catch (error) {
-    console.error('Failed to initialize app:', error)
-    throw error
   }
+  const PORT = process.env.PORT || 3000
+  const server = app.listen(PORT, () => {
+    if (process.env.NODE_ENV !== 'test') {
+      console.log(`Server running on port ${PORT}`)
+    }
+  })
+  return server
 }
 
 // Start server after database connection
-const startServer = async () => {
+export const startServer = async () => {
   try {
     // Only run database sync when not testing.
     if (process.env.NODE_ENV !== 'test') {
@@ -142,6 +141,11 @@ const startServer = async () => {
   }
 }
 
-startServer()
+// Attach startServer to app for testing purposes
+app.startServer = startServer
+
+if (process.env.NODE_ENV !== 'test') {
+  startServer()
+}
 
 export default app
