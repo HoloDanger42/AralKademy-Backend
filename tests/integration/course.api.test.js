@@ -1,15 +1,44 @@
 import request from 'supertest'
 import app from '../../src/server.js'
 import { sequelize } from '../../src/config/database.js'
+import { School } from '../../src/models/School.js'
+import { User } from '../../src/models/User.js'
+import { Admin } from '../../src/models/Admin.js'
 import { Course } from '../../src/models/Course.js'
 import '../../src/models/associate.js'
 
 describe('Course Endpoints (Integration Tests)', () => {
   let server
   let authToken
+  let testAdmin
+  let testSchool
 
   beforeAll(async () => {
     await sequelize.sync({ force: true })
+
+    // Create test school
+    testSchool = await School.create({
+      name: 'Test School',
+      address: '123 Test St., Test City',
+      contact_no: '02-8123-4567',
+    })
+
+    // Create test user/admin
+    const user = await User.create({
+      email: 'testadmin@example.com',
+      password: 'testPassword',
+      first_name: 'Test',
+      last_name: 'Admin',
+      birth_date: new Date('1990-01-01'),
+      contact_no: '09123456789',
+      school_id: testSchool.school_id,
+      role: 'admin',
+    })
+
+    // Create admin record
+    testAdmin = await Admin.create({
+      user_id: user.id,
+    })
 
     server = app.listen(0)
 
