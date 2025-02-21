@@ -1,5 +1,9 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+//
+import dotenv from 'dotenv';
+dotenv.config();
+//
 
 class UserService {
   constructor(
@@ -22,6 +26,7 @@ class UserService {
     this.Course = CourseModel
     this.Group = GroupModel
     this.School = SchoolModel
+    this.jwtSecret = process.env.JWT_SECRET; // Get from .env and store as a property
   }
 
   validateUserData(userData) {
@@ -87,7 +92,14 @@ class UserService {
           { user_id: user.id, department, section, group_id: groupId },
           { transaction }
         )
-      }
+      } else if (role === 'learner'){//---------
+       
+           if (groupId) {
+               await this.LearnerModel.create({ user_id: user.id, group_id: groupId }, { transaction });
+           } else {
+                await this.LearnerModel.create({ user_id: user.id}, { transaction }); //create without group
+           }
+      }//---------------
 
       await transaction.commit()
       return user
@@ -102,18 +114,35 @@ class UserService {
     }
   }
 
-  async loginUser(email, password) {
-    const user = await this.UserModel.findOne({ where: { email } })
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new Error('Invalid credentials')
-    }
+    async loginUser(email, password) {
+      try{
+      const user = await this.UserModel.findOne({ where: { email } })
 
-    const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-      expiresIn: '15m',
-    })
+      if (!user || !(await bcrypt.compare(password, user.password))) {
+        throw new Error('Invalid credentials')
+      }
 
-    return { user, token }
+      const passwordMatch = await bcrypt.compare(password, user.password);
+
+      if (!passwordMatch) {
+        throw new Error('Invalid credentials');
+      }
+
+      //--
+      const token = this.generateToken(user); 
+
+      return { user, token }
+      }catch (error) {
+        console.error("Error in loginUser:", error); // LOG THE ERROR
+        throw error; // Re-throw the error so the controller can handle it
+      }
   }
+  
+  //-------------
+  generateToken(user) {
+    return jwt.sign({ id: user.id, email: user.email, role: user.role }, this.jwtSecret, { expiresIn: '1h' }); 
+  }
+  //--------------
 
   async getAllUsers(page = 1, limit = 10) {
     return await this.UserModel.findAndCountAll({
@@ -225,6 +254,12 @@ class UserService {
           transaction,
         })
       }
+      // added but maybe needed in the future - lennard
+      else if (user.role === 'admin') {
+        await this.AdminModel.destroy({ where: { user_id: userId }, force: true, transaction 
+        })
+      }
+      //-----
 
       await user.destroy({ transaction })
       await transaction.commit()
