@@ -443,4 +443,40 @@ describe('Enrollment Service', () => {
       await expect(enrollmentService.getEnrollmentsBySchool(schoolId)).rejects.toThrow('Failed to fetch enrollments by school');
     });
   });
+
+  describe('getEnrollmentStatus', () => {
+    test('should retrieve the enrollment status successfully (get enrollment status)', async () => {
+      // Arrange
+      const enrollmentId = 1;
+      const expectedEnrollment = { id: enrollmentId, status: 'pending' };
+      mockEnrollmentModel.findByPk.mockResolvedValue(expectedEnrollment);
+  
+      // Act
+      const status = await enrollmentService.getEnrollmentStatus(enrollmentId);
+  
+      // Assert
+      expect(status).toEqual('pending');
+      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
+    });
+  
+    test('should throw an error when the enrollment does not exist (get enrollment status)', async () => {
+      // Arrange
+      const enrollmentId = 1;
+      mockEnrollmentModel.findByPk.mockResolvedValue(null);
+  
+      // Act & Assert
+      await expect(enrollmentService.getEnrollmentStatus(enrollmentId)).rejects.toThrow('Enrollment not found');
+      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
+    });
+  
+    test('should throw an error when fetching of enrollment fails (get enrollment status)', async () => {
+      // Arrange
+      const enrollmentId = 1;
+      mockEnrollmentModel.findByPk.mockRejectedValue(new Error('Fetching error'));
+  
+      // Act & Assert
+      await expect(enrollmentService.getEnrollmentStatus(enrollmentId)).rejects.toThrow('Failed to fetch enrollment');
+      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
+    });
+  });
 });

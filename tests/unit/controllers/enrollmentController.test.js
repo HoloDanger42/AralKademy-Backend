@@ -1,5 +1,5 @@
 import { afterEach, jest, describe, test, beforeEach, expect } from '@jest/globals';
-import { enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getAllEnrollments, getEnrollmentsBySchool } from '../../../src/controllers/enrollmentController.js';
+import { enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getAllEnrollments, getEnrollmentsBySchool, getEnrollmentStatus } from '../../../src/controllers/enrollmentController.js';
 import EnrollmentService from '../../../src/services/enrollmentService.js';
 import { log } from '../../../src/utils/logger.js';
 import { validEnrollments } from '../../fixtures/enrollmentData.js';
@@ -26,7 +26,8 @@ describe('Enrollment Controller', () => {
     approveEnrollmentSpy = jest.spyOn(EnrollmentService.prototype, 'approveEnrollment');
     rejectEnrollmentSpy = jest.spyOn(EnrollmentService.prototype, 'rejectEnrollment');
     getAllEnrollmentsSpy = jest.spyOn(EnrollmentService.prototype, 'getAllEnrollments');
-    getEnrollmentsBySchoolSpy = jest.spyOn(EnrollmentService.prototype, 'getEnrollmentsBySchool')
+    getEnrollmentsBySchoolSpy = jest.spyOn(EnrollmentService.prototype, 'getEnrollmentsBySchool');
+    getEnrollmentStatusSpy = jest.spyOn(EnrollmentService.prototype, 'getEnrollmentStatus');
 
     jest.spyOn(log, 'info');
     jest.spyOn(log, 'error');
@@ -384,4 +385,51 @@ describe('Enrollment Controller', () => {
       expect(log.error).toHaveBeenCalledWith('Get enrollments by school error:', error);
     });
   });
+
+  describe('getEnrollmentStatus', () => {
+    test('should retrieve enrollment status by ID successfully (get enrollment status)', async () => {
+      // Arrange
+      mockReq.params.id = '1';
+      const mockEnrollment = { id: 1, status: 'approved' };
+      getEnrollmentStatusSpy.mockResolvedValue(mockEnrollment.status);
+  
+      // Act
+      await getEnrollmentStatus(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({ status: 'approved' });
+      expect(log.info).toHaveBeenCalledWith('Retrieved enrollment status for ID: 1');
+    });
+  
+    test('should handle enrollment not found (get enrollment status)', async () => {
+      // Arrange
+      mockReq.params.id = '99';
+      const error = new Error('Enrollment not found');
+      getEnrollmentStatusSpy.mockRejectedValue(error);
+  
+      // Act
+      await getEnrollmentStatus(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Enrollment not found' });
+      expect(log.error).toHaveBeenCalledWith('Get enrollment status error:', error);
+    });
+  
+    test('should handle unexpected server errors during retrieval (get enrollment status)', async () => {
+      // Arrange
+      mockReq.params.id = '1';
+      const error = new Error('Unexpected error');
+      getEnrollmentStatusSpy.mockRejectedValue(error);
+  
+      // Act
+      await getEnrollmentStatus(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to retrieve enrollment status' });
+      expect(log.error).toHaveBeenCalledWith('Get enrollment status error:', error);
+    });
+  }); 
 });

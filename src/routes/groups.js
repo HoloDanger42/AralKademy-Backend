@@ -5,9 +5,9 @@ import { authMiddleware } from '../middleware/authMiddleware.js';
 const groupsRouter = express.Router();
 
 groupsRouter.get('/', authMiddleware, getAllGroups);
+groupsRouter.get('/:id', authMiddleware, getGroupById);
 groupsRouter.post('/', authMiddleware, createGroup);
-groupsRouter.post('/assign-student-teachers', authMiddleware, assignStudentTeacherMembers);
-groupsRouter.post('/assign-learners', authMiddleware, assignLearnerMembers);
-groupsRouter.get('/:groupId', authMiddleware, getGroupById);
+groupsRouter.post('/assignStudentTeacherMembers', authMiddleware, assignStudentTeacherMembers);
+groupsRouter.post('/assignLearnerMembers', authMiddleware, assignLearnerMembers);
 
 export { groupsRouter };

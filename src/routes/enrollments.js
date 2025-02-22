@@ -1,13 +1,14 @@
 import express from 'express'
-import { getAllEnrollments, enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getEnrollmentsBySchool } from '../controllers/enrollmentController.js'
+import { getAllEnrollments, enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getEnrollmentsBySchool, getEnrollmentStatus } from '../controllers/enrollmentController.js'
 
 const enrollmentsRouter = express.Router()
 
 enrollmentsRouter.get('/', getAllEnrollments)
-enrollmentsRouter.get('/:enrollmentId', getEnrollmentById)
 enrollmentsRouter.post('/', enroll)
-enrollmentsRouter.post('/approve', approveEnrollment)
-enrollmentsRouter.post('/reject', rejectEnrollment)
-enrollmentsRouter.get('/:schoolId', getEnrollmentsBySchool)
+enrollmentsRouter.get('/:enrollmentId', getEnrollmentById)
+enrollmentsRouter.put('/:enrollmentId/approve', approveEnrollment)
+enrollmentsRouter.put('/:enrollmentId/reject', rejectEnrollment)
+enrollmentsRouter.get('/school/:schoolId', getEnrollmentsBySchool)
+enrollmentsRouter.get('/:enrollmentId/status', getEnrollmentStatus)
 
 export { enrollmentsRouter }

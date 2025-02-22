@@ -109,4 +109,19 @@ const getEnrollmentsBySchool = async (req, res) => {
   }
 };
 
-export { getAllEnrollments, enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getEnrollmentsBySchool };
+const getEnrollmentStatus = async (req, res) => {
+  try {
+    const enrollmentId = req.params.id;
+    const status = await enrollmentService.getEnrollmentStatus(enrollmentId);
+    res.status(200).json({ status });
+    log.info(`Retrieved enrollment status for ID: ${enrollmentId}`);
+  } catch (error) {
+    log.error('Get enrollment status error:', error);
+    if (error.message === 'Enrollment not found') {
+      return res.status(404).json({ message: error.message });
+    }
+    return res.status(500).json({ message: 'Failed to retrieve enrollment status' });
+  }
+}
+
+export { getAllEnrollments, enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getEnrollmentsBySchool, getEnrollmentStatus };

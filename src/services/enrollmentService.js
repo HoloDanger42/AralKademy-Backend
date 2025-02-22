@@ -162,6 +162,21 @@ class EnrollmentService {
       throw new Error('Failed to fetch enrollments by school');
     }
   }
+
+  async getEnrollmentStatus(enrollmentId) {
+    try {
+      const enrollment = await this.EnrollmentModel.findByPk(enrollmentId);
+      if (!enrollment) {
+        throw new Error('Enrollment not found');
+      }
+      return enrollment.status;
+    } catch (error) {
+      if (error.message === 'Enrollment not found') {
+        throw error;
+      }
+      throw new Error('Failed to fetch enrollment status');
+    }
+  }
 }
 
 export default EnrollmentService;
