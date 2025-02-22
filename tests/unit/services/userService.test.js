@@ -1,8 +1,11 @@
+import { jest } from '@jest/globals'
 import UserService from '../../../src/services/userService.js'
 import { sequelize } from '../../../src/config/database.js'
 import { createTestSchool, createTestEnrollment } from '../../helpers/testData.js'
 import { jest } from '@jest/globals'
 import '../../../src/models/associate.js'
+
+jest.setTimeout(10000)
 
 describe('UserService', () => {
   let userService

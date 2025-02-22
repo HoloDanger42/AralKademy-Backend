@@ -5,6 +5,10 @@ import rateLimit from 'express-rate-limit'
 import cache from 'memory-cache'
 import paginate from 'express-paginate'
 
+//cors
+import cors from 'cors';
+
+
 // Middleware
 import { errorMiddleware, SpecificError } from './middleware/errorMiddleware.js'
 import { logMiddleware } from './middleware/logMiddleware.js'
@@ -20,6 +24,26 @@ import { coursesRouter } from './routes/courses.js'
 dotenv.config()
 
 const app = express()
+
+//Cors configuration
+const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  optionsSuccessStatus: 200,
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+//----
+
+
 
 app.use(express.json())
 
@@ -46,7 +70,9 @@ if (applyRateLimiter) {
   const authLimiter = rateLimit({
     windowMs: FIFTEEN_MINUTES,
     max: AUTH_MAX_REQUESTS,
-    handler: (_req, res) => {
+    handler: (req, res) => {
+      res.setHeader('ratelimit-remaining', options.max - req.rateLimit.current)
+      res.setHeader('ratelimit-reset', Math.ceil(options.windowMs / 1000))
       res.status(429).json({
         message: 'Too many authentication requests',
       })
@@ -94,7 +120,8 @@ app.get('/', (_req, res) => {
   res.send('API is running')
 })
 
-app.use('/users', usersRouter)
+//IMPORTANT* always put /api/ before the route
+app.use('/api/users', usersRouter)
 app.use('/courses', coursesRouter)
 
 app.get('/error', (_req, _res, next) => {
@@ -111,23 +138,20 @@ app.use((_req, _res, next) => {
 app.use(errorMiddleware)
 
 export const initializeApp = async () => {
-  try {
+  if (process.env.NODE_ENV !== 'test') {
     await databaseConnection()
-    const PORT = process.env.PORT || 3000
-    const server = app.listen(PORT, () => {
-      if (process.env.NODE_ENV !== 'test') {
-        console.log(`Server running on port ${PORT}`)
-      }
-    })
-    return server
-  } catch (error) {
-    console.error('Failed to initialize app:', error)
-    throw error
   }
+  const PORT = process.env.PORT || 3000
+  const server = app.listen(PORT, () => {
+    if (process.env.NODE_ENV !== 'test') {
+      console.log(`Server running on port ${PORT}`)
+    }
+  })
+  return server
 }
 
 // Start server after database connection
-const startServer = async () => {
+export const startServer = async () => {
   try {
     // Only run database sync when not testing.
     if (process.env.NODE_ENV !== 'test') {
@@ -142,6 +166,11 @@ const startServer = async () => {
   }
 }
 
-startServer()
+// Attach startServer to app for testing purposes
+app.startServer = startServer
+
+if (process.env.NODE_ENV !== 'test') {
+  startServer()
+}
 
 export default app
