@@ -21,6 +21,9 @@ import { databaseConnection } from './config/database.js'
 import { usersRouter } from './routes/users.js'
 import { coursesRouter } from './routes/courses.js'
 
+//enrollment
+import { enrollmentRouter } from './routes/enrollments.js';
+
 dotenv.config()
 
 const app = express()
@@ -123,6 +126,8 @@ app.get('/', (_req, res) => {
 //IMPORTANT* always put /api/ before the route
 app.use('/api/users', usersRouter)
 app.use('/courses', coursesRouter)
+
+app.use('/api/enrollment', enrollmentRouter); 
 
 app.get('/error', (_req, _res, next) => {
   next(new Error('Intentional error for testing'))

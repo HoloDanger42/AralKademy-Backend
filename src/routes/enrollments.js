@@ -1,13 +1,17 @@
-import express from 'express'
-import { getAllEnrollments, enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getEnrollmentsBySchool } from '../controllers/enrollmentController.js'
+// routes/enrollmentRoutes.js
+import express from 'express';
+import * as enrollmentController from '../controllers/enrollmentController.js';
 
-const enrollmentsRouter = express.Router()
+const enrollmentRouter = express.Router();
 
-enrollmentsRouter.get('/', getAllEnrollments)
-enrollmentsRouter.get('/:enrollmentId', getEnrollmentById)
-enrollmentsRouter.post('/', enroll)
-enrollmentsRouter.post('/approve', approveEnrollment)
-enrollmentsRouter.post('/reject', rejectEnrollment)
-enrollmentsRouter.get('/:schoolId', getEnrollmentsBySchool)
+enrollmentRouter.get('/', enrollmentController.getAllEnrollments);
+enrollmentRouter.get('/:enrollmentId', enrollmentController.getEnrollmentById);
+enrollmentRouter.post('/', enrollmentController.enroll);
+enrollmentRouter.patch('/:enrollmentId/approve', enrollmentController.approveEnrollment);
+enrollmentRouter.patch('/:enrollmentId/reject', enrollmentController.rejectEnrollment);
+enrollmentRouter.get('/school/:schoolId', enrollmentController.getEnrollmentsBySchool);
 
-export { enrollmentsRouter }
+// For checking status by email
+enrollmentRouter.post('/check-status', enrollmentController.checkEnrollmentStatus); 
+
+export { enrollmentRouter };

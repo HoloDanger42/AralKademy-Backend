@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { log } from '../utils/logger.js'; 
 
 class EnrollmentService {
   constructor(EnrollmentModel, SchoolModel, UserModel, LearnerModel) {
@@ -11,13 +12,13 @@ class EnrollmentService {
   async approveEnrollment(enrollmentId, adminId) {
     try {
       const enrollment = await this.EnrollmentModel.findByPk(enrollmentId);
-  
+
       if (!enrollment) {
         throw new Error('Enrollment not found');
       }
-  
+
       let user = await this.UserModel.findOne({ where: { email: enrollment.email } });
-  
+
       if (!user) {
         user = await this.UserModel.create({
           first_name: enrollment.first_name,
@@ -30,29 +31,30 @@ class EnrollmentService {
           role: 'learner',
         });
       }
-  
-      let learner = await this.LearnerModel.findOne({ where: { user_id: user.user_id } });
-  
+
+      let learner = await this.LearnerModel.findOne({ where: { user_id: user.id } }); 
+
       if (!learner) {
         learner = await this.LearnerModel.create({
-          user_id: user.user_id,
-          year_level: enrollment.year_level, 
+          user_id: user.id,         
+          year_level: enrollment.year_level,
           enrollment_id: enrollment.enrollment_id,
         });
       }
-  
+
       enrollment.status = 'approved';
       enrollment.handled_by_id = adminId;
       await enrollment.save();
-  
-      return enrollment; 
+
+      return enrollment;
     } catch (error) {
+      log.error('Error approving enrollment:', error); // Log the error
       if (error.message === 'Enrollment not found') {
         throw error;
       }
       throw new Error('Failed to approve enrollment');
     }
-  }  
+  }
 
   async rejectEnrollment(enrollmentId, adminId) {
     try {
@@ -65,6 +67,7 @@ class EnrollmentService {
       await enrollment.save();
       return enrollment;
     } catch (error) {
+      log.error('Error rejecting enrollment:', error); // Log the error
       if (error.message === 'Enrollment not found') {
         throw error;
       }
@@ -106,6 +109,7 @@ class EnrollmentService {
         status
       });
     } catch (error) {
+        log.error('Error during enrollment creation:', error); // Log the error
       if (error.name === 'SequelizeUniqueConstraintError') {
         if (error.errors[0].path === 'email') {
           throw new Error('Email already exists');
@@ -121,6 +125,7 @@ class EnrollmentService {
         attributes: { exclude: ['password'] }
       });
     } catch (error) {
+        log.error('Error fetching all enrollments:', error); // Log the error
       throw new Error('Failed to fetch enrollments');
     }
   }
@@ -135,6 +140,7 @@ class EnrollmentService {
       }
       return enrollment;
     } catch (error) {
+      log.error('Error fetching enrollment by ID:', error); // Log the error
       if (error.message === 'Enrollment not found') {
         throw error;
       }
@@ -148,20 +154,40 @@ class EnrollmentService {
       if (!school) {
         throw new Error('School not found');
       }
-  
+
       const enrollments = await this.EnrollmentModel.findAll({
         where: { school_id: schoolId },
         attributes: { exclude: ['password'] }
       });
-  
+
       return enrollments;
     } catch (error) {
+        log.error('Error fetching enrollments by school:', error); // Log the error
       if (error.message === 'School not found') {
         throw error;
       }
       throw new Error('Failed to fetch enrollments by school');
     }
   }
+    // Add the new method to check enrollment status by email
+    async checkEnrollmentStatus(email) {
+        try {
+            const enrollment = await this.EnrollmentModel.findOne({
+                where: { email: email },
+                attributes: ['status'] // Only retrieve the 'status' column
+            });
+
+            if (!enrollment) {
+                return null; // Or 'not_found'
+            }
+
+            return enrollment.status;
+
+        } catch (error) {
+            log.error('Error checking enrollment status:', error);  // Log the error
+            throw error; 
+        }
+    }
 }
 
 export default EnrollmentService;
