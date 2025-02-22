@@ -3,14 +3,14 @@ import app from '../../src/server.js'
 import { sequelize } from '../../src/config/database.js'
 import { School } from '../../src/models/School.js'
 import { User } from '../../src/models/User.js'
-import { Teacher } from '../../src/models/Teacher.js'
+import { Admin } from '../../src/models/Admin.js'
 import { Course } from '../../src/models/Course.js'
 import '../../src/models/associate.js'
 
 describe('Course Endpoints (Integration Tests)', () => {
   let server
   let authToken
-  let testTeacher
+  let testAdmin
   let testSchool
 
   beforeAll(async () => {
@@ -23,20 +23,20 @@ describe('Course Endpoints (Integration Tests)', () => {
       contact_no: '02-8123-4567',
     })
 
-    // Create test user/teacher
+    // Create test user/admin
     const user = await User.create({
-      email: 'testteacher@example.com',
+      email: 'testadmin@example.com',
       password: 'testPassword',
       first_name: 'Test',
-      last_name: 'Teacher',
+      last_name: 'Admin',
       birth_date: new Date('1990-01-01'),
       contact_no: '09123456789',
       school_id: testSchool.school_id,
-      role: 'teacher',
+      role: 'admin',
     })
 
-    // Create teacher record
-    testTeacher = await Teacher.create({
+    // Create admin record
+    testAdmin = await Admin.create({
       user_id: user.id,
     })
 
@@ -44,7 +44,7 @@ describe('Course Endpoints (Integration Tests)', () => {
 
     // Login to get auth token
     const loginRes = await request(app).post('/users/login').send({
-      email: 'testteacher@example.com',
+      email: 'testadmin@example.com',
       password: 'testPassword',
     })
 
@@ -63,7 +63,7 @@ describe('Course Endpoints (Integration Tests)', () => {
       const courseData = {
         name: 'Introduction to Programming',
         description: 'Learn the basics of programming.',
-        user_id: testTeacher.user_id,
+        user_id: null,
         student_teacher_group_id: null,
         learner_group_id: null,
       }
@@ -77,8 +77,7 @@ describe('Course Endpoints (Integration Tests)', () => {
       expect(res.body.course).toEqual(
         expect.objectContaining({
           name: courseData.name,
-          description: courseData.description,
-          user_id: testTeacher.user_id,
+          description: courseData.description
         })
       )
     })
@@ -90,28 +89,12 @@ describe('Course Endpoints (Integration Tests)', () => {
           .set('Authorization', `Bearer ${authToken}`)
           .send({
             name: '',
-            description: 'Test description',
-            user_id: testTeacher.user_id,
+            description: 'Test description'
           })
 
         expect(res.status).toBe(400)
         expect(res.body).toEqual({
           message: 'Course name is required',
-        })
-      })
-
-      it('should handle missing teacher ID', async () => {
-        const res = await request(app)
-          .post('/courses')
-          .set('Authorization', `Bearer ${authToken}`)
-          .send({
-            name: 'Test Course',
-            description: 'Test description',
-          })
-
-        expect(res.status).toBe(400)
-        expect(res.body).toEqual({
-          message: 'Teacher ID is required',
         })
       })
 
@@ -121,8 +104,7 @@ describe('Course Endpoints (Integration Tests)', () => {
           .set('Authorization', `Bearer ${authToken}`)
           .send({
             name: 'a'.repeat(256),
-            description: 'Test description',
-            user_id: testTeacher.user_id,
+            description: 'Test description'
           })
 
         expect(res.status).toBe(400)
@@ -143,13 +125,11 @@ describe('Course Endpoints (Integration Tests)', () => {
       await Course.bulkCreate([
         {
           name: 'Course 1',
-          description: 'Description 1',
-          user_id: testTeacher.user_id,
+          description: 'Description 1'
         },
         {
           name: 'Course 2',
-          description: 'Description 2',
-          user_id: testTeacher.user_id,
+          description: 'Description 2'
         },
       ])
 
@@ -162,8 +142,7 @@ describe('Course Endpoints (Integration Tests)', () => {
           rows: expect.arrayContaining([
             expect.objectContaining({
               name: expect.any(String),
-              description: expect.any(String),
-              user_id: testTeacher.user_id,
+              description: expect.any(String)
             }),
           ]),
         })

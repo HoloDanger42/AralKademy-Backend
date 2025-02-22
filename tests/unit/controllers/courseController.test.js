@@ -57,7 +57,7 @@ describe('Course Controller', () => {
 
   describe('createCourse', () => {
     test('should create a new course successfully (create course)', async () => {
-      mockReq.body = { name: 'New Course', description: 'Description', userId: 1 }
+      mockReq.body = { name: 'New Course', description: 'Description'}
       const newCourse = { id: 1, name: 'New Course' }
       jest.spyOn(CourseService.prototype, 'createCourse').mockResolvedValue(newCourse)
 

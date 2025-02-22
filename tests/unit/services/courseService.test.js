@@ -15,10 +15,7 @@ describe('Course Service', () => {
       update: jest.fn(),
       destroy: jest.fn(),
     }
-    const mockTeacherModel = {
-      findOne: jest.fn(),
-    }
-    courseService = new CourseService(mockCourseModel, mockTeacherModel)
+    courseService = new CourseService(mockCourseModel)
   })
 
   describe('getAllCourses', () => {
@@ -62,20 +59,16 @@ describe('Course Service', () => {
         ...courseData,
         learner_group_id: null,
         student_teacher_group_id: null,
-        user_id: 'some-valid-teacher-id',
+        user_id: null,
       }
 
-      courseService.TeacherModel.findOne.mockResolvedValue({
-        id: 1,
-        user_id: 'some-valid-teacher-id',
-      })
       mockCourseModel.create.mockResolvedValue({ id: 1, ...expectedData })
 
       // Act
       const course = await courseService.createCourse(
         courseData.name,
         courseData.description,
-        'some-valid-teacher-id',
+        courseData.user_id,
         courseData.learner_group_id,
         courseData.student_teacher_group_id
       )
@@ -83,50 +76,38 @@ describe('Course Service', () => {
       // Assert
       expect(course).toEqual({ id: 1, ...expectedData })
       expect(mockCourseModel.create).toHaveBeenCalledWith(expectedData)
-      expect(courseService.TeacherModel.findOne).toHaveBeenCalledWith({
-        where: { user_id: 'some-valid-teacher-id' },
-      })
     })
 
     test('should throw error when course name is empty (create course)', async () => {
       // Arrange
       const invalidCourse = invalidCourses[0]
-      const userId = 'some-user-id'
 
       // Act & Assert
       await expect(
-        courseService.createCourse('', invalidCourse.description, userId)
+        courseService.createCourse('', invalidCourse.description)
       ).rejects.toThrow('Course name is required')
     })
 
     test('should throw error when course name is too long (create course)', async () => {
       // Arrange
       const invalidCourse = invalidCourses[1]
-      const userId = 'some-user-id'
 
       // Act & Assert
       await expect(
-        courseService.createCourse(invalidCourse.name, invalidCourse.description, userId)
+        courseService.createCourse(invalidCourse.name, invalidCourse.description)
       ).rejects.toThrow('Course name is too long')
     })
 
     test('should throw error when course creation fails (create course)', async () => {
       // Arrange
       const courseData = validCourses[0]
-      const userId = 'some-user-id'
-
-      // Mock teacher find
-      courseService.TeacherModel.findOne.mockResolvedValue({
-        id: 1,
-        user_id: userId,
-      })
 
       // Mock course creation failure
       mockCourseModel.create.mockRejectedValue(new Error('Database error'))
 
       // Act & Assert
       await expect(
-        courseService.createCourse(courseData.name, courseData.description, userId)
+        courseService.createCourse(courseData.name, courseData.description)
       ).rejects.toThrow('Failed to create course')
     })
   })
