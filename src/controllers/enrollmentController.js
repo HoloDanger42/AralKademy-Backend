@@ -1,6 +1,7 @@
+// controllers/enrollmentController.js
 import EnrollmentService from '../services/enrollmentService.js';
 import { Enrollment } from '../models/Enrollment.js';
-import { School} from '../models/School.js';
+import { School } from '../models/School.js';
 import { log } from '../utils/logger.js';
 
 const enrollmentService = new EnrollmentService(Enrollment, School);
@@ -54,7 +55,7 @@ const getEnrollmentById = async (req, res) => {
 const approveEnrollment = async (req, res) => {
   try {
     const enrollmentId = req.params.id;
-    const adminId = req.user.id;
+    const adminId = req.user.id;  
     const enrollment = await enrollmentService.approveEnrollment(enrollmentId, adminId);
     res.status(200).json(enrollment);
     log.info(`Enrollment with ID: ${enrollmentId} was approved`);
@@ -70,7 +71,7 @@ const approveEnrollment = async (req, res) => {
 const rejectEnrollment = async (req, res) => {
   try {
     const enrollmentId = req.params.id;
-    const adminId = req.user.id;
+    const adminId = req.user.id; // Assuming you have authentication middleware
     const enrollment = await enrollmentService.rejectEnrollment(enrollmentId, adminId);
     res.status(200).json(enrollment);
     log.info(`Enrollment with ID: ${enrollmentId} was rejected`);
@@ -109,4 +110,27 @@ const getEnrollmentsBySchool = async (req, res) => {
   }
 };
 
-export { getAllEnrollments, enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getEnrollmentsBySchool };
+// Function to check enrollment status
+const checkEnrollmentStatus = async (req, res) => {
+  try {
+      const { email } = req.body;
+
+      if (!email) {
+          return res.status(400).json({ message: 'Email is required' });
+      }
+
+      const status = await enrollmentService.checkEnrollmentStatus(email);
+
+      if (!status) {
+          return res.status(404).json({ message: 'Enrollment not found for this email' }); 
+      }
+
+      res.status(200).json({ status });
+
+  } catch (error) {
+      log.error('Error checking enrollment status:', error);
+      return res.status(500).json({message: 'Failed to check enrollment status'});
+  }
+};
+
+export { getAllEnrollments, enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getEnrollmentsBySchool, checkEnrollmentStatus }; 
