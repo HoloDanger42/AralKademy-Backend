@@ -5,6 +5,10 @@ import rateLimit from 'express-rate-limit'
 import cache from 'memory-cache'
 import paginate from 'express-paginate'
 
+//cors
+import cors from 'cors';
+
+
 // Middleware
 import { errorMiddleware, SpecificError } from './middleware/errorMiddleware.js'
 import { logMiddleware } from './middleware/logMiddleware.js'
@@ -20,6 +24,26 @@ import { coursesRouter } from './routes/courses.js'
 dotenv.config()
 
 const app = express()
+
+//Cors configuration
+const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  optionsSuccessStatus: 200,
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+//----
+
+
 
 app.use(express.json())
 
@@ -96,7 +120,8 @@ app.get('/', (_req, res) => {
   res.send('API is running')
 })
 
-app.use('/users', usersRouter)
+//IMPORTANT* always put /api/ before the route
+app.use('/api/users', usersRouter)
 app.use('/courses', coursesRouter)
 
 app.get('/error', (_req, _res, next) => {
