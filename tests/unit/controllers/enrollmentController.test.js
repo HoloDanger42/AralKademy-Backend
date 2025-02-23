@@ -1,5 +1,5 @@
 import { afterEach, jest, describe, test, beforeEach, expect } from '@jest/globals';
-import { enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getAllEnrollments, getEnrollmentsBySchool } from '../../../src/controllers/enrollmentController.js';
+import { enroll, getEnrollmentById, approveEnrollment, rejectEnrollment, getAllEnrollments, getEnrollmentsBySchool, checkEnrollmentStatus } from '../../../src/controllers/enrollmentController.js';
 import EnrollmentService from '../../../src/services/enrollmentService.js';
 import { log } from '../../../src/utils/logger.js';
 import { validEnrollments } from '../../fixtures/enrollmentData.js';
@@ -13,9 +13,10 @@ describe('Enrollment Controller', () => {
   let rejectEnrollmentSpy;
   let getAllEnrollmentsSpy;
   let getEnrollmentsBySchoolSpy;
+  let checkEnrollmentStatusSpy;
 
   beforeEach(() => {
-    mockReq = { body: {}, params: {} };
+    mockReq = { body: {}, params: {}, query: {} };
     mockRes = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
@@ -26,7 +27,8 @@ describe('Enrollment Controller', () => {
     approveEnrollmentSpy = jest.spyOn(EnrollmentService.prototype, 'approveEnrollment');
     rejectEnrollmentSpy = jest.spyOn(EnrollmentService.prototype, 'rejectEnrollment');
     getAllEnrollmentsSpy = jest.spyOn(EnrollmentService.prototype, 'getAllEnrollments');
-    getEnrollmentsBySchoolSpy = jest.spyOn(EnrollmentService.prototype, 'getEnrollmentsBySchool')
+    getEnrollmentsBySchoolSpy = jest.spyOn(EnrollmentService.prototype, 'getEnrollmentsBySchool');
+    checkEnrollmentStatusSpy = jest.spyOn(EnrollmentService.prototype, 'checkEnrollmentStatus');
 
     jest.spyOn(log, 'info');
     jest.spyOn(log, 'error');
@@ -384,4 +386,66 @@ describe('Enrollment Controller', () => {
       expect(log.error).toHaveBeenCalledWith('Get enrollments by school error:', error);
     });
   });
+
+  describe('checkEnrollmentStatus', () => {
+    test('should check enrollment status by email successfully (check enrollment status)', async () => {
+      // Arrange
+      const email = 'test@example.com';
+      mockReq.body.email = email; // Fix: Use req.body instead of req.query
+      const mockEnrollment = 'approved'; // Fix: Use string instead of object
+      checkEnrollmentStatusSpy.mockResolvedValue(mockEnrollment);
+
+      // Act
+      await checkEnrollmentStatus(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({ status: mockEnrollment });
+      expect(checkEnrollmentStatusSpy).toHaveBeenCalledWith(email);
+    });
+
+    test('should handle enrollment not found (check enrollment status)', async () => {
+      // Arrange
+      const email = 'test@example.com';
+      mockReq.body.email = email; // Fix: Use req.body instead of req.query
+      const error = new Error('Enrollment not found');
+      checkEnrollmentStatusSpy.mockResolvedValue(null); // Fix: Return null, not reject
+
+      // Act
+      await checkEnrollmentStatus(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Enrollment not found for this email' }); // Fix: Correct error message
+    });
+
+    test('should handle errors when checking enrollment status (check enrollment status)', async () => {
+      // Arrange
+      const email = 'test@example.com';
+      mockReq.body.email = email; // Fix: Use req.body instead of req.query
+      const error = new Error('Unexpected error');
+      checkEnrollmentStatusSpy.mockRejectedValue(error);
+
+      // Act
+      await checkEnrollmentStatus(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to check enrollment status' });
+      expect(log.error).toHaveBeenCalledWith('Error checking enrollment status:', error); // Fix: Correct error log
+    });
+
+    test('should handle missing email (check enrollment status)', async () => {
+      // Arrange
+      const error = new Error('Email is required');
+      checkEnrollmentStatusSpy.mockRejectedValue(error);
+
+      // Act
+      await checkEnrollmentStatus(mockReq, mockRes);
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Email is required' });
+    });
+  }); 
 });

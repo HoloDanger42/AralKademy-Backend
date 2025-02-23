@@ -9,6 +9,7 @@ const mockEnrollmentModel = {
   create: jest.fn(),
   findAll: jest.fn(),
   findByPk: jest.fn(),
+  findOne: jest.fn(),
 };
 
 const mockSchoolModel = {
@@ -210,35 +211,37 @@ describe('Enrollment Service', () => {
         school_id: 5,
         year_level: '3rd Year',
         status: 'pending',
+        handled_by_id: null,  // Ensure this is present initially
         save: jest.fn()
       };
-  
-      const user = { user_id: 101, email: 'john@example.com' };
-      const learner = { user_id: 101, enrollment_id: enrollmentId };
-  
+    
+      const user = { id: 101, email: 'john@example.com' }; // Fix: Use 'id' instead of 'user_id'
+      const learner = { user_id: user.id, enrollment_id: enrollmentId }; // Fix: Use user.id
+    
       mockEnrollmentModel.findByPk.mockResolvedValue(enrollment);
       mockUserModel.findOne.mockResolvedValue(null);  
-      mockUserModel.create.mockResolvedValue(user);  
+      mockUserModel.create.mockResolvedValue(user);  // Fix: Ensure it returns user with 'id'
       mockLearnerModel.findOne.mockResolvedValue(null); 
       mockLearnerModel.create.mockResolvedValue(learner); 
-  
+    
       // Act
       const result = await enrollmentService.approveEnrollment(enrollmentId, adminId);
-  
+    
       // Assert
       expect(result).toMatchObject({
         id: enrollmentId,
         status: 'approved',
-        handled_by_id: adminId
+        handled_by_id: adminId // Ensure this is included
       });
-  
+    
       expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId);
       expect(mockUserModel.findOne).toHaveBeenCalledWith({ where: { email: enrollment.email } });
       expect(mockUserModel.create).toHaveBeenCalledWith(expect.objectContaining({ email: enrollment.email }));
-      expect(mockLearnerModel.findOne).toHaveBeenCalledWith({ where: { user_id: user.user_id } });
-      expect(mockLearnerModel.create).toHaveBeenCalledWith(expect.objectContaining({ user_id: user.user_id }));
+      expect(mockLearnerModel.findOne).toHaveBeenCalledWith({ where: { user_id: user.id } }); // Fix: Check user.id
+      expect(mockLearnerModel.create).toHaveBeenCalledWith(expect.objectContaining({ user_id: user.id })); // Fix: Use user.id
       expect(enrollment.save).toHaveBeenCalled();
     });
+    
   
     test('should throw an error if enrollment is not found (approve enrollment)', async () => {
       // Arrange
@@ -441,6 +444,54 @@ describe('Enrollment Service', () => {
   
       // Act & Assert
       await expect(enrollmentService.getEnrollmentsBySchool(schoolId)).rejects.toThrow('Failed to fetch enrollments by school');
+    });
+  });
+
+  describe('checkEnrollmentStatus', () => {
+    test('should retrieve the enrollment status by email successfully (check enrollment status)', async () => {
+      // Arrange
+      const email = 'test@example.com';
+      const expectedStatus = 'pending';
+      mockEnrollmentModel.findOne.mockResolvedValue({ status: expectedStatus });
+
+      // Act
+      const status = await enrollmentService.checkEnrollmentStatus(email);
+
+      // Assert
+      expect(status).toEqual(expectedStatus);
+      expect(mockEnrollmentModel.findOne).toHaveBeenCalledWith({
+        where: { email },
+        attributes: ['status'],
+      });
+    });
+
+    test('should return null if the enrollment does not exist (check enrollment status)', async () => {
+      // Arrange
+      const email = 'test@example.com';
+      mockEnrollmentModel.findOne.mockResolvedValue(null);
+
+      // Act
+      const status = await enrollmentService.checkEnrollmentStatus(email);
+
+      // Assert
+      expect(status).toBeNull();
+      expect(mockEnrollmentModel.findOne).toHaveBeenCalledWith({
+        where: { email },
+        attributes: ['status'],
+      });
+    });
+
+    test('should throw an error if fetching the enrollment status fails (check enrollment status)', async () => {
+      // Arrange
+      const email = 'test@example.com';
+      mockEnrollmentModel.findOne.mockRejectedValue(new Error('Failed to fetch enrollment status'));
+
+      // Act & Assert
+      await expect(enrollmentService.checkEnrollmentStatus(email)).rejects.toThrow('Failed to fetch enrollment status');
+      expect(mockEnrollmentModel.findOne).toHaveBeenCalledWith({
+        where: { email },
+        attributes: ['status'],
+      });
     });
   });
 });
