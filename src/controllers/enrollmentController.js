@@ -48,7 +48,7 @@ const createEnrollment = async (req, res) => {
     } else {
       const cleanedContactNo = contact_no.replace(/[-\s()]/g, ""); // Remove hyphens, spaces, parentheses
         if (!/^(?:\+63|0)9\d{9}$/.test(cleanedContactNo)) {
-            errors.contact_no = 'Invalid contact number format. Must start with 09 or +63 and have 11 digits.';
+            errors.contact_no = 'Invalid contact number format. Must start with 09 and have 11 digits.';
         }
     }
       // 4. Check for presence of required fields (good general check)
@@ -104,9 +104,9 @@ const createEnrollment = async (req, res) => {
     }
 
     // Handle unique constraint errors (e.g., duplicate email)
-    if (error.name === 'SequelizeUniqueConstraintError') {
+    if (error.message === 'Email already exists') {
       return res.status(409).json({ errors: { email: 'Email already exists.' } });
-    }
+  }
 
     return res.status(500).json({ message: 'Failed to create enrollment' });
   }
