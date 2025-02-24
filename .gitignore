@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Node modules
 node_modules/
 
@@ -15,3 +16,48 @@ coverage/
 # OS-specific
 .DS_Store
 Thumbs.db
+=======
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# Build & Distribution
+dist/
+build/
+
+# Database
+config/*.json
+!config/config.example.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temp files
+*.swp
+*.swo
+*~
+
+# Migration archives
+/migration_files/
+>>>>>>> fa553813e6c2625c3d51c2c3f858e3fb9bfc7ef2

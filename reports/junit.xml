@@ -1,0 +1,784 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="344" failures="3" errors="0" time="158.789">
+  <testsuite name="UserService" errors="0" failures="2" skipped="0" timestamp="2025-01-29T12:56:11" time="23.177" tests="19">
+    <testcase classname="UserService Validation should validate email format" name="UserService Validation should validate email format" time="1.597">
+    </testcase>
+    <testcase classname="UserService Validation should validate contact number format" name="UserService Validation should validate contact number format" time="1.026">
+    </testcase>
+    <testcase classname="UserService Validation should validate role" name="UserService Validation should validate role" time="0.978">
+    </testcase>
+    <testcase classname="UserService Validation should validate password length" name="UserService Validation should validate password length" time="1.014">
+    </testcase>
+    <testcase classname="UserService User Creation should create teacher user with role data" name="UserService User Creation should create teacher user with role data" time="0.837">
+    </testcase>
+    <testcase classname="UserService User Creation should fail creating user with existing email" name="UserService User Creation should fail creating user with existing email" time="0.771">
+    </testcase>
+    <testcase classname="UserService Authentication should login user with valid credentials" name="UserService Authentication should login user with valid credentials" time="0.705">
+    </testcase>
+    <testcase classname="UserService Authentication should fail login with invalid credentials" name="UserService Authentication should fail login with invalid credentials" time="0.856">
+    </testcase>
+    <testcase classname="UserService User Retrieval should get user by id with role details" name="UserService User Retrieval should get user by id with role details" time="1.133">
+      <failure>Error: expect(received).toBeUndefined()
+
+Received: &quot;$2a$10$AqSZM5H9s/J/xlfZn6q/kOef.CTyLowr29wo8UJ6VE28JjRwST3iW&quot;
+    at Object.toBeUndefined (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\tests\unit\services\userService.test.js:214:34)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)</failure>
+    </testcase>
+    <testcase classname="UserService User Retrieval should fail with non-existent user id" name="UserService User Retrieval should fail with non-existent user id" time="1.1">
+      <failure>Error: expect(received).rejects.toThrow(expected)
+
+Expected substring: &quot;User not found&quot;
+Received message:   &quot;Failed to fetch user&quot;
+
+      227 |       return user;
+      228 |     } catch (error) {
+    &gt; 229 |       throw new Error(&apos;Failed to fetch user&apos;);
+          |             ^
+      230 |     }
+      231 |   }
+      232 | }
+
+      at UserService.getUserById (src/services/userService.js:229:13)
+      at Object.&lt;anonymous&gt; (tests/unit/services/userService.test.js:219:7)
+    at Object.toThrow (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\expect\build\index.js:218:22)
+    at Object.toThrow (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\tests\unit\services\userService.test.js:219:58)
+    at Promise.then.completed (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\jest-circus\build\utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\jest-circus\build\utils.js:231:10)
+    at _callCircusTest (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\jest-circus\build\run.js:316:40)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at _runTest (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\jest-circus\build\run.js:252:3)
+    at _runTestsForDescribeBlock (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\jest-circus\build\run.js:126:9)
+    at _runTestsForDescribeBlock (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\jest-circus\build\run.js:121:9)
+    at _runTestsForDescribeBlock (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\jest-circus\build\run.js:121:9)
+    at run (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\jest-circus\build\run.js:71:3)
+    at runAndTransformResultsToJestFormat (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapterInit.js:122:21)
+    at jestAdapter (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\jest-circus\build\legacy-code-todo-rewrite\jestAdapter.js:79:19)
+    at runTestInternal (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\jest-runner\build\runTest.js:367:16)
+    at runTest (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\node_modules\jest-runner\build\runTest.js:444:34)</failure>
+    </testcase>
+    <testcase classname="UserService User Retrieval should get paginated users" name="UserService User Retrieval should get paginated users" time="2.818">
+    </testcase>
+    <testcase classname="UserService User Update should update user data" name="UserService User Update should update user data" time="0.736">
+    </testcase>
+    <testcase classname="UserService Password Management should change password with valid credentials" name="UserService Password Management should change password with valid credentials" time="1.358">
+    </testcase>
+    <testcase classname="UserService Password Management should fail password change with invalid old password" name="UserService Password Management should fail password change with invalid old password" time="1.023">
+    </testcase>
+    <testcase classname="UserService User Deletion should delete existing user" name="UserService User Deletion should delete existing user" time="0.646">
+    </testcase>
+    <testcase classname="UserService User Deletion should throw error for non-existent user" name="UserService User Deletion should throw error for non-existent user" time="0.638">
+    </testcase>
+    <testcase classname="UserService User Deletion should rollback transaction on error" name="UserService User Deletion should rollback transaction on error" time="1.152">
+    </testcase>
+    <testcase classname="UserService Role and School Queries should get users by role" name="UserService Role and School Queries should get users by role" time="1.026">
+    </testcase>
+    <testcase classname="UserService Role and School Queries should get users by school" name="UserService Role and School Queries should get users by school" time="1.035">
+    </testcase>
+  </testsuite>
+  <testsuite name="User Controller" errors="0" failures="1" skipped="0" timestamp="2025-01-29T12:56:35" time="0.755" tests="4">
+    <testcase classname="User Controller login should login user successfully" name="User Controller login should login user successfully" time="0.024">
+    </testcase>
+    <testcase classname="User Controller login should handle invalid credentials" name="User Controller login should handle invalid credentials" time="0.06">
+      <failure>Error: expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+Expected: 500
+Received: 401
+
+Number of calls: 1
+    at Object.toHaveBeenCalledWith (C:\Users\Tristan\Documents\AralKademy2\AralKademy-Backend\tests\unit\controllers\userController.test.js:70:30)</failure>
+    </testcase>
+    <testcase classname="User Controller login should handle general server errors during login" name="User Controller login should handle general server errors during login" time="0.008">
+    </testcase>
+    <testcase classname="User Controller getAllUsers should return all users successfully" name="User Controller getAllUsers should return all users successfully" time="0.012">
+    </testcase>
+  </testsuite>
+  <testsuite name="Database Configuration" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:56:35" time="0.622" tests="6">
+    <testcase classname="Database Configuration should create Sequelize instance with correct config" name="Database Configuration should create Sequelize instance with correct config" time="0.005">
+    </testcase>
+    <testcase classname="Database Configuration should establish database connection successfully" name="Database Configuration should establish database connection successfully" time="0.003">
+    </testcase>
+    <testcase classname="Database Configuration should handle connection failure" name="Database Configuration should handle connection failure" time="0.027">
+    </testcase>
+    <testcase classname="Database Configuration should handle sync failure" name="Database Configuration should handle sync failure" time="0.002">
+    </testcase>
+    <testcase classname="Database Configuration Environment Configuration should validate required environment variables" name="Database Configuration Environment Configuration should validate required environment variables" time="0.003">
+    </testcase>
+    <testcase classname="Database Configuration Connection Timeout should handle connection timeout" name="Database Configuration Connection Timeout should handle connection timeout" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="RoleService" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:56:36" time="21.437" tests="18">
+    <testcase classname="RoleService assignRole should assign teacher role" name="RoleService assignRole should assign teacher role" time="1.333">
+    </testcase>
+    <testcase classname="RoleService assignRole should fail with invalid role" name="RoleService assignRole should fail with invalid role" time="1.125">
+    </testcase>
+    <testcase classname="RoleService assignRole should fail with non-existent user" name="RoleService assignRole should fail with non-existent user" time="1.051">
+    </testcase>
+    <testcase classname="RoleService assignRole should fail when assigning learner without enrollment_id" name="RoleService assignRole should fail when assigning learner without enrollment_id" time="1.109">
+    </testcase>
+    <testcase classname="RoleService assignRole should fail when assigning student_teacher without required fields" name="RoleService assignRole should fail when assigning student_teacher without required fields" time="0.886">
+    </testcase>
+    <testcase classname="RoleService assignRole should fail when assigning learner without year_level" name="RoleService assignRole should fail when assigning learner without year_level" time="0.771">
+    </testcase>
+    <testcase classname="RoleService assignRole should fail when assigning same role" name="RoleService assignRole should fail when assigning same role" time="0.728">
+    </testcase>
+    <testcase classname="RoleService changeRole should change from teacher to admin" name="RoleService changeRole should change from teacher to admin" time="1.299">
+    </testcase>
+    <testcase classname="RoleService changeRole should maintain role data integrity during change" name="RoleService changeRole should maintain role data integrity during change" time="0.853">
+    </testcase>
+    <testcase classname="RoleService changeRole should validate role data during change" name="RoleService changeRole should validate role data during change" time="0.757">
+    </testcase>
+    <testcase classname="RoleService changeRole should handle concurrent role changes" name="RoleService changeRole should handle concurrent role changes" time="0.866">
+    </testcase>
+    <testcase classname="RoleService changeRole should fail when changing role for non-existent user" name="RoleService changeRole should fail when changing role for non-existent user" time="1.121">
+    </testcase>
+    <testcase classname="RoleService changeRole should fail when changing to same role" name="RoleService changeRole should fail when changing to same role" time="3.517">
+    </testcase>
+    <testcase classname="RoleService changeRole should rollback on failure" name="RoleService changeRole should rollback on failure" time="1.449">
+    </testcase>
+    <testcase classname="RoleService validateRole should validate correct roles" name="RoleService validateRole should validate correct roles" time="0.993">
+    </testcase>
+    <testcase classname="RoleService validateRole should reject invalid roles" name="RoleService validateRole should reject invalid roles" time="0.962">
+    </testcase>
+    <testcase classname="RoleService getRoleModel should return correct model for each role" name="RoleService getRoleModel should return correct model for each role" time="0.954">
+    </testcase>
+    <testcase classname="RoleService getRoleModel should throw error for invalid role" name="RoleService getRoleModel should throw error for invalid role" time="0.873">
+    </testcase>
+  </testsuite>
+  <testsuite name="Enrollment Model" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:56:57" time="11.974" tests="17">
+    <testcase classname="Enrollment Model Creation should create valid enrollment" name="Enrollment Model Creation should create valid enrollment" time="0.68">
+    </testcase>
+    <testcase classname="Enrollment Model Creation should hash password on creation" name="Enrollment Model Creation should hash password on creation" time="0.466">
+    </testcase>
+    <testcase classname="Enrollment Model Validation should require all mandatory fields" name="Enrollment Model Validation should require all mandatory fields" time="0.535">
+    </testcase>
+    <testcase classname="Enrollment Model Validation should validate email format" name="Enrollment Model Validation should validate email format" time="0.647">
+    </testcase>
+    <testcase classname="Enrollment Model Validation should validate year level range" name="Enrollment Model Validation should validate year level range" time="0.855">
+    </testcase>
+    <testcase classname="Enrollment Model Validation should validate status values" name="Enrollment Model Validation should validate status values" time="0.852">
+    </testcase>
+    <testcase classname="Enrollment Model Validation should not allow future birth dates" name="Enrollment Model Validation should not allow future birth dates" time="1.001">
+    </testcase>
+    <testcase classname="Enrollment Model Validation should allow valid past birth dates" name="Enrollment Model Validation should allow valid past birth dates" time="0.683">
+    </testcase>
+    <testcase classname="Enrollment Model Associations should associate with school" name="Enrollment Model Associations should associate with school" time="0.57">
+    </testcase>
+    <testcase classname="Enrollment Model Associations should associate with admin" name="Enrollment Model Associations should associate with admin" time="0.635">
+    </testcase>
+    <testcase classname="Enrollment Model Status Management should update enrollment status" name="Enrollment Model Status Management should update enrollment status" time="0.643">
+    </testcase>
+    <testcase classname="Enrollment Model Soft Delete should soft delete enrollment" name="Enrollment Model Soft Delete should soft delete enrollment" time="0.528">
+    </testcase>
+    <testcase classname="Enrollment Model Query Operations should find enrollments by status" name="Enrollment Model Query Operations should find enrollments by status" time="0.57">
+    </testcase>
+    <testcase classname="Enrollment Model Query Operations should paginate enrollments" name="Enrollment Model Query Operations should paginate enrollments" time="0.816">
+    </testcase>
+    <testcase classname="Enrollment Model Data Updates should update enrollment details" name="Enrollment Model Data Updates should update enrollment details" time="0.488">
+    </testcase>
+    <testcase classname="Enrollment Model Data Integrity should enforce unique email" name="Enrollment Model Data Integrity should enforce unique email" time="0.613">
+    </testcase>
+    <testcase classname="Enrollment Model Data Integrity should validate contact number format" name="Enrollment Model Data Integrity should validate contact number format" time="0.463">
+    </testcase>
+  </testsuite>
+  <testsuite name="Learner Model" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:57:09" time="27.955" tests="16">
+    <testcase classname="Learner Model Creation should create a valid learner" name="Learner Model Creation should create a valid learner" time="1.623">
+    </testcase>
+    <testcase classname="Learner Model Creation should fail with invalid year level" name="Learner Model Creation should fail with invalid year level" time="1.352">
+    </testcase>
+    <testcase classname="Learner Model Creation should fail without enrollment_id" name="Learner Model Creation should fail without enrollment_id" time="1.532">
+    </testcase>
+    <testcase classname="Learner Model Associations should associate with enrollment" name="Learner Model Associations should associate with enrollment" time="1.456">
+    </testcase>
+    <testcase classname="Learner Model Associations should associate with user" name="Learner Model Associations should associate with user" time="0.823">
+    </testcase>
+    <testcase classname="Learner Model Associations should allow null group association" name="Learner Model Associations should allow null group association" time="0.815">
+    </testcase>
+    <testcase classname="Learner Model Associations should associate with user through belongsTo" name="Learner Model Associations should associate with user through belongsTo" time="0.988">
+    </testcase>
+    <testcase classname="Learner Model Associations should associate with group through belongsTo" name="Learner Model Associations should associate with group through belongsTo" time="0.959">
+    </testcase>
+    <testcase classname="Learner Model Associations should delete learner when user is deleted" name="Learner Model Associations should delete learner when user is deleted" time="2.415">
+    </testcase>
+    <testcase classname="Learner Model Constraints should enforce unique user_id" name="Learner Model Constraints should enforce unique user_id" time="1.639">
+    </testcase>
+    <testcase classname="Learner Model Validation should fail with zero year level" name="Learner Model Validation should fail with zero year level" time="2.721">
+    </testcase>
+    <testcase classname="Learner Model Validation should fail with non-existent user_id" name="Learner Model Validation should fail with non-existent user_id" time="3.754">
+    </testcase>
+    <testcase classname="Learner Model Validation should fail with non-existent enrollment_id" name="Learner Model Validation should fail with non-existent enrollment_id" time="2.32">
+    </testcase>
+    <testcase classname="Learner Model Query Operations should find learner with associations" name="Learner Model Query Operations should find learner with associations" time="1.707">
+    </testcase>
+    <testcase classname="Learner Model Update Operations should update year level" name="Learner Model Update Operations should update year level" time="2.453">
+    </testcase>
+    <testcase classname="Learner Model Data Integrity should cascade delete when enrollment is deleted" name="Learner Model Data Integrity should cascade delete when enrollment is deleted" time="0.835">
+    </testcase>
+  </testsuite>
+  <testsuite name="Course Model" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:57:37" time="10.239" tests="15">
+    <testcase classname="Course Model Creation should create a valid course" name="Course Model Creation should create a valid course" time="0.834">
+    </testcase>
+    <testcase classname="Course Model Creation should fail without required fields" name="Course Model Creation should fail without required fields" time="0.751">
+    </testcase>
+    <testcase classname="Course Model Validation should validate name length" name="Course Model Validation should validate name length" time="0.623">
+    </testcase>
+    <testcase classname="Course Model Validation should validate description length" name="Course Model Validation should validate description length" time="0.643">
+    </testcase>
+    <testcase classname="Course Model Validation should fail with empty course name" name="Course Model Validation should fail with empty course name" time="0.646">
+    </testcase>
+    <testcase classname="Course Model Validation should fail with non-existent teacher_id" name="Course Model Validation should fail with non-existent teacher_id" time="0.664">
+    </testcase>
+    <testcase classname="Course Model Validation should fail with non-existent student_teacher_group_id" name="Course Model Validation should fail with non-existent student_teacher_group_id" time="0.624">
+    </testcase>
+    <testcase classname="Course Model Associations should associate with teacher" name="Course Model Associations should associate with teacher" time="0.637">
+    </testcase>
+    <testcase classname="Course Model Associations should associate with groups" name="Course Model Associations should associate with groups" time="0.58">
+    </testcase>
+    <testcase classname="Course Model Constraints should enforce unique course name" name="Course Model Constraints should enforce unique course name" time="0.574">
+    </testcase>
+    <testcase classname="Course Model Cascade Behavior should delete course when teacher is deleted" name="Course Model Cascade Behavior should delete course when teacher is deleted" time="0.646">
+    </testcase>
+    <testcase classname="Course Model Soft Deletion should soft delete course" name="Course Model Soft Deletion should soft delete course" time="0.554">
+    </testcase>
+    <testcase classname="Course Model Multiple Courses should allow multiple courses per teacher" name="Course Model Multiple Courses should allow multiple courses per teacher" time="0.568">
+    </testcase>
+    <testcase classname="Course Model Updates should update course details" name="Course Model Updates should update course details" time="0.607">
+    </testcase>
+    <testcase classname="Course Model Query Operations should find courses with pagination" name="Course Model Query Operations should find courses with pagination" time="0.628">
+    </testcase>
+  </testsuite>
+  <testsuite name="User Model" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:57:48" time="7.48" tests="33">
+    <testcase classname="User Model Valid Users should create a user with valid data" name="User Model Valid Users should create a user with valid data" time="0.26">
+    </testcase>
+    <testcase classname="User Model Valid Users should create user with valid birthdate in past" name="User Model Valid Users should create user with valid birthdate in past" time="0.259">
+    </testcase>
+    <testcase classname="User Model Invalid Users should not create user with invalid data - case 1" name="User Model Invalid Users should not create user with invalid data - case 1" time="0.118">
+    </testcase>
+    <testcase classname="User Model Invalid Users should not create user with invalid data - case 2" name="User Model Invalid Users should not create user with invalid data - case 2" time="0.204">
+    </testcase>
+    <testcase classname="User Model Invalid Users should not create user with invalid data - case 3" name="User Model Invalid Users should not create user with invalid data - case 3" time="0.088">
+    </testcase>
+    <testcase classname="User Model Invalid Users should not create user with invalid data - case 4" name="User Model Invalid Users should not create user with invalid data - case 4" time="0.084">
+    </testcase>
+    <testcase classname="User Model Invalid Users should not create user with future birthdate" name="User Model Invalid Users should not create user with future birthdate" time="0.189">
+    </testcase>
+    <testcase classname="User Model Invalid Users should not create user with today as birthdate" name="User Model Invalid Users should not create user with today as birthdate" time="0.073">
+    </testcase>
+    <testcase classname="User Model Associations should belong to a school" name="User Model Associations should belong to a school" time="0.101">
+    </testcase>
+    <testcase classname="User Model Associations should have one StudentTeacher" name="User Model Associations should have one StudentTeacher" time="0.087">
+    </testcase>
+    <testcase classname="User Model Associations should have one Teacher" name="User Model Associations should have one Teacher" time="0.094">
+    </testcase>
+    <testcase classname="User Model Associations should have one Admin" name="User Model Associations should have one Admin" time="0.113">
+    </testcase>
+    <testcase classname="User Model Associations should have one Learner" name="User Model Associations should have one Learner" time="0.447">
+    </testcase>
+    <testcase classname="User Model Associations should cascade soft delete to associated roles" name="User Model Associations should cascade soft delete to associated roles" time="0.094">
+    </testcase>
+    <testcase classname="User Model Password Management should hash password on create" name="User Model Password Management should hash password on create" time="0.084">
+    </testcase>
+    <testcase classname="User Model Password Management should rehash password on update" name="User Model Password Management should rehash password on update" time="0.173">
+    </testcase>
+    <testcase classname="User Model Password Management should have comparePassword instance method" name="User Model Password Management should have comparePassword instance method" time="0.128">
+    </testcase>
+    <testcase classname="User Model Data Validation should enforce contact number format" name="User Model Data Validation should enforce contact number format" time="0.094">
+    </testcase>
+    <testcase classname="User Model Data Validation should enforce unique email" name="User Model Data Validation should enforce unique email" time="0.297">
+    </testcase>
+    <testcase classname="User Model Data Validation should validate email format" name="User Model Data Validation should validate email format" time="0.196">
+    </testcase>
+    <testcase classname="User Model Data Validation should require school_id" name="User Model Data Validation should require school_id" time="0.117">
+    </testcase>
+    <testcase classname="User Model Role Management should enforce valid role types" name="User Model Role Management should enforce valid role types" time="0.151">
+    </testcase>
+    <testcase classname="User Model Soft Delete should soft delete user" name="User Model Soft Delete should soft delete user" time="0.159">
+    </testcase>
+    <testcase classname="User Model Soft Delete should restore soft deleted user" name="User Model Soft Delete should restore soft deleted user" time="0.154">
+    </testcase>
+    <testcase classname="User Model Update Operations should update user details" name="User Model Update Operations should update user details" time="0.151">
+    </testcase>
+    <testcase classname="User Model Query Operations should find user by email" name="User Model Query Operations should find user by email" time="0.148">
+    </testcase>
+    <testcase classname="User Model Query Operations should not return soft deleted users in normal queries" name="User Model Query Operations should not return soft deleted users in normal queries" time="0.232">
+    </testcase>
+    <testcase classname="User Model Attributes should have all required attributes" name="User Model Attributes should have all required attributes" time="0.142">
+    </testcase>
+    <testcase classname="User Model Instance Methods should compare password correctly" name="User Model Instance Methods should compare password correctly" time="0.255">
+    </testcase>
+    <testcase classname="User Model Instance Methods should verify correct password with comparePassword" name="User Model Instance Methods should verify correct password with comparePassword" time="0.25">
+    </testcase>
+    <testcase classname="User Model Instance Methods should reject incorrect password with comparePassword" name="User Model Instance Methods should reject incorrect password with comparePassword" time="0.279">
+    </testcase>
+    <testcase classname="User Model Data Sanitization should trim whitespace from string fields" name="User Model Data Sanitization should trim whitespace from string fields" time="0.193">
+    </testcase>
+    <testcase classname="User Model Error Handling should handle concurrent updates correctly" name="User Model Error Handling should handle concurrent updates correctly" time="0.103">
+    </testcase>
+  </testsuite>
+  <testsuite name="School Model" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:57:55" time="15.319" tests="15">
+    <testcase classname="School Model Creation should create a valid school" name="School Model Creation should create a valid school" time="0.729">
+    </testcase>
+    <testcase classname="School Model Creation should fail without required fields" name="School Model Creation should fail without required fields" time="0.823">
+    </testcase>
+    <testcase classname="School Model Validation should validate name is required" name="School Model Validation should validate name is required" time="1.117">
+    </testcase>
+    <testcase classname="School Model Validation should validate address is required" name="School Model Validation should validate address is required" time="0.682">
+    </testcase>
+    <testcase classname="School Model Validation should validate contact number format" name="School Model Validation should validate contact number format" time="0.634">
+    </testcase>
+    <testcase classname="School Model Validation should accept valid contact number formats" name="School Model Validation should accept valid contact number formats" time="1.226">
+    </testcase>
+    <testcase classname="School Model Validation should validate name length" name="School Model Validation should validate name length" time="0.501">
+    </testcase>
+    <testcase classname="School Model Validation should not allow empty contact number" name="School Model Validation should not allow empty contact number" time="0.922">
+    </testcase>
+    <testcase classname="School Model Associations should have many users" name="School Model Associations should have many users" time="1.619">
+    </testcase>
+    <testcase classname="School Model Constraints should enforce unique school name" name="School Model Constraints should enforce unique school name" time="0.553">
+    </testcase>
+    <testcase classname="School Model Soft Deletion should soft delete school" name="School Model Soft Deletion should soft delete school" time="0.798">
+    </testcase>
+    <testcase classname="School Model Updates should update school details" name="School Model Updates should update school details" time="1.171">
+    </testcase>
+    <testcase classname="School Model Cascade Behavior should not delete school with active users" name="School Model Cascade Behavior should not delete school with active users" time="1.021">
+    </testcase>
+    <testcase classname="School Model Query Operations should find schools with pagination" name="School Model Query Operations should find schools with pagination" time="1.076">
+    </testcase>
+    <testcase classname="School Model Query Operations should search schools by name" name="School Model Query Operations should search schools by name" time="1.61">
+    </testcase>
+  </testsuite>
+  <testsuite name="StudentTeacher Model" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:10" time="9.063" tests="12">
+    <testcase classname="StudentTeacher Model Creation should create a valid student teacher" name="StudentTeacher Model Creation should create a valid student teacher" time="2.112">
+    </testcase>
+    <testcase classname="StudentTeacher Model Creation should fail without required fields" name="StudentTeacher Model Creation should fail without required fields" time="0.425">
+    </testcase>
+    <testcase classname="StudentTeacher Model Validation should require section" name="StudentTeacher Model Validation should require section" time="0.343">
+    </testcase>
+    <testcase classname="StudentTeacher Model Validation should require department" name="StudentTeacher Model Validation should require department" time="0.336">
+    </testcase>
+    <testcase classname="StudentTeacher Model Validation should not allow empty section" name="StudentTeacher Model Validation should not allow empty section" time="0.487">
+    </testcase>
+    <testcase classname="StudentTeacher Model Associations should associate with user" name="StudentTeacher Model Associations should associate with user" time="0.362">
+    </testcase>
+    <testcase classname="StudentTeacher Model Associations should associate with group" name="StudentTeacher Model Associations should associate with group" time="0.5">
+    </testcase>
+    <testcase classname="StudentTeacher Model Constraints should enforce unique user_id" name="StudentTeacher Model Constraints should enforce unique user_id" time="0.65">
+    </testcase>
+    <testcase classname="StudentTeacher Model Query Operations should find by department" name="StudentTeacher Model Query Operations should find by department" time="0.573">
+    </testcase>
+    <testcase classname="StudentTeacher Model Soft Delete should soft delete student teacher" name="StudentTeacher Model Soft Delete should soft delete student teacher" time="0.564">
+    </testcase>
+    <testcase classname="StudentTeacher Model Soft Delete should cascade delete when user is deleted" name="StudentTeacher Model Soft Delete should cascade delete when user is deleted" time="0.661">
+    </testcase>
+    <testcase classname="StudentTeacher Model Updates should update student teacher details" name="StudentTeacher Model Updates should update student teacher details" time="0.538">
+    </testcase>
+  </testsuite>
+  <testsuite name="Teacher Model" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:20" time="7.042" tests="11">
+    <testcase classname="Teacher Model Creation should create a valid teacher" name="Teacher Model Creation should create a valid teacher" time="1.022">
+    </testcase>
+    <testcase classname="Teacher Model Creation should fail without user_id" name="Teacher Model Creation should fail without user_id" time="0.776">
+    </testcase>
+    <testcase classname="Teacher Model Creation should fail with non-existent user_id" name="Teacher Model Creation should fail with non-existent user_id" time="0.686">
+    </testcase>
+    <testcase classname="Teacher Model Associations should associate with user" name="Teacher Model Associations should associate with user" time="0.631">
+    </testcase>
+    <testcase classname="Teacher Model Associations should have many courses" name="Teacher Model Associations should have many courses" time="0.454">
+    </testcase>
+    <testcase classname="Teacher Model Deletion should soft delete teacher" name="Teacher Model Deletion should soft delete teacher" time="0.33">
+    </testcase>
+    <testcase classname="Teacher Model Deletion should cascade delete when user is deleted" name="Teacher Model Deletion should cascade delete when user is deleted" time="0.427">
+    </testcase>
+    <testcase classname="Teacher Model Constraints should enforce unique user_id" name="Teacher Model Constraints should enforce unique user_id" time="0.39">
+    </testcase>
+    <testcase classname="Teacher Model Course Management should allow multiple courses" name="Teacher Model Course Management should allow multiple courses" time="0.4">
+    </testcase>
+    <testcase classname="Teacher Model Course Management should cascade delete courses when teacher is deleted" name="Teacher Model Course Management should cascade delete courses when teacher is deleted" time="0.531">
+    </testcase>
+    <testcase classname="Teacher Model Query Operations should find active teachers" name="Teacher Model Query Operations should find active teachers" time="0.644">
+    </testcase>
+  </testsuite>
+  <testsuite name="Group Model" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:27" time="7.154" tests="11">
+    <testcase classname="Group Model Creation should create a valid group" name="Group Model Creation should create a valid group" time="0.732">
+    </testcase>
+    <testcase classname="Group Model Creation should fail without required fields" name="Group Model Creation should fail without required fields" time="0.626">
+    </testcase>
+    <testcase classname="Group Model Validation should validate group type" name="Group Model Validation should validate group type" time="0.429">
+    </testcase>
+    <testcase classname="Group Model Validation should not allow empty name" name="Group Model Validation should not allow empty name" time="0.455">
+    </testcase>
+    <testcase classname="Group Model Associations should have many learners" name="Group Model Associations should have many learners" time="1.107">
+    </testcase>
+    <testcase classname="Group Model Associations should have many student teachers when type is student_teacher" name="Group Model Associations should have many student teachers when type is student_teacher" time="0.649">
+    </testcase>
+    <testcase classname="Group Model Query Operations should find groups by type" name="Group Model Query Operations should find groups by type" time="0.5">
+    </testcase>
+    <testcase classname="Group Model Soft Delete should soft delete group" name="Group Model Soft Delete should soft delete group" time="0.422">
+    </testcase>
+    <testcase classname="Group Model Course Associations should associate with courses" name="Group Model Course Associations should associate with courses" time="0.604">
+    </testcase>
+    <testcase classname="Group Model Updates should update group name" name="Group Model Updates should update group name" time="0.445">
+    </testcase>
+    <testcase classname="Group Model Cascade Delete should handle associations on delete" name="Group Model Cascade Delete should handle associations on delete" time="0.436">
+    </testcase>
+  </testsuite>
+  <testsuite name="Admin Model" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:34" time="6.153" tests="9">
+    <testcase classname="Admin Model Creation should create a valid admin" name="Admin Model Creation should create a valid admin" time="0.866">
+    </testcase>
+    <testcase classname="Admin Model Creation should fail without user_id" name="Admin Model Creation should fail without user_id" time="0.445">
+    </testcase>
+    <testcase classname="Admin Model Associations should associate with user" name="Admin Model Associations should associate with user" time="0.4">
+    </testcase>
+    <testcase classname="Admin Model Associations should have many enrollments" name="Admin Model Associations should have many enrollments" time="0.572">
+    </testcase>
+    <testcase classname="Admin Model Constraints should enforce unique user_id" name="Admin Model Constraints should enforce unique user_id" time="0.443">
+    </testcase>
+    <testcase classname="Admin Model Soft Delete should soft delete admin" name="Admin Model Soft Delete should soft delete admin" time="0.779">
+    </testcase>
+    <testcase classname="Admin Model Soft Delete should cascade delete when user is deleted" name="Admin Model Soft Delete should cascade delete when user is deleted" time="0.687">
+    </testcase>
+    <testcase classname="Admin Model Attributes should have all required attributes" name="Admin Model Attributes should have all required attributes" time="0.618">
+    </testcase>
+    <testcase classname="Admin Model Query Operations should find active admins" name="Admin Model Query Operations should find active admins" time="0.512">
+    </testcase>
+  </testsuite>
+  <testsuite name="Enrollment Controller" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:40" time="0.842" tests="18">
+    <testcase classname="Enrollment Controller enroll should create enrollment successfully (enroll)" name="Enrollment Controller enroll should create enrollment successfully (enroll)" time="0.011">
+    </testcase>
+    <testcase classname="Enrollment Controller enroll should handle missing required fields (enroll)" name="Enrollment Controller enroll should handle missing required fields (enroll)" time="0.022">
+    </testcase>
+    <testcase classname="Enrollment Controller enroll should handle duplicate email error (enroll)" name="Enrollment Controller enroll should handle duplicate email error (enroll)" time="0.007">
+    </testcase>
+    <testcase classname="Enrollment Controller enroll should handle invalid email format error (enroll)" name="Enrollment Controller enroll should handle invalid email format error (enroll)" time="0.006">
+    </testcase>
+    <testcase classname="Enrollment Controller enroll should handle invalid contact number format error (enroll)" name="Enrollment Controller enroll should handle invalid contact number format error (enroll)" time="0.005">
+    </testcase>
+    <testcase classname="Enrollment Controller enroll should handle short password error (enroll)" name="Enrollment Controller enroll should handle short password error (enroll)" time="0.006">
+    </testcase>
+    <testcase classname="Enrollment Controller enroll should handle unexpected server errors during enrollment (enroll)" name="Enrollment Controller enroll should handle unexpected server errors during enrollment (enroll)" time="0.004">
+    </testcase>
+    <testcase classname="Enrollment Controller getEnrollmentById should retrieve enrollment by ID successfully (get enrollment by id)" name="Enrollment Controller getEnrollmentById should retrieve enrollment by ID successfully (get enrollment by id)" time="0.009">
+    </testcase>
+    <testcase classname="Enrollment Controller getEnrollmentById should handle enrollment not found (get enrollment by id)" name="Enrollment Controller getEnrollmentById should handle enrollment not found (get enrollment by id)" time="0.005">
+    </testcase>
+    <testcase classname="Enrollment Controller getEnrollmentById should handle unexpected server errors during retrieval (get enrollment by id)" name="Enrollment Controller getEnrollmentById should handle unexpected server errors during retrieval (get enrollment by id)" time="0.003">
+    </testcase>
+    <testcase classname="Enrollment Controller approveEnrollment should approve enrollment successfully (approve enrollment)" name="Enrollment Controller approveEnrollment should approve enrollment successfully (approve enrollment)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Controller approveEnrollment should handle enrollment not found (approve enrollment)" name="Enrollment Controller approveEnrollment should handle enrollment not found (approve enrollment)" time="0.006">
+    </testcase>
+    <testcase classname="Enrollment Controller approveEnrollment should handle unexpected server errors during approval (approve enrollment)" name="Enrollment Controller approveEnrollment should handle unexpected server errors during approval (approve enrollment)" time="0.003">
+    </testcase>
+    <testcase classname="Enrollment Controller rejectEnrollment should reject enrollment successfully (reject enrollment)" name="Enrollment Controller rejectEnrollment should reject enrollment successfully (reject enrollment)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Controller rejectEnrollment should handle enrollment not found during rejection (reject enrollment)" name="Enrollment Controller rejectEnrollment should handle enrollment not found during rejection (reject enrollment)" time="0.003">
+    </testcase>
+    <testcase classname="Enrollment Controller rejectEnrollment should handle unexpected server errors during rejection (reject enrollment)" name="Enrollment Controller rejectEnrollment should handle unexpected server errors during rejection (reject enrollment)" time="0.05">
+    </testcase>
+    <testcase classname="Enrollment Controller getAllEnrollments should retrieve all enrollments successfully (get all enrollments)" name="Enrollment Controller getAllEnrollments should retrieve all enrollments successfully (get all enrollments)" time="0.022">
+    </testcase>
+    <testcase classname="Enrollment Controller getAllEnrollments should handle unexpected server errors during retrieving all enrollments (get all enrollments)" name="Enrollment Controller getAllEnrollments should handle unexpected server errors during retrieving all enrollments (get all enrollments)" time="0.009">
+    </testcase>
+  </testsuite>
+  <testsuite name="Course Controller" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:41" time="0.599" tests="28">
+    <testcase classname="Course Controller getAllCourses should retrieve all courses successfully (get all courses)" name="Course Controller getAllCourses should retrieve all courses successfully (get all courses)" time="0.013">
+    </testcase>
+    <testcase classname="Course Controller getAllCourses should handle errors (get all courses)" name="Course Controller getAllCourses should handle errors (get all courses)" time="0.023">
+    </testcase>
+    <testcase classname="Course Controller createCourse should create a new course successfully (create course)" name="Course Controller createCourse should create a new course successfully (create course)" time="0.01">
+    </testcase>
+    <testcase classname="Course Controller createCourse should handle validation errors (create course)" name="Course Controller createCourse should handle validation errors (create course)" time="0.008">
+    </testcase>
+    <testcase classname="Course Controller createCourse should handle unique constraint errors (create course)" name="Course Controller createCourse should handle unique constraint errors (create course)" time="0.005">
+    </testcase>
+    <testcase classname="Course Controller createCourse should handle when course name is too long (create course)" name="Course Controller createCourse should handle when course name is too long (create course)" time="0.005">
+    </testcase>
+    <testcase classname="Course Controller createCourse should handle error when creating the course (create course)" name="Course Controller createCourse should handle error when creating the course (create course)" time="0.004">
+    </testcase>
+    <testcase classname="Course Controller assignStudentTeacherGroupCourse should assign a student-teacher group to a course (assign student teacher group course)" name="Course Controller assignStudentTeacherGroupCourse should assign a student-teacher group to a course (assign student teacher group course)" time="0.005">
+    </testcase>
+    <testcase classname="Course Controller assignStudentTeacherGroupCourse should handle when course not found (assign student teacher group course)" name="Course Controller assignStudentTeacherGroupCourse should handle when course not found (assign student teacher group course)" time="0.005">
+    </testcase>
+    <testcase classname="Course Controller assignStudentTeacherGroupCourse should handle error when assigning the student-teacher group (assign student teacher group course)" name="Course Controller assignStudentTeacherGroupCourse should handle error when assigning the student-teacher group (assign student teacher group course)" time="0.01">
+    </testcase>
+    <testcase classname="Course Controller assignLearnerGroupCourse should assign a learner group to a course (assign learner group course)" name="Course Controller assignLearnerGroupCourse should assign a learner group to a course (assign learner group course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Controller assignLearnerGroupCourse should handle when course not found (assign learner group course)" name="Course Controller assignLearnerGroupCourse should handle when course not found (assign learner group course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Controller assignLearnerGroupCourse should handle error when assigning the learner group (assign learner group course)" name="Course Controller assignLearnerGroupCourse should handle error when assigning the learner group (assign learner group course)" time="0.004">
+    </testcase>
+    <testcase classname="Course Controller assignTeacherCourse should assign a teacher to a course (assign teacher course)" name="Course Controller assignTeacherCourse should assign a teacher to a course (assign teacher course)" time="0.004">
+    </testcase>
+    <testcase classname="Course Controller assignTeacherCourse should handle when course not found (assign teacher course)" name="Course Controller assignTeacherCourse should handle when course not found (assign teacher course)" time="0.005">
+    </testcase>
+    <testcase classname="Course Controller assignTeacherCourse should handle error when assigning the teacher (assign teacher course)" name="Course Controller assignTeacherCourse should handle error when assigning the teacher (assign teacher course)" time="0.004">
+    </testcase>
+    <testcase classname="Course Controller getCourseById should return a course by ID successfully (get course by id)" name="Course Controller getCourseById should return a course by ID successfully (get course by id)" time="0.001">
+    </testcase>
+    <testcase classname="Course Controller getCourseById should handle when course not found (get course by id)" name="Course Controller getCourseById should handle when course not found (get course by id)" time="0.004">
+    </testcase>
+    <testcase classname="Course Controller getCourseById should handle error when fetching the course (get course by id)" name="Course Controller getCourseById should handle error when fetching the course (get course by id)" time="0.006">
+    </testcase>
+    <testcase classname="Course Controller softDeleteCourse should soft delete a course successfully (soft delete course)" name="Course Controller softDeleteCourse should soft delete a course successfully (soft delete course)" time="0.002">
+    </testcase>
+    <testcase classname="Course Controller softDeleteCourse should handle when course not found (soft delete course)" name="Course Controller softDeleteCourse should handle when course not found (soft delete course)" time="0.004">
+    </testcase>
+    <testcase classname="Course Controller softDeleteCourse should handle error when deleting the course (soft delete course)" name="Course Controller softDeleteCourse should handle error when deleting the course (soft delete course)" time="0.005">
+    </testcase>
+    <testcase classname="Course Controller editCourse should edit a course successfully (edit course)" name="Course Controller editCourse should edit a course successfully (edit course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Controller editCourse should handle when course not found (edit course)" name="Course Controller editCourse should handle when course not found (edit course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Controller editCourse should handle course name is required (edit course)" name="Course Controller editCourse should handle course name is required (edit course)" time="0.004">
+    </testcase>
+    <testcase classname="Course Controller editCourse should handle course name is too long (edit course)" name="Course Controller editCourse should handle course name is too long (edit course)" time="0.006">
+    </testcase>
+    <testcase classname="Course Controller editCourse should handle error when editing the course (edit course)" name="Course Controller editCourse should handle error when editing the course (edit course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Controller editCourse should handle course name already exists (edit course)" name="Course Controller editCourse should handle course name already exists (edit course)" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="Group Controller" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:41" time="0.695" tests="14">
+    <testcase classname="Group Controller getAllGroups should retrieve all groups successfully (get all groups)" name="Group Controller getAllGroups should retrieve all groups successfully (get all groups)" time="0.025">
+    </testcase>
+    <testcase classname="Group Controller getAllGroups should handle errors when retrieving all groups (get all groups)" name="Group Controller getAllGroups should handle errors when retrieving all groups (get all groups)" time="0.062">
+    </testcase>
+    <testcase classname="Group Controller createGroup should create a new group successfully (create group)" name="Group Controller createGroup should create a new group successfully (create group)" time="0.012">
+    </testcase>
+    <testcase classname="Group Controller createGroup should handle missing fields when creating a group (create group)" name="Group Controller createGroup should handle missing fields when creating a group (create group)" time="0.012">
+    </testcase>
+    <testcase classname="Group Controller createGroup should handle errors when creating a group (create group)" name="Group Controller createGroup should handle errors when creating a group (create group)" time="0.014">
+    </testcase>
+    <testcase classname="Group Controller getGroupById should return a group by ID successfully (get group by id)" name="Group Controller getGroupById should return a group by ID successfully (get group by id)" time="0.01">
+    </testcase>
+    <testcase classname="Group Controller getGroupById should handle when group is not found (get group by id)" name="Group Controller getGroupById should handle when group is not found (get group by id)" time="0.003">
+    </testcase>
+    <testcase classname="Group Controller getGroupById should handle errors when retrieving a group by ID (get group by id)" name="Group Controller getGroupById should handle errors when retrieving a group by ID (get group by id)" time="0.013">
+    </testcase>
+    <testcase classname="Group Controller assignLearnerMembers should assign learners to a group successfully (assign learner members)" name="Group Controller assignLearnerMembers should assign learners to a group successfully (assign learner members)" time="0.008">
+    </testcase>
+    <testcase classname="Group Controller assignLearnerMembers should handle errors when assigning learners to a group (assign learner members)" name="Group Controller assignLearnerMembers should handle errors when assigning learners to a group (assign learner members)" time="0.013">
+    </testcase>
+    <testcase classname="Group Controller assignLearnerMembers should handle missing fields when assigning learners to a group (assign learner members)" name="Group Controller assignLearnerMembers should handle missing fields when assigning learners to a group (assign learner members)" time="0.014">
+    </testcase>
+    <testcase classname="Group Controller assignStudentTeacherMembers should assign student teachers to a group successfully (assign student teacher members)" name="Group Controller assignStudentTeacherMembers should assign student teachers to a group successfully (assign student teacher members)" time="0.013">
+    </testcase>
+    <testcase classname="Group Controller assignStudentTeacherMembers should handle errors when assigning student teachers to a group (assign student teacher members)" name="Group Controller assignStudentTeacherMembers should handle errors when assigning student teachers to a group (assign student teacher members)" time="0.009">
+    </testcase>
+    <testcase classname="Group Controller assignStudentTeacherMembers should handle missing fields when assigning student teachers to a group (assign student teacher members)" name="Group Controller assignStudentTeacherMembers should handle missing fields when assigning student teachers to a group (assign student teacher members)" time="0.006">
+    </testcase>
+  </testsuite>
+  <testsuite name="Server Setup" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:42" time="1.31" tests="9">
+    <testcase classname="Server Setup GET / should return API is running message" name="Server Setup GET / should return API is running message" time="0.111">
+    </testcase>
+    <testcase classname="Server Setup Middleware Configuration should use compression, JSON, and pagination middleware" name="Server Setup Middleware Configuration should use compression, JSON, and pagination middleware" time="0.005">
+    </testcase>
+    <testcase classname="Server Setup Middleware Configuration should set up the security middleware" name="Server Setup Middleware Configuration should set up the security middleware" time="0.003">
+    </testcase>
+    <testcase classname="Server Setup Middleware Configuration should not use cache middleware in test environment" name="Server Setup Middleware Configuration should not use cache middleware in test environment" time="0.003">
+    </testcase>
+    <testcase classname="Server Setup Middleware Configuration should cache responses for /courses route when not in test environment" name="Server Setup Middleware Configuration should cache responses for /courses route when not in test environment" time="0.003">
+    </testcase>
+    <testcase classname="Server Setup Routing should register /users and /courses routes" name="Server Setup Routing should register /users and /courses routes" time="0.003">
+    </testcase>
+    <testcase classname="Server Setup Error Handling should handle unknown routes with 404" name="Server Setup Error Handling should handle unknown routes with 404" time="0.103">
+    </testcase>
+    <testcase classname="Server Setup Error Handling should handle server errors gracefully" name="Server Setup Error Handling should handle server errors gracefully" time="0.045">
+    </testcase>
+    <testcase classname="Server Setup Database Connection should connect to the database on server start" name="Server Setup Database Connection should connect to the database on server start" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="Course Service" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:44" time="0.421" tests="26">
+    <testcase classname="Course Service getAllCourses should retrieve all courses (get all courses)" name="Course Service getAllCourses should retrieve all courses (get all courses)" time="0.007">
+    </testcase>
+    <testcase classname="Course Service getAllCourses should throw an error when the query fails (get all courses)" name="Course Service getAllCourses should throw an error when the query fails (get all courses)" time="0.02">
+    </testcase>
+    <testcase classname="Course Service createCourse should create a course successfully (create course)" name="Course Service createCourse should create a course successfully (create course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Service createCourse should throw error when course name is empty (create course)" name="Course Service createCourse should throw error when course name is empty (create course)" time="0.01">
+    </testcase>
+    <testcase classname="Course Service createCourse should throw error when course name is too long (create course)" name="Course Service createCourse should throw error when course name is too long (create course)" time="0.002">
+    </testcase>
+    <testcase classname="Course Service createCourse should throw error when course creation fails (create course)" name="Course Service createCourse should throw error when course creation fails (create course)" time="0.004">
+    </testcase>
+    <testcase classname="Course Service getCourseById should return the course when it exists (get course by id)" name="Course Service getCourseById should return the course when it exists (get course by id)" time="0.002">
+    </testcase>
+    <testcase classname="Course Service getCourseById should throw an error when the course does not exist (get course by id)" name="Course Service getCourseById should throw an error when the course does not exist (get course by id)" time="0.003">
+    </testcase>
+    <testcase classname="Course Service getCourseById should throw an error when the query fails (get course by id)" name="Course Service getCourseById should throw an error when the query fails (get course by id)" time="0.001">
+    </testcase>
+    <testcase classname="Course Service assignStudentTeacherGroupCourse should successfully assign student teacher group to a course (assign student teacher group course)" name="Course Service assignStudentTeacherGroupCourse should successfully assign student teacher group to a course (assign student teacher group course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Service assignStudentTeacherGroupCourse should throw an error if the course does not exist (assign student teacher group course)" name="Course Service assignStudentTeacherGroupCourse should throw an error if the course does not exist (assign student teacher group course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Service assignStudentTeacherGroupCourse should throw an error if assigning fails (assign student teacher group course)" name="Course Service assignStudentTeacherGroupCourse should throw an error if assigning fails (assign student teacher group course)" time="0.01">
+    </testcase>
+    <testcase classname="Course Service assignLearnerGroupCourse should successfully assign learner group to a course (assign learner group course)" name="Course Service assignLearnerGroupCourse should successfully assign learner group to a course (assign learner group course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Service assignLearnerGroupCourse should throw an error if the course does not exist (assign learner group course)" name="Course Service assignLearnerGroupCourse should throw an error if the course does not exist (assign learner group course)" time="0.001">
+    </testcase>
+    <testcase classname="Course Service assignLearnerGroupCourse should throw an error if assigning fails (assign learner group course)" name="Course Service assignLearnerGroupCourse should throw an error if assigning fails (assign learner group course)" time="0.002">
+    </testcase>
+    <testcase classname="Course Service assignTeacherCourse should successfully assign teacher to a course (assign teacher course)" name="Course Service assignTeacherCourse should successfully assign teacher to a course (assign teacher course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Service assignTeacherCourse should throw an error if the course does not exist (assign teacher course)" name="Course Service assignTeacherCourse should throw an error if the course does not exist (assign teacher course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Service assignTeacherCourse should throw an error if assigning fails (assign teacher course)" name="Course Service assignTeacherCourse should throw an error if assigning fails (assign teacher course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Service softDeleteCourse should successfully soft delete a course (soft delete course)" name="Course Service softDeleteCourse should successfully soft delete a course (soft delete course)" time="0.002">
+    </testcase>
+    <testcase classname="Course Service softDeleteCourse should throw an error if the course does not exist (soft delete course)" name="Course Service softDeleteCourse should throw an error if the course does not exist (soft delete course)" time="0.039">
+    </testcase>
+    <testcase classname="Course Service softDeleteCourse should throw an error if deleting the course fails (soft delete course)" name="Course Service softDeleteCourse should throw an error if deleting the course fails (soft delete course)" time="0.003">
+    </testcase>
+    <testcase classname="Course Service editCourse should successfully edit a course (edit course)" name="Course Service editCourse should successfully edit a course (edit course)" time="0.004">
+    </testcase>
+    <testcase classname="Course Service editCourse should throw an error if the course does not exist (edit course)" name="Course Service editCourse should throw an error if the course does not exist (edit course)" time="0.001">
+    </testcase>
+    <testcase classname="Course Service editCourse should throw an error if saving the course fails (edit course)" name="Course Service editCourse should throw an error if saving the course fails (edit course)" time="0.002">
+    </testcase>
+    <testcase classname="Course Service editCourse should throw an error if the course name is empty (edit course)" name="Course Service editCourse should throw an error if the course name is empty (edit course)" time="0.002">
+    </testcase>
+    <testcase classname="Course Service editCourse should throw an error if the course name is too long (edit course)" name="Course Service editCourse should throw an error if the course name is too long (edit course)" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="Group Service" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:44" time="0.236" tests="14">
+    <testcase classname="Group Service createGroup should successfully create a group (create group)" name="Group Service createGroup should successfully create a group (create group)" time="0.004">
+    </testcase>
+    <testcase classname="Group Service createGroup should throw error if required fields are missing (create group)" name="Group Service createGroup should throw error if required fields are missing (create group)" time="0.014">
+    </testcase>
+    <testcase classname="Group Service createGroup should throw error if group creation fails (create group)" name="Group Service createGroup should throw error if group creation fails (create group)" time="0.002">
+    </testcase>
+    <testcase classname="Group Service getAllGroups should retrieve all groups (get all groups)" name="Group Service getAllGroups should retrieve all groups (get all groups)" time="0.002">
+    </testcase>
+    <testcase classname="Group Service getAllGroups should throw error if fetching all groups fails (get all groups)" name="Group Service getAllGroups should throw error if fetching all groups fails (get all groups)" time="0.004">
+    </testcase>
+    <testcase classname="Group Service assignStudentTeacherMembers should assign student-teacher members to a group successfully (assign student teacher members)" name="Group Service assignStudentTeacherMembers should assign student-teacher members to a group successfully (assign student teacher members)" time="0.004">
+    </testcase>
+    <testcase classname="Group Service assignStudentTeacherMembers should throw error if required fields are missing (assign student teacher members)" name="Group Service assignStudentTeacherMembers should throw error if required fields are missing (assign student teacher members)" time="0.002">
+    </testcase>
+    <testcase classname="Group Service assignStudentTeacherMembers should throw error if assignment fails (assign student teacher members)" name="Group Service assignStudentTeacherMembers should throw error if assignment fails (assign student teacher members)" time="0.001">
+    </testcase>
+    <testcase classname="Group Service assignLearnerMembers should assign learner members to a group successfully (assign learner members)" name="Group Service assignLearnerMembers should assign learner members to a group successfully (assign learner members)" time="0.002">
+    </testcase>
+    <testcase classname="Group Service assignLearnerMembers should throw error if required fields are missing (assign learner members)" name="Group Service assignLearnerMembers should throw error if required fields are missing (assign learner members)" time="0.001">
+    </testcase>
+    <testcase classname="Group Service assignLearnerMembers should throw error if assignment fails (assign learner members)" name="Group Service assignLearnerMembers should throw error if assignment fails (assign learner members)" time="0.001">
+    </testcase>
+    <testcase classname="Group Service getGroupById should retrieve a group by ID (get group by id)" name="Group Service getGroupById should retrieve a group by ID (get group by id)" time="0.002">
+    </testcase>
+    <testcase classname="Group Service getGroupById should throw error if group is not found (get group by id)" name="Group Service getGroupById should throw error if group is not found (get group by id)" time="0.003">
+    </testcase>
+    <testcase classname="Group Service getGroupById should throw error if fetching the group fails (get group by id)" name="Group Service getGroupById should throw error if fetching the group fails (get group by id)" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="Logger" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:44" time="0.267" tests="3">
+    <testcase classname="Logger should log info messages" name="Logger should log info messages" time="0.006">
+    </testcase>
+    <testcase classname="Logger should log error messages" name="Logger should log error messages" time="0.001">
+    </testcase>
+    <testcase classname="Logger should include additional metadata" name="Logger should include additional metadata" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="Enrollment Service" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:44" time="0.265" tests="22">
+    <testcase classname="Enrollment Service enroll should enroll a new user successfully (enroll)" name="Enrollment Service enroll should enroll a new user successfully (enroll)" time="0.009">
+    </testcase>
+    <testcase classname="Enrollment Service enroll should throw an error if required fields are missing (enroll)" name="Enrollment Service enroll should throw an error if required fields are missing (enroll)" time="0.019">
+    </testcase>
+    <testcase classname="Enrollment Service enroll should throw an error if email format is invalid (enroll)" name="Enrollment Service enroll should throw an error if email format is invalid (enroll)" time="0.003">
+    </testcase>
+    <testcase classname="Enrollment Service enroll should throw an error if contact number format is invalid (enroll)" name="Enrollment Service enroll should throw an error if contact number format is invalid (enroll)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Service enroll should throw an error if password is too short (enroll)" name="Enrollment Service enroll should throw an error if password is too short (enroll)" time="0.003">
+    </testcase>
+    <testcase classname="Enrollment Service enroll should throw an error if email already exists (enroll)" name="Enrollment Service enroll should throw an error if email already exists (enroll)" time="0.003">
+    </testcase>
+    <testcase classname="Enrollment Service enroll should throw an error if enrollment fails (enroll)" name="Enrollment Service enroll should throw an error if enrollment fails (enroll)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Service approveEnrollment should approve an enrollment successfully (approve enrollment)" name="Enrollment Service approveEnrollment should approve an enrollment successfully (approve enrollment)" time="0.003">
+    </testcase>
+    <testcase classname="Enrollment Service approveEnrollment should throw an error if enrollment is not found (approve enrollment)" name="Enrollment Service approveEnrollment should throw an error if enrollment is not found (approve enrollment)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Service approveEnrollment should throw an error if updating enrollment fails (approve enrollment)" name="Enrollment Service approveEnrollment should throw an error if updating enrollment fails (approve enrollment)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Service rejectEnrollment should reject an enrollment successfully (reject enrollment)" name="Enrollment Service rejectEnrollment should reject an enrollment successfully (reject enrollment)" time="0.003">
+    </testcase>
+    <testcase classname="Enrollment Service rejectEnrollment should throw an error if enrollment is not found (reject enrollment)" name="Enrollment Service rejectEnrollment should throw an error if enrollment is not found (reject enrollment)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Service rejectEnrollment should throw an error if updating enrollment fails (reject enrollment)" name="Enrollment Service rejectEnrollment should throw an error if updating enrollment fails (reject enrollment)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Service getEnrollmentById should retrieve an enrollment by ID successfully (get enrollment by id)" name="Enrollment Service getEnrollmentById should retrieve an enrollment by ID successfully (get enrollment by id)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Service getEnrollmentById should throw an error when the enrollment does not exist (get enrollment by id)" name="Enrollment Service getEnrollmentById should throw an error when the enrollment does not exist (get enrollment by id)" time="0.008">
+    </testcase>
+    <testcase classname="Enrollment Service getEnrollmentById should throw an error when fetching of enrollment fails (get enrollment by id)" name="Enrollment Service getEnrollmentById should throw an error when fetching of enrollment fails (get enrollment by id)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Service getAllEnrollments should retrieve all enrollments successfully (get all enrollments)" name="Enrollment Service getAllEnrollments should retrieve all enrollments successfully (get all enrollments)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Service getAllEnrollments should throw an error when fetching enrollments fails (get all enrollments)" name="Enrollment Service getAllEnrollments should throw an error when fetching enrollments fails (get all enrollments)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Service getAllEnrollments should return an empty list if no enrollments exist (get all enrollments)" name="Enrollment Service getAllEnrollments should return an empty list if no enrollments exist (get all enrollments)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Service getEnrollmentsBySchool should retrieve enrollments by school successfully (get enrollments by school)" name="Enrollment Service getEnrollmentsBySchool should retrieve enrollments by school successfully (get enrollments by school)" time="0.002">
+    </testcase>
+    <testcase classname="Enrollment Service getEnrollmentsBySchool should throw an error if the school does not exist (get enrollments by school)" name="Enrollment Service getEnrollmentsBySchool should throw an error if the school does not exist (get enrollments by school)" time="0.001">
+    </testcase>
+    <testcase classname="Enrollment Service getEnrollmentsBySchool should throw an error if fetching enrollments by school fails (get enrollments by school)" name="Enrollment Service getEnrollmentsBySchool should throw an error if fetching enrollments by school fails (get enrollments by school)" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="Error Middleware" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:45" time="0.392" tests="7">
+    <testcase classname="Error Middleware should handle SpecificError" name="Error Middleware should handle SpecificError" time="0.029">
+    </testcase>
+    <testcase classname="Error Middleware should handle SequelizeUniqueConstraintError" name="Error Middleware should handle SequelizeUniqueConstraintError" time="0.012">
+    </testcase>
+    <testcase classname="Error Middleware should handle SequelizeValidationError" name="Error Middleware should handle SequelizeValidationError" time="0.005">
+    </testcase>
+    <testcase classname="Error Middleware should handle JsonWebTokenError" name="Error Middleware should handle JsonWebTokenError" time="0.011">
+    </testcase>
+    <testcase classname="Error Middleware should handle TokenExpiredError" name="Error Middleware should handle TokenExpiredError" time="0.006">
+    </testcase>
+    <testcase classname="Error Middleware should handle generic error" name="Error Middleware should handle generic error" time="0.007">
+    </testcase>
+    <testcase classname="Error Middleware should log error details" name="Error Middleware should log error details" time="0.006">
+    </testcase>
+  </testsuite>
+  <testsuite name="Security Middleware" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:45" time="2.868" tests="7">
+    <testcase classname="Security Middleware CORS should allow requests from allowed origins" name="Security Middleware CORS should allow requests from allowed origins" time="0.036">
+    </testcase>
+    <testcase classname="Security Middleware CORS should block requests from unauthorized origins" name="Security Middleware CORS should block requests from unauthorized origins" time="0.022">
+    </testcase>
+    <testcase classname="Security Middleware Helmet should set security headers" name="Security Middleware Helmet should set security headers" time="0.016">
+    </testcase>
+    <testcase classname="Security Middleware Rate Limiting should limit standard requests" name="Security Middleware Rate Limiting should limit standard requests" time="2.324">
+    </testcase>
+    <testcase classname="Security Middleware Rate Limiting should apply stricter limits to auth endpoints" name="Security Middleware Rate Limiting should apply stricter limits to auth endpoints" time="0.112">
+    </testcase>
+    <testcase classname="Security Middleware XSS Protection should sanitize input with potential XSS" name="Security Middleware XSS Protection should sanitize input with potential XSS" time="0.017">
+    </testcase>
+    <testcase classname="Security Middleware MongoDB Sanitization should remove MongoDB operators from request" name="Security Middleware MongoDB Sanitization should remove MongoDB operators from request" time="0.011">
+    </testcase>
+  </testsuite>
+  <testsuite name="Log Middleware" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:48" time="0.368" tests="3">
+    <testcase classname="Log Middleware should log incoming GET requests" name="Log Middleware should log incoming GET requests" time="0.047">
+    </testcase>
+    <testcase classname="Log Middleware should log incoming POST requests with body" name="Log Middleware should log incoming POST requests with body" time="0.046">
+    </testcase>
+    <testcase classname="Log Middleware should handle responses correctly" name="Log Middleware should handle responses correctly" time="0.028">
+    </testcase>
+  </testsuite>
+  <testsuite name="Auth Middleware" errors="0" failures="0" skipped="0" timestamp="2025-01-29T12:58:48" time="0.892" tests="7">
+    <testcase classname="Auth Middleware should authenticate valid token and call next" name="Auth Middleware should authenticate valid token and call next" time="0.011">
+    </testcase>
+    <testcase classname="Auth Middleware should return 401 when no token provided" name="Auth Middleware should return 401 when no token provided" time="0.02">
+    </testcase>
+    <testcase classname="Auth Middleware should return 401 for invalid token format" name="Auth Middleware should return 401 for invalid token format" time="0.017">
+    </testcase>
+    <testcase classname="Auth Middleware should return 401 for expired token" name="Auth Middleware should return 401 for expired token" time="0.009">
+    </testcase>
+    <testcase classname="Auth Middleware should return 401 for invalid JWT" name="Auth Middleware should return 401 for invalid JWT" time="0.012">
+    </testcase>
+    <testcase classname="Auth Middleware should return 401 for user not found" name="Auth Middleware should return 401 for user not found" time="0.008">
+    </testcase>
+    <testcase classname="Auth Middleware should return 500 for database errors" name="Auth Middleware should return 500 for database errors" time="0.007">
+    </testcase>
+  </testsuite>
+</testsuites>
