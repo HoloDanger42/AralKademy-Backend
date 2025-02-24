@@ -1,22 +1,3 @@
-<<<<<<< HEAD
-# Node modules
-node_modules/
-
-# Logs
-*.log
-
-# Environment files
-.env
-
-# Build, coverage, and dist
-dist/
-coverage/
-.nyc_output/
-
-# OS-specific
-.DS_Store
-Thumbs.db
-=======
 # Dependencies
 node_modules/
 
@@ -60,4 +41,3 @@ desktop.ini
 
 # Migration archives
 /migration_files/
->>>>>>> fa553813e6c2625c3d51c2c3f858e3fb9bfc7ef2
