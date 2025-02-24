@@ -8,7 +8,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "seed": "node --experimental-json-modules seeders/index.js"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +23,7 @@
     "compression": "^1.7.5",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "esm": "^3.2.25",
     "express": "^4.21.1",
     "express-mongo-sanitize": "^2.2.0",
     "express-paginate": "^1.0.2",
@@ -32,7 +34,6 @@
     "memory-cache": "^0.2.0",
     "pg": "^8.13.1",
     "sequelize": "^6.37.5",
-    "sqlite3": "^5.1.7",
     "winston": "^3.17.0",
     "xss-clean": "^0.1.4"
   },

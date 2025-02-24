@@ -140,6 +140,7 @@ app.use(errorMiddleware)
 export const initializeApp = async () => {
   if (config.env !== 'test') {
     await databaseConnection()
+    await initializeDatabase()
   }
 
   const server = app.listen(config.port, () => {

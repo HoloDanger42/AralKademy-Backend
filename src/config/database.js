@@ -1,6 +1,7 @@
 import { Sequelize } from 'sequelize'
 import dotenv from 'dotenv'
 import { log } from '../utils/logger.js'
+import { runSeeders } from '../../seeders/index.js'
 
 dotenv.config()
 
@@ -29,6 +30,22 @@ const databaseConnection = async () => {
     log.info('Database synchronized successfully.')
   } catch (error) {
     log.error('Database connection failed:', error)
+    throw error
+  }
+}
+
+export const initializeDatabase = async () => {
+  try {
+    await sequelize.authenticate()
+    await sequelize.sync({ alter: true })
+
+    if (process.env.NODE_ENV === 'development') {
+      await runSeeders()
+    }
+
+    log.info('Database initialized successfully')
+  } catch (error) {
+    log.error('Database initialization error:', error)
     throw error
   }
 }
