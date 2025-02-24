@@ -6,6 +6,6 @@ export const adminsList = [
     password: process.env.ADMIN_PASSWORD || 'changeme123!',
     role: 'admin',
     is_verified: true,
-    school_id: 3,
+    school_id: 2,
   },
 ]

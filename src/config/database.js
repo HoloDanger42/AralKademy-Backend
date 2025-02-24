@@ -1,7 +1,6 @@
 import { Sequelize } from 'sequelize'
 import dotenv from 'dotenv'
 import { log } from '../utils/logger.js'
-import { runSeeders } from '../../seeders/index.js'
 
 dotenv.config()
 
@@ -11,7 +10,7 @@ const dbConfig = {
   logging: process.env.NODE_ENV === 'test' ? false : console.log,
 }
 
-const sequelize = new Sequelize(
+export const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
   process.env.DB_PASSWORD,
@@ -23,11 +22,27 @@ const databaseConnection = async () => {
     await sequelize.authenticate()
     log.info('Database connection has been established successfully.')
 
+    // Import models and associations dynamically to avoid circular dependencies
+    const { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School } =
+      await import('../models/index.js')
+
+    // Import associations after models are loaded
     await import('../models/associate.js')
 
     await sequelize.sync({ force: false })
-
     log.info('Database synchronized successfully.')
+
+    return {
+      User,
+      Teacher,
+      Admin,
+      StudentTeacher,
+      Learner,
+      Enrollment,
+      Course,
+      Group,
+      School,
+    }
   } catch (error) {
     log.error('Database connection failed:', error)
     throw error
@@ -40,6 +55,7 @@ export const initializeDatabase = async () => {
     await sequelize.sync({ alter: true })
 
     if (process.env.NODE_ENV === 'development') {
+      const { runSeeders } = await import('../../seeders/index.js')
       await runSeeders()
     }
 
@@ -50,4 +66,4 @@ export const initializeDatabase = async () => {
   }
 }
 
-export { sequelize, databaseConnection }
+export { databaseConnection }
