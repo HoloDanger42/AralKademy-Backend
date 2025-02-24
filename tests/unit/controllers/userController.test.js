@@ -9,8 +9,14 @@ describe('User Controller', () => {
   let mockRes
   let loginUserSpy
   let getAllUsersSpy
+  let originalFetch
 
   beforeEach(() => {
+    // Save original fetch
+    originalFetch = global.fetch
+
+    // Setup test environment
+    process.env.RECAPTCHA_SECRET_KEY = 'test-secret-key'
     mockReq = {
       body: {},
     }
@@ -19,23 +25,40 @@ describe('User Controller', () => {
       json: jest.fn(),
     }
 
+    // Setup spies
     createUserSpy = jest.spyOn(UserServiceModule.default.prototype, 'createUser')
     loginUserSpy = jest.spyOn(UserServiceModule.default.prototype, 'loginUser')
     getAllUsersSpy = jest.spyOn(UserServiceModule.default.prototype, 'getAllUsers')
 
     jest.spyOn(log, 'info')
     jest.spyOn(log, 'error')
+
+    // Mock fetch for reCAPTCHA
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({ success: true }),
+      })
+    )
   })
 
   afterEach(() => {
+    // Restore original fetch
+    global.fetch = originalFetch
+
+    // Clear all mocks
     jest.clearAllMocks()
   })
 
   describe('login', () => {
     test('should login user successfully', async () => {
       // Arrange
-      const loginData = validUsers[0]
+      const loginData = {
+        email: validUsers[0].email,
+        password: validUsers[0].password,
+        captchaResponse: 'mock-captcha-response',
+      }
       mockReq.body = loginData
+
       const mockResponse = {
         user: { id: 1, ...loginData },
         token: 'mockedToken',
@@ -46,6 +69,10 @@ describe('User Controller', () => {
       await login(mockReq, mockRes)
 
       // Assert
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('recaptcha/api/siteverify'),
+        expect.any(Object)
+      )
       expect(mockRes.status).toHaveBeenCalledWith(200)
       expect(mockRes.json).toHaveBeenCalledWith({
         message: 'Logged in successfully',

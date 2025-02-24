@@ -1,4 +1,3 @@
-import { jest } from '@jest/globals'
 import UserService from '../../../src/services/userService.js'
 import { sequelize } from '../../../src/config/database.js'
 import { createTestSchool, createTestEnrollment } from '../../helpers/testData.js'
@@ -149,7 +148,7 @@ describe('UserService', () => {
         role: 'teacher',
       }
 
-      await userService.createUser(
+      const createdUser = await userService.createUser(
         userData.email,
         userData.password,
         userData.first_name,

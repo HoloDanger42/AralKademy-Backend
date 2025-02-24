@@ -25,15 +25,15 @@ const User = sequelize.define(
         this.setDataValue('first_name', value.trim())
       },
     },
-    middle_initial: {  
-        type: DataTypes.STRING,
-        allowNull: true, 
-        validate: {
-          len: {
-              args: [0, 3],  
-              msg: 'Middle initial must be at most 1 character.',
-          },
+    middle_initial: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        len: {
+          args: [0, 3],
+          msg: 'Middle initial must be at most 1 character.',
         },
+      },
     },
     last_name: {
       type: DataTypes.STRING,
@@ -84,10 +84,6 @@ const User = sequelize.define(
           msg: 'Password must be at least 8 characters long',
         },
       },
-      // set(value) {
-      //   const hashedPassword = bcrypt.hashSync(value, 12)
-      //   this.setDataValue('password', hashedPassword)
-      // },
     },
     birth_date: {
       type: DataTypes.DATE,
