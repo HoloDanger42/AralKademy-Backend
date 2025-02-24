@@ -26,7 +26,7 @@ class UserService {
     this.Course = CourseModel
     this.Group = GroupModel
     this.School = SchoolModel
-    this.jwtSecret = process.env.JWT_SECRET; // Get from .env and store as a property
+    this.jwtSecret = process.env.JWT_SECRET; 
   }
 
   validateUserData(userData) {
@@ -119,14 +119,8 @@ class UserService {
       const user = await this.UserModel.findOne({ where: { email } })
 
       if (!user || !(await bcrypt.compare(password, user.password))) {
-        throw new Error('Invalid credentials')
-      }
-
-      const passwordMatch = await bcrypt.compare(password, user.password);
-
-      if (!passwordMatch) {
         throw new Error('Invalid credentials');
-      }
+    }
 
       //--
       const token = this.generateToken(user); 
@@ -134,7 +128,7 @@ class UserService {
       return { user, token }
       }catch (error) {
         console.error("Error in loginUser:", error); // LOG THE ERROR
-        throw error; // Re-throw the error so the controller can handle it
+        throw error; 
       }
   }
   
