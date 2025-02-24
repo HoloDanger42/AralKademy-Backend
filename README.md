@@ -33,8 +33,9 @@ This is a RESTful API backend for the AralKademy Learning Management System (LMS
 aralkademy-backend/
 ├── .vscode/
 │   └── settings.json          # VS Code workspace settings (for formatting, linting, etc.)
-├── .eslintrc.js               # ESLint configuration
+├── eslint.config.cjs               # ESLint configuration
 ├── .prettierrc                # Prettier configuration
+├── .sequelizerc                # Sequelize configuration
 ├── .env                       # Environment variables (never commit this!)
 ├── aralkademy.log             # Application log file
 ├── migrations/
@@ -44,6 +45,8 @@ aralkademy-backend/
 │   │   └── database.js        # Database connection
 │   ├── controllers/            # API logic
 │   │   ├── userController.js
+│   │   ├── enrollmentController.js
+│   │   ├── groupController.js
 │   │   └── courseController.js
 │   ├── middleware/             # Middleware functions
 │   │   ├── authMiddleware.js  # Auth middleware
@@ -60,13 +63,19 @@ aralkademy-backend/
 │   │   ├── Course.js
 │   │   ├── Enrollment.js
 │   │   ├── School.js
+│   │   ├── Group.js
+│   │   ├── index.js
 │   │   └── associate.js
 │   ├── routes/                 # API endpoint definitions
 │   │   ├── users.js
+│   │   ├── enrollments.js
+│   │   ├── groups.js
 │   │   └── courses.js
 │   ├── services/               # Business logic and services
 │   │   ├── userService.js
 │   │   ├── courseService.js
+│   │   ├── enrollmentService.js
+│   │   ├── groupService.js
 │   │   └── roleService.js
 │   └── utils/                  # Utility functions
 │       └── logger.js
@@ -74,14 +83,20 @@ aralkademy-backend/
 │   ├── fixtures/               # Reusable test data
 │   │   ├── userData.js
 │   │   ├── schoolData.js
+│   │   ├── enrollmentData.js
+│   │   ├── groupData.js
 │   │   └── courseData.js
 │   ├── helpers/                # Test utility functions
 │   │   ├── testData.js
 │   │   ├── testSetup.js
 │   │   └── testUtils.js
 │   ├── unit/                   # Unit tests
+│   │   ├── config/
+│   │   │   └── database.test.js
 │   │   ├── controllers/
 │   │   │   ├── userController.test.js
+│   │   │   ├── enrollmentController.test.js
+│   │   │   ├── groupController.test.js
 │   │   │   └── courseController.test.js
 │   │   ├── middleware/
 │   │   │   ├── authMiddleware.test.js
@@ -103,12 +118,14 @@ aralkademy-backend/
 │   │   ├── services/
 │   │   │   ├── userService.test.js
 │   │   │   ├── courseService.test.js
+│   │   │   ├── enrollmentService.test.js
+│   │   │   ├── groupService.test.js
 │   │   │   └── roleService.test.js
 │   │   └── utils/
 │   │       └── logger.test.js
 │   ├── integration/            # Integration tests
-│   │   ├── courses.test.js
-│   │   └── users.test.js
+│   │   ├── course.api.test.js
+│   │   └── user.api.test.js
 │   └── jest.setup.js           # Jest setup and configuration
 ├── babel.config.js            # Babel configuration
 ├── jest.config.js             # Jest configuration

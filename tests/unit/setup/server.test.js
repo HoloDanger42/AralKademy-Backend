@@ -5,7 +5,7 @@ import rateLimit from 'express-rate-limit'
 import cache from 'memory-cache'
 import { jest } from '@jest/globals'
 import supertest from 'supertest'
-import { errorMiddleware, SpecificError } from '../../src/middleware/errorMiddleware.js'
+import { errorMiddleware, SpecificError } from '../../../src/middleware/errorMiddleware.js'
 
 // Mock modules
 jest.unstable_mockModule('../../src/config/database.js', () => {
@@ -82,19 +82,19 @@ jest.unstable_mockModule('../../src/routes/courses.js', () => ({
   coursesRouter: express.Router(),
 }))
 
-const mockUsersRoutes = await import('../../src/routes/users.js')
-const mockCoursesRoutes = await import('../../src/routes/courses.js')
-const mockDatabase = await import('../../src/config/database.js')
+const mockUsersRoutes = await import('../../../src/routes/users.js')
+const mockCoursesRoutes = await import('../../../src/routes/courses.js')
+const mockDatabase = await import('../../../src/config/database.js')
 
 // Import the main app
-const appModule = await import('../../src/server.js')
+const appModule = await import('../../../src/server.js')
 
 // Mock the app configuration
 const app = appModule.default
 const FIFTEEN_MINUTES = 15 * 60 * 1000
 const AUTH_MAX_REQUESTS = 5
 
-const { securityMiddleware } = await import('../../src/middleware/securityMiddleware.js')
+const { securityMiddleware } = await import('../../../src/middleware/securityMiddleware.js')
 
 // Create supertest instance
 const request = supertest(app)
@@ -226,7 +226,7 @@ describe('Server Setup', () => {
       process.env.NODE_ENV = 'development'
       try {
         // Import the app initialization function
-        const { initializeApp } = await import('../../src/server.js')
+        const { initializeApp } = await import('../../../src/server.js')
 
         // Initialize the app, which should trigger database connection
         server = await initializeApp()
