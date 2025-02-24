@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 //
-import dotenv from 'dotenv';
-dotenv.config();
+import dotenv from 'dotenv'
+dotenv.config()
 //
 
 class UserService {
@@ -26,7 +26,7 @@ class UserService {
     this.Course = CourseModel
     this.Group = GroupModel
     this.School = SchoolModel
-    this.jwtSecret = process.env.JWT_SECRET; 
+    this.jwtSecret = process.env.JWT_SECRET
   }
 
   validateUserData(userData) {
@@ -66,9 +66,11 @@ class UserService {
   ) {
     const transaction = await this.UserModel.sequelize.transaction()
     try {
+      const hashedPassword = await bcrypt.hash(password, 10)
+
       const userData = {
         email,
-        password: password,
+        password: hashedPassword,
         first_name: firstName,
         last_name: lastName,
         role: role,
@@ -92,14 +94,15 @@ class UserService {
           { user_id: user.id, department, section, group_id: groupId },
           { transaction }
         )
-      } else if (role === 'learner'){//---------
-       
-           if (groupId) {
-               await this.LearnerModel.create({ user_id: user.id, group_id: groupId }, { transaction });
-           } else {
-                await this.LearnerModel.create({ user_id: user.id}, { transaction }); //create without group
-           }
-      }//---------------
+      } else if (role === 'learner') {
+        //---------
+
+        if (groupId) {
+          await this.LearnerModel.create({ user_id: user.id, group_id: groupId }, { transaction })
+        } else {
+          await this.LearnerModel.create({ user_id: user.id }, { transaction }) //create without group
+        }
+      } //---------------
 
       await transaction.commit()
       return user
@@ -114,27 +117,29 @@ class UserService {
     }
   }
 
-    async loginUser(email, password) {
-      try{
+  async loginUser(email, password) {
+    try {
       const user = await this.UserModel.findOne({ where: { email } })
 
       if (!user || !(await bcrypt.compare(password, user.password))) {
-        throw new Error('Invalid credentials');
-    }
+        throw new Error('Invalid credentials')
+      }
 
       //--
-      const token = this.generateToken(user); 
+      const token = this.generateToken(user)
 
       return { user, token }
-      }catch (error) {
-        console.error("Error in loginUser:", error); // LOG THE ERROR
-        throw error; 
-      }
+    } catch (error) {
+      console.error('Error in loginUser:', error) // LOG THE ERROR
+      throw error
+    }
   }
-  
+
   //-------------
   generateToken(user) {
-    return jwt.sign({ id: user.id, email: user.email, role: user.role }, this.jwtSecret, { expiresIn: '1h' }); 
+    return jwt.sign({ id: user.id, email: user.email, role: user.role }, this.jwtSecret, {
+      expiresIn: '1h',
+    })
   }
   //--------------
 
@@ -250,8 +255,7 @@ class UserService {
       }
       // added but maybe needed in the future - lennard
       else if (user.role === 'admin') {
-        await this.AdminModel.destroy({ where: { user_id: userId }, force: true, transaction 
-        })
+        await this.AdminModel.destroy({ where: { user_id: userId }, force: true, transaction })
       }
       //-----
 

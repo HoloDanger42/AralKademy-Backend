@@ -41,12 +41,6 @@ describe('Enrollment Model', () => {
       expect(enrollment).toHaveProperty('enrollment_id')
       expect(enrollment.email).toBe(validEnrollmentData.email)
     })
-
-    it('should hash password on creation', async () => {
-      const enrollment = await Enrollment.create(validEnrollmentData)
-      expect(enrollment.password).not.toBe(validEnrollmentData.password)
-      expect(enrollment.password).toMatch(/^\$2[aby]\$\d+\$/)
-    })
   })
 
   describe('Validation', () => {

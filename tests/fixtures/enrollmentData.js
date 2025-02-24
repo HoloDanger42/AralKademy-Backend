@@ -1,37 +1,37 @@
-
 export const validEnrollments = [
   {
     email: 'testuser1@example.com',
-    password: 'password123',
-    firstName: 'John',
-    lastName: 'Doe',
-    birthDate: '2000-01-01',
-    contactNo: '09953644057',
-    schoolId: 'school123',
-    yearLevel: 'Freshman',
+    password: 'password123!',
+    confirm_password: 'password123!',
+    first_name: 'John',
+    last_name: 'Doe',
+    birth_date: '2000-01-01',
+    contact_no: '09953644057',
+    school_id: 'school123',
+    year_level: 'Freshman',
   },
   {
     email: 'testuser2@example.com',
-    password: 'password456',
-    firstName: 'Jane',
-    lastName: 'Smith',
-    birthDate: '1999-02-02',
-    contactNo: '09953644057',
-    schoolId: 'school456',
-    yearLevel: 'Sophomore',
+    password: 'password456@',
+    confirm_password: 'password456@',
+    first_name: 'Jane',
+    last_name: 'Smith',
+    birth_date: '1999-02-02',
+    contact_no: '09953644057',
+    school_id: 'school456',
+    year_level: 'Sophomore',
   },
-];
-
+]
 
 export const invalidEnrollments = [
   {
     email: null, // Missing email
     password: 'password123',
-    firstName: 'John',
-    lastName: 'Doe',
-    birthDate: '2000-01-01',
-    contactNo: '1234567890',
-    schoolId: 'school123',
-    yearLevel: 'Freshman',
+    first_name: 'John',
+    last_name: 'Doe',
+    birth_date: '2000-01-01',
+    contact_no: '1234567890',
+    school_id: 'school123',
+    year_level: 'Freshman',
   },
-];
+]

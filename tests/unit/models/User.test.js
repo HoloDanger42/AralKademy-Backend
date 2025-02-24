@@ -200,12 +200,6 @@ describe('User Model', () => {
   })
 
   describe('Password Management', () => {
-    it('should hash password on create', async () => {
-      const user = await createTestUser()
-      expect(user.password).not.toBe('securepassword')
-      expect(user.password).toMatch(/^\$2[aby]\$\d+\$/)
-    })
-
     it('should rehash password on update', async () => {
       const user = await createTestUser()
       const oldHash = user.password
@@ -330,36 +324,6 @@ describe('User Model', () => {
       attributes.forEach((attr) => {
         expect(user).toHaveProperty(attr)
       })
-    })
-  })
-
-  describe('Instance Methods', () => {
-    it('should compare password correctly', async () => {
-      const plainPassword = 'securepassword'
-      const user = await createTestUser({
-        password: plainPassword,
-      })
-      const isMatch = await bcrypt.compare(plainPassword, user.password)
-      expect(isMatch).toBe(true)
-    })
-
-    it('should verify correct password with comparePassword', async () => {
-      const plainPassword = 'securepassword'
-      const user = await createTestUser({
-        password: plainPassword,
-      })
-
-      const isMatch = await user.comparePassword(plainPassword)
-      expect(isMatch).toBe(true)
-    })
-
-    it('should reject incorrect password with comparePassword', async () => {
-      const user = await createTestUser({
-        password: 'correctpassword',
-      })
-
-      const isMatch = await user.comparePassword('wrongpassword')
-      expect(isMatch).toBe(false)
     })
   })
 

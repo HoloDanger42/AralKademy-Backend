@@ -8,9 +8,48 @@ import supertest from 'supertest'
 import { errorMiddleware, SpecificError } from '../../src/middleware/errorMiddleware.js'
 
 // Mock modules
-jest.unstable_mockModule('../../src/config/database.js', () => ({
-  databaseConnection: jest.fn().mockResolvedValue(true),
-}))
+jest.unstable_mockModule('../../src/config/database.js', () => {
+  const mockModelInstance = {
+    findAll: jest.fn(),
+    findOne: jest.fn(),
+    findByPk: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    destroy: jest.fn(),
+    hasMany: jest.fn(),
+    belongsTo: jest.fn(),
+    belongsToMany: jest.fn(),
+    comparePassword: jest.fn().mockResolvedValue(true),
+  }
+
+  const mockModel = {
+    ...mockModelInstance,
+    prototype: {
+      comparePassword: jest.fn().mockResolvedValue(true),
+    },
+  }
+
+  return {
+    databaseConnection: jest.fn().mockResolvedValue(true),
+    sequelize: {
+      authenticate: jest.fn().mockResolvedValue(true),
+      sync: jest.fn().mockResolvedValue(true),
+      define: jest.fn().mockReturnValue(mockModel),
+      models: {},
+      transaction: jest.fn((cb) => cb()),
+      literal: jest.fn(),
+      col: jest.fn(),
+      where: jest.fn(),
+      DataTypes: {
+        STRING: 'STRING',
+        INTEGER: 'INTEGER',
+        DATE: 'DATE',
+        ENUM: (...values) => `ENUM(${values.join(', ')})`,
+        BOOLEAN: 'BOOLEAN',
+      },
+    },
+  }
+})
 
 jest.unstable_mockModule('../../src/middleware/logMiddleware.js', () => ({
   logMiddleware: (_req, _res, next) => next(),
