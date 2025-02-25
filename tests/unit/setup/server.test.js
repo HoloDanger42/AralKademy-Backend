@@ -8,7 +8,7 @@ import supertest from 'supertest'
 import { errorMiddleware, SpecificError } from '../../../src/middleware/errorMiddleware.js'
 
 // Mock modules
-jest.unstable_mockModule('../../src/config/database.js', () => {
+jest.unstable_mockModule('../../../src/config/database.js', () => {
   const mockModelInstance = {
     findAll: jest.fn(),
     findOne: jest.fn(),
@@ -31,6 +31,7 @@ jest.unstable_mockModule('../../src/config/database.js', () => {
 
   return {
     databaseConnection: jest.fn().mockResolvedValue(true),
+    initializeDatabase: jest.fn().mockResolvedValue(true),
     sequelize: {
       authenticate: jest.fn().mockResolvedValue(true),
       sync: jest.fn().mockResolvedValue(true),
@@ -51,11 +52,11 @@ jest.unstable_mockModule('../../src/config/database.js', () => {
   }
 })
 
-jest.unstable_mockModule('../../src/middleware/logMiddleware.js', () => ({
+jest.unstable_mockModule('../../../src/middleware/logMiddleware.js', () => ({
   logMiddleware: (_req, _res, next) => next(),
 }))
 
-jest.unstable_mockModule('../../src/middleware/securityMiddleware.js', () => ({
+jest.unstable_mockModule('../../../src/middleware/securityMiddleware.js', () => ({
   securityMiddleware: [
     (_req, _res, next) => {
       next()
@@ -69,16 +70,16 @@ jest.unstable_mockModule('../../src/middleware/securityMiddleware.js', () => ({
   ],
 }))
 
-jest.unstable_mockModule('../../src/middleware/errorMiddleware.js', () => ({
+jest.unstable_mockModule('../../../src/middleware/errorMiddleware.js', () => ({
   errorMiddleware: errorMiddleware,
   SpecificError: SpecificError,
 }))
 
-jest.unstable_mockModule('../../src/routes/users.js', () => ({
+jest.unstable_mockModule('../../../src/routes/users.js', () => ({
   usersRouter: express.Router(),
 }))
 
-jest.unstable_mockModule('../../src/routes/courses.js', () => ({
+jest.unstable_mockModule('../../../src/routes/courses.js', () => ({
   coursesRouter: express.Router(),
 }))
 

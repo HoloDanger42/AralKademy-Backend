@@ -26,7 +26,7 @@ const createEnrollment = async (req, res) => {
     // --- Controller-Level Validations (Focus on cross-field and complex validations) ---
 
     // 1. Password Confirmation Check
-    if (password !== confirm_password) {
+    if (!confirm_password || password !== confirm_password) {
       errors.confirm_password = 'Passwords do not match.'
     }
 
@@ -61,6 +61,7 @@ const createEnrollment = async (req, res) => {
     // --- End of Controller-Specific Validations ---
 
     if (Object.keys(errors).length > 0) {
+      log.error('Validation errors while creating enrollment:', errors)
       return res.status(400).json({ errors })
     }
 
@@ -213,6 +214,7 @@ const updateEnrollment = async (req, res) => {
     const enrollment = await enrollmentService.updateEnrollment(enrollmentId, updatedData)
 
     res.status(200).json(enrollment) //return the updated data
+    log.info(`Enrollment with ID: ${enrollmentId} updated successfully`)
   } catch (error) {
     log.error('Error in updateEnrollment:', error)
 
@@ -237,9 +239,10 @@ const deleteEnrollment = async (req, res) => {
   try {
     const enrollmentId = req.params.enrollmentId
 
-    const enrollment = await enrollmentService.deleteEnrollment(enrollmentId)
+    await enrollmentService.deleteEnrollment(enrollmentId)
 
     res.status(204).end()
+    log.info(`Enrollment with ID: ${enrollmentId} deleted successfully`)
   } catch (error) {
     log.error('Error in deleteEnrollment:', error)
     if (error.message === 'Enrollment not found') {

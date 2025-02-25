@@ -1,5 +1,5 @@
 import { sequelize } from '../src/config/database.js'
-import { User, Admin } from '../src/models/index.js'
+import { User, Admin, School } from '../src/models/index.js'
 import { adminsList } from '../src/config/admins.js'
 import { log } from '../src/utils/logger.js'
 import bcrypt from 'bcryptjs'
@@ -14,6 +14,15 @@ export const seedAdmins = async () => {
       return
     }
 
+    // Retrieve the school with the name "University of Santo Tomas"
+    const school = await School.findOne({
+      where: { name: 'University of Santo Tomas' },
+      transaction: t,
+    })
+    if (!school) {
+      throw new Error('University of Santo Tomas not found. Ensure the school is seeded first.')
+    }
+
     // Create admin users
     for (const adminData of adminsList) {
       const hashedPassword = await bcrypt.hash(adminData.password, 10)
@@ -26,7 +35,7 @@ export const seedAdmins = async () => {
           last_name: adminData.last_name,
           role: adminData.role,
           is_verified: adminData.is_verified,
-          school_id: adminData.school_id,
+          school_id: school.school_id,
         },
         { transaction: t }
       )

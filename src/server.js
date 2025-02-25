@@ -15,7 +15,7 @@ import { logMiddleware } from './middleware/logMiddleware.js'
 import { securityMiddleware } from './middleware/securityMiddleware.js'
 
 // Configuration
-import { databaseConnection } from './config/database.js'
+import { databaseConnection, initializeDatabase } from './config/database.js'
 
 // Routes
 import { usersRouter } from './routes/users.js'
@@ -138,8 +138,9 @@ app.use((_req, _res, next) => {
 app.use(errorMiddleware)
 
 export const initializeApp = async () => {
+  await databaseConnection()
+
   if (config.env !== 'test') {
-    await databaseConnection()
     await initializeDatabase()
   }
 

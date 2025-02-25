@@ -25,7 +25,10 @@ Object.entries(requiredEnvVars).forEach(([envVar, description]) => {
 
 const config = {
   // Environment
-  env: process.env.NODE_ENV || 'development',
+  get env() {
+    return process.env.NODE_ENV || 'development'
+  },
+
   port: parseInt(process.env.PORT, 10) || 3000,
 
   // Database

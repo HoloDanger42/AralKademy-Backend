@@ -77,7 +77,7 @@ describe('Course Endpoints (Integration Tests)', () => {
       expect(res.body.course).toEqual(
         expect.objectContaining({
           name: courseData.name,
-          description: courseData.description
+          description: courseData.description,
         })
       )
     })
@@ -89,7 +89,7 @@ describe('Course Endpoints (Integration Tests)', () => {
           .set('Authorization', `Bearer ${authToken}`)
           .send({
             name: '',
-            description: 'Test description'
+            description: 'Test description',
           })
 
         expect(res.status).toBe(400)
@@ -104,7 +104,7 @@ describe('Course Endpoints (Integration Tests)', () => {
           .set('Authorization', `Bearer ${authToken}`)
           .send({
             name: 'a'.repeat(256),
-            description: 'Test description'
+            description: 'Test description',
           })
 
         expect(res.status).toBe(400)
@@ -125,11 +125,11 @@ describe('Course Endpoints (Integration Tests)', () => {
       await Course.bulkCreate([
         {
           name: 'Course 1',
-          description: 'Description 1'
+          description: 'Description 1',
         },
         {
           name: 'Course 2',
-          description: 'Description 2'
+          description: 'Description 2',
         },
       ])
 
@@ -142,7 +142,7 @@ describe('Course Endpoints (Integration Tests)', () => {
           rows: expect.arrayContaining([
             expect.objectContaining({
               name: expect.any(String),
-              description: expect.any(String)
+              description: expect.any(String),
             }),
           ]),
         })

@@ -4,47 +4,80 @@ import * as UserServiceModule from '../../../src/services/userService.js'
 import { log } from '../../../src/utils/logger.js'
 import { validUsers } from '../../fixtures/userData.js'
 
+let fetchMock
+
+jest.unstable_mockModule('node-fetch', async () => {
+  console.log('Mocking node-fetch module (async)...')
+  fetchMock = jest.fn().mockImplementation((url, options) => {
+    console.log('fetch mock called with URL:', url) // Log the URL
+    console.log('fetch mock called with options:', options) // Log the options
+    console.log('fetch mock returning success: true') // Explicitly log what we are returning
+    return Promise.resolve({
+      json: () => {
+        console.log('fetch mock json() called - returning reCAPTCHA success data')
+        return Promise.resolve({
+          success: true,
+          challenge_ts: 'test',
+          hostname: 'localhost',
+          score: 0.9,
+        }) // Return a more realistic success response
+      },
+    })
+  })
+  return { default: fetchMock }
+})
+
 describe('User Controller', () => {
+  beforeAll(async () => {
+    jest.unstable_mockModule('node-fetch', async () => {
+      console.log('Mocking node-fetch module (async) - Explicit Return...') // Updated log message
+      const fetchMock = jest.fn().mockImplementation((url, options) => {
+        console.log('fetch mock called with URL:', url)
+        console.log('fetch mock called with options:', options)
+        console.log('fetch mock returning success: true')
+        return Promise.resolve({
+          json: () => {
+            console.log('fetch mock json() called - returning reCAPTCHA success data')
+            return Promise.resolve({
+              success: true,
+              challenge_ts: 'test',
+              hostname: 'localhost',
+              score: 0.9,
+            })
+          },
+        })
+      })
+      return { default: fetchMock } // Explicitly return fetchMock as default
+    })
+    await import('node-fetch') // Ensure mock module is loaded before tests
+  })
+
   let mockReq
   let mockRes
   let loginUserSpy
   let getAllUsersSpy
-  let originalFetch
 
   beforeEach(() => {
-    // Save original fetch
-    originalFetch = global.fetch
-
     // Setup test environment
     process.env.RECAPTCHA_SECRET_KEY = 'test-secret-key'
     mockReq = {
       body: {},
     }
+
     mockRes = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     }
 
     // Setup spies
-    createUserSpy = jest.spyOn(UserServiceModule.default.prototype, 'createUser')
     loginUserSpy = jest.spyOn(UserServiceModule.default.prototype, 'loginUser')
     getAllUsersSpy = jest.spyOn(UserServiceModule.default.prototype, 'getAllUsers')
 
     jest.spyOn(log, 'info')
     jest.spyOn(log, 'error')
-
-    // Mock fetch for reCAPTCHA
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        json: () => Promise.resolve({ success: true }),
-      })
-    )
   })
 
   afterEach(() => {
-    // Restore original fetch
-    global.fetch = originalFetch
-
     // Clear all mocks
     jest.clearAllMocks()
   })
@@ -66,10 +99,12 @@ describe('User Controller', () => {
       loginUserSpy.mockResolvedValue(mockResponse)
 
       // Act
+      console.log('Before login call')
       await login(mockReq, mockRes)
+      console.log('After login call')
 
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         expect.stringContaining('recaptcha/api/siteverify'),
         expect.any(Object)
       )
@@ -84,8 +119,18 @@ describe('User Controller', () => {
 
     test('should handle invalid credentials', async () => {
       // Arrange
-      const loginData = { email: 'nonexistent@example.com', password: 'wrongpassword' }
+      const loginData = {
+        email: 'nonexistent@example.com',
+        password: 'wrongpassword',
+        captchaResponse: 'mock-captcha-response',
+      }
       mockReq.body = loginData
+
+      // Mock reCAPTCHA verification success
+      fetchMock.mockResolvedValue({
+        json: jest.fn().mockResolvedValue({ success: true }),
+      })
+
       const error = new Error('Invalid credentials')
       error.name = 'InvalidCredentialsError'
       loginUserSpy.mockRejectedValue(error)

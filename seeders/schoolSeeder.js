@@ -1,5 +1,5 @@
 import { sequelize } from '../src/config/database.js'
-import { School } from '../src/models/School.js'
+import { School } from '../src/models/index.js'
 import { schoolsList } from '../src/config/schools.js'
 import { log } from '../src/utils/logger.js'
 
