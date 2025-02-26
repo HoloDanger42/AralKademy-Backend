@@ -54,11 +54,6 @@ export const initializeDatabase = async () => {
     await sequelize.authenticate()
     await sequelize.sync({ alter: true })
 
-    if (process.env.NODE_ENV === 'development') {
-      const { runSeeders } = await import('../../seeders/index.js')
-      await runSeeders()
-    }
-
     log.info('Database initialized successfully')
   } catch (error) {
     log.error('Database initialization error:', error)

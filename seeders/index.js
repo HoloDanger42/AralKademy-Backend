@@ -16,7 +16,10 @@ export const runSeeders = async () => {
   }
 }
 
-if (import.meta.url === import.meta.resolve('./index.js')) {
+// Only exit if this file is being run directly via node or npm run seed
+const isDirectExecution = process.argv[1] && process.argv[1].includes('seeders/index.js')
+
+if (isDirectExecution) {
   runSeeders()
     .catch(console.error)
     .finally(() => process.exit())
