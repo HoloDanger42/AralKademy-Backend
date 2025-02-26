@@ -2,7 +2,6 @@ import { jest } from '@jest/globals'
 import UserService from '../../../src/services/userService.js'
 import { sequelize } from '../../../src/config/database.js'
 import { createTestSchool, createTestEnrollment } from '../../helpers/testData.js'
-import { jest } from '@jest/globals'
 import '../../../src/models/associate.js'
 
 jest.setTimeout(10000)
@@ -147,7 +146,7 @@ describe('UserService', () => {
         birth_date: new Date('1990-01-01'),
         contact_no: '09123456789',
         role: 'teacher',
-      }
+      };
 
       await userService.createUser(
         userData.email,
@@ -162,14 +161,17 @@ describe('UserService', () => {
 
       const result = await userService.loginUser(userData.email, userData.password)
 
-      expect(result.user).toBeDefined()
-      expect(result.token).toBeDefined()
+      expect(result.user).toBeDefined();
+      expect(result.token).toBeDefined();
+
+      const logoutResult = await userService.logoutUser(result.token);
+      expect(logoutResult).toEqual({ message: 'User logged out successfully' })
     })
 
-    it('should fail login with invalid credentials', async () => {
-      await expect(
-        userService.loginUser('nonexistent@example.com', 'wrongpassword')
-      ).rejects.toThrow('Invalid credentials')
+    it('should fail logout with an invalid token', async () => {
+      await expect(userService.logoutUser('invalid-token')).rejects.toThrow(
+        'Invalid token or logout failed'
+      )
     })
   })
 

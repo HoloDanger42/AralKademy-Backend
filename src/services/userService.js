@@ -15,7 +15,8 @@ class UserService {
     EnrollmentModel,
     CourseModel,
     GroupModel,
-    SchoolModel
+    SchoolModel,
+    BlacklistModel
   ) {
     this.UserModel = UserModel
     this.TeacherModel = TeacherModel
@@ -26,7 +27,8 @@ class UserService {
     this.Course = CourseModel
     this.Group = GroupModel
     this.School = SchoolModel
-    this.jwtSecret = process.env.JWT_SECRET; // Get from .env and store as a property
+    this.jwtSecret = process.env.JWT_SECRET // Get from .env and store as a property
+    this.BlacklistModel = BlacklistModel
   }
 
   validateUserData(userData) {
@@ -137,7 +139,7 @@ class UserService {
         throw error; // Re-throw the error so the controller can handle it
       }
   }
-  
+
   //-------------
   generateToken(user) {
     return jwt.sign({ id: user.id, email: user.email, role: user.role }, this.jwtSecret, { expiresIn: '1h' }); 
@@ -302,6 +304,20 @@ class UserService {
       where: { school_id: schoolId },
       attributes: { exclude: ['password'] },
     })
+  }
+
+  async logoutUser(token) {
+    try {
+      const decoded = jwt.verify(token, this.jwtSecret);
+
+      if (this.BlacklistModel) {
+        await this.BlacklistModel.create({ token });
+      }
+
+      return { message: 'User logged out successfully' };
+    } catch (error) {
+      throw new Error('Invalid token or logout failed');
+    }
   }
 }
 

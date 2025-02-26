@@ -15,7 +15,7 @@ import {
   Enrollment,
   Course,
   Group,
-  School,
+  School
 } from '../models/index.js'
 
 const userService = new UserService(
@@ -27,7 +27,7 @@ const userService = new UserService(
   Enrollment,
   Course,
   Group,
-  School
+  School,
 )
 
 //login function
@@ -140,4 +140,22 @@ const getUserById = async (req, res) => {
   }
 }
 
-export { login, createUser, getAllUsers, getUserById }
+const logoutUser = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+
+    await userService.logoutUser(token);
+    
+    res.status(200).json({ message: "User logged out successfully" });
+    log.info("User logged out successfully");
+  } catch (error) {
+    log.error("Logout error:", error);
+    return res.status(500).json({ message: "Logout failed" });
+  }
+};
+
+export { login, logoutUser, createUser, getAllUsers, getUserById }
