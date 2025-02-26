@@ -10,7 +10,7 @@ const dbConfig = {
   logging: process.env.NODE_ENV === 'test' ? false : console.log,
 }
 
-const sequelize = new Sequelize(
+export const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
   process.env.DB_PASSWORD,
@@ -22,15 +22,48 @@ const databaseConnection = async () => {
     await sequelize.authenticate()
     log.info('Database connection has been established successfully.')
 
+    // Import models and associations dynamically to avoid circular dependencies
+    const { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School } =
+      await import('../models/index.js')
+
+    // Import associations after models are loaded
     await import('../models/associate.js')
 
     await sequelize.sync({ force: false })
-
     log.info('Database synchronized successfully.')
+
+    return {
+      User,
+      Teacher,
+      Admin,
+      StudentTeacher,
+      Learner,
+      Enrollment,
+      Course,
+      Group,
+      School,
+    }
   } catch (error) {
     log.error('Database connection failed:', error)
     throw error
   }
 }
 
-export { sequelize, databaseConnection }
+export const initializeDatabase = async () => {
+  try {
+    await sequelize.authenticate()
+    await sequelize.sync({ alter: true })
+
+    if (process.env.RUN_SEEDERS === 'true') {
+      const { runSeeders } = await import('../../seeders/index.js')
+      await runSeeders()
+    }
+
+    log.info('Database initialized successfully')
+  } catch (error) {
+    log.error('Database initialization error:', error)
+    throw error
+  }
+}
+
+export { databaseConnection }

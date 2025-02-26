@@ -4,6 +4,20 @@ import * as UserServiceModule from '../../../src/services/userService.js'
 import { log } from '../../../src/utils/logger.js'
 import { validUsers } from '../../fixtures/userData.js'
 
+// Create a trackable mock function
+const fetchMock = jest.fn(() =>
+  Promise.resolve({
+    json: jest.fn().mockResolvedValue({ success: true }),
+  })
+)
+
+// Use unstable_mockModule with our trackable mock
+jest.unstable_mockModule('node-fetch', () => ({
+  default: fetchMock,
+}))
+
+import fetch from 'node-fetch'
+
 describe('User Controller', () => {
   let mockReq
   let mockRes
@@ -12,41 +26,28 @@ describe('User Controller', () => {
   let logoutUserSpy
 
   beforeEach(() => {
-    // Save original fetch
-    originalFetch = global.fetch
-
     // Setup test environment
     process.env.RECAPTCHA_SECRET_KEY = 'test-secret-key'
     mockReq = {
       body: {},
       headers: {},
     }
+
     mockRes = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     }
 
     // Setup spies
-    createUserSpy = jest.spyOn(UserServiceModule.default.prototype, 'createUser')
     loginUserSpy = jest.spyOn(UserServiceModule.default.prototype, 'loginUser')
     getAllUsersSpy = jest.spyOn(UserServiceModule.default.prototype, 'getAllUsers')
     logoutUserSpy = jest.spyOn(UserServiceModule.default.prototype, 'logoutUser')
 
     jest.spyOn(log, 'info')
     jest.spyOn(log, 'error')
-
-    // Mock fetch for reCAPTCHA
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        json: () => Promise.resolve({ success: true }),
-      })
-    )
   })
 
   afterEach(() => {
-    // Restore original fetch
-    global.fetch = originalFetch
-
     // Clear all mocks
     jest.clearAllMocks()
   })
@@ -68,10 +69,12 @@ describe('User Controller', () => {
       loginUserSpy.mockResolvedValue(mockResponse)
 
       // Act
+      console.log('Before login call')
       await login(mockReq, mockRes)
+      console.log('After login call')
 
       // Assert
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetch).toHaveBeenCalledWith(
         expect.stringContaining('recaptcha/api/siteverify'),
         expect.any(Object)
       )
@@ -86,8 +89,20 @@ describe('User Controller', () => {
 
     test('should handle invalid credentials', async () => {
       // Arrange
-      const loginData = { email: 'nonexistent@example.com', password: 'wrongpassword' }
+      const loginData = {
+        email: 'nonexistent@example.com',
+        password: 'wrongpassword',
+        captchaResponse: 'mock-captcha-response',
+      }
       mockReq.body = loginData
+
+      // Mock reCAPTCHA verification success
+      fetch.mockImplementation(() =>
+        Promise.resolve({
+          json: jest.fn().mockResolvedValue({ success: true }),
+        })
+      )
+
       const error = new Error('Invalid credentials')
       error.name = 'InvalidCredentialsError'
       loginUserSpy.mockRejectedValue(error)

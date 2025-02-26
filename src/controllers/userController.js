@@ -1,8 +1,8 @@
 //----
-import { log } from '../utils/logger.js';
-import fetch from 'node-fetch'; // Import node-fetch
-import dotenv from 'dotenv';
-dotenv.config();
+import { log } from '../utils/logger.js'
+import fetch from 'node-fetch' // Import node-fetch
+import dotenv from 'dotenv'
+dotenv.config()
 //---
 
 import UserService from '../services/userService.js'
@@ -33,43 +33,47 @@ const userService = new UserService(
 //login function
 const login = async (req, res) => {
   try {
-      const { email, password, captchaResponse } = req.body; // Get captchaResponse
+    const { email, password, captchaResponse } = req.body // Get captchaResponse
 
-      // --- reCAPTCHA Verification (BEFORE calling the service) ---
-      if (!captchaResponse) {
-          return res.status(400).json({ message: 'CAPTCHA response is required' });
-      }
+    // --- reCAPTCHA Verification (BEFORE calling the service) ---
+    if (!captchaResponse) {
+      return res.status(400).json({ message: 'CAPTCHA response is required' })
+    }
 
-      const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaResponse}`;
-      const verifyResponse = await fetch(verifyUrl, { method: 'POST' });
-      const verifyData = await verifyResponse.json();
+    const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaResponse}`
+    console.log('About to make fetch call to:', verifyUrl)
+    const verifyResponse = await fetch(verifyUrl, {
+      method: 'POST',
+      headers: { Connection: 'close' },
+    })
+    console.log('Fetch call completed')
+    const verifyData = await verifyResponse.json()
 
-      console.log("reCAPTCHA Verification Data:", verifyData); // ADD THIS
+    console.log('reCAPTCHA Verification Data:', verifyData) // ADD THIS
 
+    if (!verifyData.success) {
+      console.error('reCAPTCHA verification failed:', verifyData)
+      return res.status(400).json({ message: 'CAPTCHA verification failed' })
+    }
+    // --- End reCAPTCHA Verification ---
 
-      if (!verifyData.success) {
-          console.error("reCAPTCHA verification failed:", verifyData);
-          return res.status(400).json({ message: 'CAPTCHA verification failed' });
-      }
-      // --- End reCAPTCHA Verification ---
+    // calling the service, passing email and password (NO captchaResponse)
+    const { user, token } = await userService.loginUser(email, password)
 
-      // calling the service, passing email and password (NO captchaResponse)
-      const { user, token } = await userService.loginUser(email, password);
-
-      res.status(200).json({
-          message: 'Logged in successfully',
-          token,
-          user,
-      });
-      log.info(`User ${email} logged in successfully`);
+    res.status(200).json({
+      message: 'Logged in successfully',
+      token,
+      user,
+    })
+    log.info(`User ${email} logged in successfully`)
   } catch (error) {
-      log.error('Login error:', error);
-      if (error.message === 'Invalid credentials') {
-          return res.status(401).json({ message: 'Invalid credentials' });
-      }
-      return res.status(500).json({ message: 'Authentication failed' });
+    log.error('Login error:', error)
+    if (error.message === 'Invalid credentials') {
+      return res.status(401).json({ message: 'Invalid credentials' })
+    }
+    return res.status(500).json({ message: 'Authentication failed' })
   }
-};
+}
 //----
 
 const createUser = async (req, res) => {
