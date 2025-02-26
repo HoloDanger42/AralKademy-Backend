@@ -9,7 +9,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "seed": "node --experimental-json-modules seeders/index.js"
+    "seed": "cross-env RUN_SEEDERS=true node --experimental-json-modules seeders/index.js"
   },
   "keywords": [],
   "author": "",
@@ -45,6 +45,7 @@
     "@babel/preset-typescript": "^7.26.0",
     "babel-jest": "^29.7.0",
     "chai": "^5.2.0",
+    "cross-env": "^7.0.3",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
