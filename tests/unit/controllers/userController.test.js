@@ -4,54 +4,21 @@ import * as UserServiceModule from '../../../src/services/userService.js'
 import { log } from '../../../src/utils/logger.js'
 import { validUsers } from '../../fixtures/userData.js'
 
-let fetchMock
-
-jest.unstable_mockModule('node-fetch', async () => {
-  console.log('Mocking node-fetch module (async)...')
-  fetchMock = jest.fn().mockImplementation((url, options) => {
-    console.log('fetch mock called with URL:', url) // Log the URL
-    console.log('fetch mock called with options:', options) // Log the options
-    console.log('fetch mock returning success: true') // Explicitly log what we are returning
-    return Promise.resolve({
-      json: () => {
-        console.log('fetch mock json() called - returning reCAPTCHA success data')
-        return Promise.resolve({
-          success: true,
-          challenge_ts: 'test',
-          hostname: 'localhost',
-          score: 0.9,
-        }) // Return a more realistic success response
-      },
-    })
+// Create a trackable mock function
+const fetchMock = jest.fn(() =>
+  Promise.resolve({
+    json: jest.fn().mockResolvedValue({ success: true }),
   })
-  return { default: fetchMock }
-})
+)
+
+// Use unstable_mockModule with our trackable mock
+jest.unstable_mockModule('node-fetch', () => ({
+  default: fetchMock,
+}))
+
+import fetch from 'node-fetch'
 
 describe('User Controller', () => {
-  beforeAll(async () => {
-    jest.unstable_mockModule('node-fetch', async () => {
-      console.log('Mocking node-fetch module (async) - Explicit Return...') // Updated log message
-      const fetchMock = jest.fn().mockImplementation((url, options) => {
-        console.log('fetch mock called with URL:', url)
-        console.log('fetch mock called with options:', options)
-        console.log('fetch mock returning success: true')
-        return Promise.resolve({
-          json: () => {
-            console.log('fetch mock json() called - returning reCAPTCHA success data')
-            return Promise.resolve({
-              success: true,
-              challenge_ts: 'test',
-              hostname: 'localhost',
-              score: 0.9,
-            })
-          },
-        })
-      })
-      return { default: fetchMock } // Explicitly return fetchMock as default
-    })
-    await import('node-fetch') // Ensure mock module is loaded before tests
-  })
-
   let mockReq
   let mockRes
   let loginUserSpy
@@ -104,7 +71,7 @@ describe('User Controller', () => {
       console.log('After login call')
 
       // Assert
-      expect(fetchMock).toHaveBeenCalledWith(
+      expect(fetch).toHaveBeenCalledWith(
         expect.stringContaining('recaptcha/api/siteverify'),
         expect.any(Object)
       )
@@ -127,9 +94,11 @@ describe('User Controller', () => {
       mockReq.body = loginData
 
       // Mock reCAPTCHA verification success
-      fetchMock.mockResolvedValue({
-        json: jest.fn().mockResolvedValue({ success: true }),
-      })
+      fetch.mockImplementation(() =>
+        Promise.resolve({
+          json: jest.fn().mockResolvedValue({ success: true }),
+        })
+      )
 
       const error = new Error('Invalid credentials')
       error.name = 'InvalidCredentialsError'
