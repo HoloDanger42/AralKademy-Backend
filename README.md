@@ -159,7 +159,6 @@ aralkademy-backend/
       ```env
       # Database Configuration
 
-      NODE_ENV=test
       DB_HOST=localhost
       DB_USER=your_db_user
       DB_PASSWORD=your_db_password
@@ -170,11 +169,7 @@ aralkademy-backend/
       # Server Configuration
 
       PORT=4000
-      API_RATE_LIMIT=100
-      LOG_LEVEL=debug
-      LOG_FORMAT=json
-      LOG_FILE=aralkademy.log
-      ENABLE_RECAPTCHA=false
+      ENABLE_RECAPTCHA=true
       ENABLE_EMAIL_VERIFICATION=false
       RUN_SEEDERS=false
 
@@ -183,21 +178,9 @@ aralkademy-backend/
       JWT_SECRET=your_jwt_secret_key
       RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key
 
-      # CORS Configuration
-
-      CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-
       # Cache Configuration
 
-      CACHE_DURATION_PROD=300 # 5 minutes in production
-      CACHE_DURATION_DEV=60 # 1 minute in development
       CACHE_ENABLED=false # Set to true to enable caching
-
-      # Security Configuration (Rate Limiting)
-
-      RATE_LIMIT_WINDOW=900000 # Window in milliseconds (15 minutes)
-      RATE_LIMIT_MAX=100 # Max requests per window
-      AUTH_RATE_LIMIT_MAX=5 # Max auth requests per window
       ```
 
     - **Important:** You need a running PostgreSQL instance, and a database created, along with a user with the necessary privileges for the application.

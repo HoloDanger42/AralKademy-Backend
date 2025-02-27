@@ -306,14 +306,31 @@ class UserService {
 
   async logoutUser(token) {
     try {
+      // Verify and decode the token to get the expiration time
       const decoded = jwt.verify(token, this.jwtSecret)
 
+      // Calculate expiration date from jwt exp claim (which is in seconds)
+      // If exp is not available, set a default expiration (e.g., 1 hour from now)
+      const expiresAt = decoded.exp
+        ? new Date(decoded.exp * 1000)
+        : new Date(Date.now() + 60 * 60 * 1000) // 1 hour from now
+
+      // Add token to blacklist with expiration
       if (this.BlacklistModel) {
-        await this.BlacklistModel.create({ token })
+        await this.BlacklistModel.create({
+          token,
+          expiresAt,
+        })
+        if (decoded.id) {
+          await this.UserModel.update({ refreshToken: null }, { where: { id: decoded.id } })
+        }
+      } else {
+        throw new Error('BlacklistModel not initialized')
       }
 
       return { message: 'User logged out successfully' }
     } catch (error) {
+      console.error('Logout error:', error)
       throw new Error('Invalid token or logout failed')
     }
   }

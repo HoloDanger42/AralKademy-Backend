@@ -79,11 +79,13 @@ Group.hasOne(Course, {
 School.hasMany(User, { foreignKey: 'school_id', as: 'users' })
 
 // Course associations
-Course.belongsTo(Teacher, {
-  foreignKey: 'user_id',
-  as: 'teacher',
-  onDelete: 'CASCADE',
-})
+// Course.belongsTo(Teacher, {
+//   foreignKey: 'user_id',
+//   as: 'teacher',
+//   onDelete: 'CASCADE',
+// })
+Course.belongsTo(User, { foreignKey: 'user_id', as: 'teacher', onDelete: 'CASCADE' });
+
 Course.belongsTo(Group, {
   foreignKey: 'student_teacher_group_id',
   as: 'studentTeacherGroup',

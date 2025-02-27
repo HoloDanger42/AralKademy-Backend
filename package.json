@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node --experimental-vm-modules --no-warnings node_modules/jest/bin/jest.js --detectOpenHandles --forceExit",
+    "test:ci": "node --experimental-vm-modules --no-warnings node_modules/jest/bin/jest.js --detectOpenHandles --forceExit --ci --reporters=default --reporters=jest-junit",
     "start": "node src/server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

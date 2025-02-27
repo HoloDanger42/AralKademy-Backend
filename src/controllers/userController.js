@@ -14,6 +14,7 @@ import {
   Course,
   Group,
   School,
+  Blacklist,
 } from '../models/index.js'
 
 const userService = new UserService(
@@ -25,7 +26,8 @@ const userService = new UserService(
   Enrollment,
   Course,
   Group,
-  School
+  School,
+  Blacklist
 )
 
 // Create a separate function for reCAPTCHA verification that can be mocked in tests

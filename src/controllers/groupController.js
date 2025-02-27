@@ -4,16 +4,31 @@ import { log } from '../utils/logger.js'
 
 const groupService = new GroupService(Group)
 
-const getAllGroups = async (_req, res) => {
-    try {
-      const groups = await groupService.getAllGroups();
+const getAllGroups = async (req, res) => {
+  try {
+      const { group_type } = req.query; // Get group_type from query parameters.
+
+      const whereClause = {}; // Start with an empty WHERE clause.
+
+      if (group_type) {
+          // IMPORTANT: Validate the group_type to prevent SQL injection
+          if (group_type !== 'learner' && group_type !== 'student_teacher') {
+              return res.status(400).json({ message: 'Invalid group_type' });
+          }
+          whereClause.group_type = group_type; // Add group_type filter if provided and valid.
+      }
+
+
+      const groups = await Group.findAll({
+          where: whereClause, // Use the WHERE clause
+      });
       res.status(200).json(groups);
-      log.info('Retrieved all groups');
-    } catch (error) {
-      log.error('Get all groups error:', error);
-      return res.status(500).json({ message: 'Failed to retrieve groups' });
-    }
-  };
+
+  } catch (error) {
+      log.error('Error getting groups:', error);
+      res.status(500).json({ message: 'Failed to retrieve groups' });
+  }
+};
   
   const createGroup = async (req, res) => {
     try {
