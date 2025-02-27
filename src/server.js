@@ -126,8 +126,7 @@ app.get('/', (_req, res) => {
 
 //IMPORTANT* always put /api/ before the route
 app.use('/api/users', usersRouter)
-app.use('/api/courses', coursesRouter)
-app.use('/api/enrollment', enrollmentRouter)
+app.use('/api/courses', courseRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/enrollment', enrollmentRouter); 
 app.use('/api/groups', groupsRouter);
