@@ -48,8 +48,8 @@ const Course = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'groups',
-        key: 'group_id',
+        model: 'users', // Reference the users table
+        key: 'user_id', 
       },
     },
     learner_group_id: {

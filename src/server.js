@@ -19,13 +19,16 @@ import { databaseConnection, initializeDatabase } from './config/database.js'
 // Routes
 import { authRouter } from './routes/auth.js'
 import { usersRouter } from './routes/users.js'
-import { coursesRouter } from './routes/courses.js'
+import { courseRouter } from './routes/courses.js'
 
 // Token cleanup
 import { scheduleTokenCleanup } from './utils/tokenCleanup.js'
 
 // Enrollment
 import { enrollmentRouter } from './routes/enrollments.js'
+
+// Group
+import { groupsRouter } from './routes/groups.js';
 
 const app = express()
 
@@ -126,6 +129,10 @@ app.use('/api/users', usersRouter)
 app.use('/api/courses', coursesRouter)
 app.use('/api/enrollment', enrollmentRouter)
 app.use('/api/auth', authRouter)
+app.use('/api/enrollment', enrollmentRouter); 
+app.use('/api/groups', groupsRouter);
+
+
 
 app.get('/error', (_req, _res, next) => {
   next(new Error('Intentional error for testing'))
