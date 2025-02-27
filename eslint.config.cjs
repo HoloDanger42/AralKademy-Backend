@@ -7,9 +7,14 @@ module.exports = [
       globals: {
         browser: true,
         node: true,
-        jest: {
-          globals: true,
-        },
+        jest: true,
+        describe: true,
+        it: true,
+        expect: true,
+        beforeEach: true,
+        afterEach: true,
+        beforeAll: true,
+        afterAll: true,
       },
     },
     plugins: {
