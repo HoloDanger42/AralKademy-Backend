@@ -137,6 +137,10 @@ const User = sequelize.define(
         },
       },
     },
+    refreshToken: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   },
   {
     tableName: 'users',
