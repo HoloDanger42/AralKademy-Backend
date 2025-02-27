@@ -29,7 +29,6 @@ class UserService {
     this.School = SchoolModel
     this.jwtSecret = process.env.JWT_SECRET
     this.BlacklistModel = BlacklistModel
-
   }
 
   validateUserData(userData) {
@@ -133,7 +132,7 @@ class UserService {
 
       return { user, token }
     } catch (error) {
-      console.error('Error in loginUser:', error) // LOG THE ERROR
+      console.error('Error in loginUser:', error)
       throw error
     }
   }
@@ -307,15 +306,15 @@ class UserService {
 
   async logoutUser(token) {
     try {
-      const decoded = jwt.verify(token, this.jwtSecret);
+      const decoded = jwt.verify(token, this.jwtSecret)
 
       if (this.BlacklistModel) {
-        await this.BlacklistModel.create({ token });
+        await this.BlacklistModel.create({ token })
       }
 
-      return { message: 'User logged out successfully' };
+      return { message: 'User logged out successfully' }
     } catch (error) {
-      throw new Error('Invalid token or logout failed');
+      throw new Error('Invalid token or logout failed')
     }
   }
 }

@@ -107,7 +107,7 @@ const cacheMiddleware = (duration) => {
 
 const CACHE_DURATION = config.cache.duration[config.env]
 if (config.cache.enabled) {
-  app.use('/courses', cacheMiddleware(CACHE_DURATION))
+  app.use('/api/courses', cacheMiddleware(CACHE_DURATION))
 }
 
 // Other Middleware
@@ -120,7 +120,7 @@ app.get('/', (_req, res) => {
 
 //IMPORTANT* always put /api/ before the route
 app.use('/api/users', usersRouter)
-app.use('/courses', coursesRouter)
+app.use('/api/courses', coursesRouter)
 
 app.use('/api/enrollment', enrollmentRouter)
 

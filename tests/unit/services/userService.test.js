@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals'
 import UserService from '../../../src/services/userService.js'
 import { sequelize } from '../../../src/config/database.js'
 import { createTestSchool, createTestEnrollment } from '../../helpers/testData.js'
@@ -145,7 +146,7 @@ describe('UserService', () => {
         birth_date: new Date('1990-01-01'),
         contact_no: '09123456789',
         role: 'teacher',
-      };
+      }
 
       const createdUser = await userService.createUser(
         userData.email,
@@ -160,10 +161,10 @@ describe('UserService', () => {
 
       const result = await userService.loginUser(userData.email, userData.password)
 
-      expect(result.user).toBeDefined();
-      expect(result.token).toBeDefined();
+      expect(result.user).toBeDefined()
+      expect(result.token).toBeDefined()
 
-      const logoutResult = await userService.logoutUser(result.token);
+      const logoutResult = await userService.logoutUser(result.token)
       expect(logoutResult).toEqual({ message: 'User logged out successfully' })
     })
 
