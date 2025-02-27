@@ -1,3 +1,6 @@
+const jestPlugin = require('eslint-plugin-jest')
+const prettierPlugin = require('eslint-plugin-prettier')
+
 module.exports = [
   {
     files: ['*.js'],
@@ -18,7 +21,8 @@ module.exports = [
       },
     },
     plugins: {
-      jest: require('eslint-plugin-jest'),
+      jest: jestPlugin,
+      prettier: prettierPlugin,
     },
     rules: {
       'prettier/prettier': 'error',
