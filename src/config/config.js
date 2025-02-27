@@ -29,7 +29,7 @@ const config = {
     return process.env.NODE_ENV || 'development'
   },
 
-  port: parseInt(process.env.PORT, 10) || 3000,
+  port: parseInt(process.env.PORT, 10) || 4000,
 
   // Database
   dbConfig: {
@@ -42,6 +42,15 @@ const config = {
 
   // Authentication
   jwtSecret: process.env.JWT_SECRET,
+
+  // JWT Configuration
+  jwt: {
+    accessTokenSecret: process.env.JWT_ACCESS_TOKEN_SECRET || process.env.JWT_SECRET,
+    accessTokenExpiry: process.env.JWT_ACCESS_TOKEN_EXPIRY || '15m',
+    refreshTokenSecret: process.env.JWT_REFRESH_TOKEN_SECRET || `${process.env.JWT_SECRET}_refresh`,
+    refreshTokenExpiry: process.env.JWT_REFRESH_TOKEN_EXPIRY || '7d',
+  },
+
   recaptchaSecret: process.env.RECAPTCHA_SECRET_KEY,
 
   // CORS

@@ -1,5 +1,4 @@
 import express from 'express'
-import dotenv from 'dotenv'
 import compression from 'compression'
 import rateLimit from 'express-rate-limit'
 import cache from 'memory-cache'
@@ -18,6 +17,7 @@ import { securityMiddleware } from './middleware/securityMiddleware.js'
 import { databaseConnection, initializeDatabase } from './config/database.js'
 
 // Routes
+import { authRouter } from './routes/auth.js'
 import { usersRouter } from './routes/users.js'
 import { coursesRouter } from './routes/courses.js'
 
@@ -121,8 +121,8 @@ app.get('/', (_req, res) => {
 //IMPORTANT* always put /api/ before the route
 app.use('/api/users', usersRouter)
 app.use('/api/courses', coursesRouter)
-
 app.use('/api/enrollment', enrollmentRouter)
+app.use('/api/auth', authRouter)
 
 app.get('/error', (_req, _res, next) => {
   next(new Error('Intentional error for testing'))

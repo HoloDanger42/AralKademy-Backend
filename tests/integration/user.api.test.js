@@ -2,9 +2,7 @@ import request from 'supertest'
 import app from '../../src/server.js'
 import bcrypt from 'bcryptjs'
 import { sequelize } from '../../src/config/database.js'
-import { School } from '../../src/models/School.js'
-import { User } from '../../src/models/User.js'
-import { Teacher } from '../../src/models/Teacher.js'
+import { User, School, Teacher } from '../../src/models/index.js'
 import '../../src/models/associate.js'
 
 describe('Users API Integration Tests', () => {
