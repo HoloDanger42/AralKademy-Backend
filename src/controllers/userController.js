@@ -1,9 +1,7 @@
-//----
 import { log } from '../utils/logger.js'
-import fetch from 'node-fetch' // Import node-fetch
+import fetch from 'node-fetch'
 import dotenv from 'dotenv'
 dotenv.config()
-//---
 
 import UserService from '../services/userService.js'
 import {
@@ -15,7 +13,7 @@ import {
   Enrollment,
   Course,
   Group,
-  School
+  School,
 } from '../models/index.js'
 
 const userService = new UserService(
@@ -27,37 +25,52 @@ const userService = new UserService(
   Enrollment,
   Course,
   Group,
-  School,
+  School
 )
 
-//login function
+// Create a separate function for reCAPTCHA verification that can be mocked in tests
+export const verifyCaptcha = async (captchaResponse) => {
+  // Skip verification in test environment
+  if (process.env.NODE_ENV === 'test' && captchaResponse === 'test-bypass-captcha') {
+    return { success: true }
+  }
+
+  const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaResponse}`
+  console.log('Constructed verifyUrl in controller:', verifyUrl)
+  const verifyResponse = await fetch(verifyUrl, {
+    method: 'POST',
+    headers: { Connection: 'close' },
+  })
+  console.log('Fetch call completed')
+  return verifyResponse.json()
+}
+
+// Login function
 const login = async (req, res) => {
   try {
     const { email, password, captchaResponse } = req.body // Get captchaResponse
 
     // --- reCAPTCHA Verification (BEFORE calling the service) ---
     if (!captchaResponse) {
+      log.warn(`Login attempt failed: Missing CAPTCHA response for ${email || 'unknown user'}`)
       return res.status(400).json({ message: 'CAPTCHA response is required' })
     }
 
-    const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaResponse}`
-    console.log('About to make fetch call to:', verifyUrl)
-    const verifyResponse = await fetch(verifyUrl, {
-      method: 'POST',
-      headers: { Connection: 'close' },
-    })
-    console.log('Fetch call completed')
-    const verifyData = await verifyResponse.json()
-
-    console.log('reCAPTCHA Verification Data:', verifyData) // ADD THIS
+    const verifyData = await verifyCaptcha(captchaResponse)
+    console.log('reCAPTCHA Verification Data:', verifyData)
 
     if (!verifyData.success) {
+      log.warn(`Login attempt failed: CAPTCHA verification failed for ${email || 'unknown user'}`, {
+        error: verifyData['error-codes'] || 'No specific error codes provided',
+        score: verifyData.score,
+        requestUrl: `https://www.google.com/recaptcha/api/siteverify?secret=[REDACTED]&response=${captchaResponse?.substring(0, 20)}...`,
+        captchaLength: captchaResponse ? captchaResponse.length : 0,
+        errorDetails: JSON.stringify(verifyData),
+      })
       console.error('reCAPTCHA verification failed:', verifyData)
       return res.status(400).json({ message: 'CAPTCHA verification failed' })
     }
-    // --- End reCAPTCHA Verification ---
 
-    // calling the service, passing email and password (NO captchaResponse)
     const { user, token } = await userService.loginUser(email, password)
 
     res.status(200).json({
@@ -67,14 +80,23 @@ const login = async (req, res) => {
     })
     log.info(`User ${email} logged in successfully`)
   } catch (error) {
-    log.error('Login error:', error)
+    log.error(`Login error for ${req.body.email || 'unknown user'}:`, {
+      errorMessage: error.message,
+      errorStack: error.stack,
+      errorType: error.name,
+    })
+
     if (error.message === 'Invalid credentials') {
+      log.warn(
+        `Failed login attempt with invalid credentials for ${req.body.email || 'unknown user'}`
+      )
       return res.status(401).json({ message: 'Invalid credentials' })
     }
+
+    log.error(`Authentication failed with error: ${error.message}`)
     return res.status(500).json({ message: 'Authentication failed' })
   }
 }
-//----
 
 const createUser = async (req, res) => {
   try {
@@ -146,20 +168,20 @@ const getUserById = async (req, res) => {
 
 const logoutUser = async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = req.headers.authorization?.split(' ')[1]
 
     if (!token) {
-      return res.status(401).json({ message: "Unauthorized: No token provided" });
+      return res.status(401).json({ message: 'Unauthorized: No token provided' })
     }
 
-    await userService.logoutUser(token);
-    
-    res.status(200).json({ message: "User logged out successfully" });
-    log.info("User logged out successfully");
+    await userService.logoutUser(token)
+
+    res.status(200).json({ message: 'User logged out successfully' })
+    log.info('User logged out successfully')
   } catch (error) {
-    log.error("Logout error:", error);
-    return res.status(500).json({ message: "Logout failed" });
+    log.error('Logout error:', error)
+    return res.status(500).json({ message: 'Logout failed' })
   }
-};
+}
 
 export { login, logoutUser, createUser, getAllUsers, getUserById }

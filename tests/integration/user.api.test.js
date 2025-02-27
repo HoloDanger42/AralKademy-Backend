@@ -1,5 +1,6 @@
 import request from 'supertest'
 import app from '../../src/server.js'
+import bcrypt from 'bcryptjs'
 import { sequelize } from '../../src/config/database.js'
 import { School } from '../../src/models/School.js'
 import { User } from '../../src/models/User.js'
@@ -21,9 +22,10 @@ describe('Users API Integration Tests', () => {
     })
 
     // Create user after sync
+    const hashedPassword = await bcrypt.hash('testPassword', 10)
     const user = await User.create({
       email: 'testUser@example.com',
-      password: 'testPassword',
+      password: hashedPassword,
       first_name: 'Test',
       last_name: 'User',
       birth_date: new Date('1990-01-01'),
@@ -51,8 +53,12 @@ describe('Users API Integration Tests', () => {
 
   describe('POST /users/login', () => {
     it('should log in a user and return a valid token', async () => {
-      const loginData = { email: 'testUser@example.com', password: 'testPassword' }
-      const res = await request(app).post('/users/login').send(loginData).expect(200)
+      const loginData = {
+        email: 'testUser@example.com',
+        password: 'testPassword',
+        captchaResponse: 'test-bypass-captcha',
+      }
+      const res = await request(app).post('/api/users/login').send(loginData).expect(200)
 
       expect(res.body).toHaveProperty('token')
       authToken = res.body.token
@@ -62,7 +68,7 @@ describe('Users API Integration Tests', () => {
   describe('GET /users', () => {
     it('should retrieve all users', async () => {
       const res = await request(app)
-        .get('/users')
+        .get('/api/users')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200)
 
@@ -92,7 +98,7 @@ describe('Users API Integration Tests', () => {
       console.log('Making request with test user ID:', testUserId)
 
       const res = await request(app)
-        .get(`/users/${testUserId}`)
+        .get(`/api/users/${testUserId}`)
         .set('Authorization', `Bearer ${authToken}`)
 
       console.log('Response status:', res.status)
@@ -110,7 +116,7 @@ describe('Users API Integration Tests', () => {
     })
 
     it('should return 401 Unauthorized when token is missing', async () => {
-      await request(app).get(`/users/${testUserId}`).expect(401)
+      await request(app).get(`/api/users/${testUserId}`).expect(401)
     })
   })
 })

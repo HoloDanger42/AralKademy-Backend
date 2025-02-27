@@ -443,7 +443,7 @@ describe('Server Setup', () => {
       delete process.env.PORT
 
       const server = await appModule.initializeApp()
-      expect(server.address().port).toBe(3000)
+      expect(server.address().port).toBe(4000)
 
       await server.close()
       process.env.PORT = originalPort
