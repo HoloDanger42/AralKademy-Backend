@@ -19,10 +19,14 @@ import { databaseConnection } from './config/database.js'
 
 // Routes
 import { usersRouter } from './routes/users.js'
-import { coursesRouter } from './routes/courses.js'
+import { courseRouter } from './routes/courses.js'
 
 //enrollment
 import { enrollmentRouter } from './routes/enrollments.js';
+
+//Group
+import { groupsRouter } from './routes/groups.js';
+
 
 dotenv.config()
 
@@ -125,9 +129,13 @@ app.get('/', (_req, res) => {
 
 //IMPORTANT* always put /api/ before the route
 app.use('/api/users', usersRouter)
-app.use('/courses', coursesRouter)
+app.use('/api/courses', courseRouter);
 
 app.use('/api/enrollment', enrollmentRouter); 
+
+app.use('/api/groups', groupsRouter); // Add this line!
+
+
 
 app.get('/error', (_req, _res, next) => {
   next(new Error('Intentional error for testing'))

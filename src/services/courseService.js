@@ -1,186 +1,202 @@
+// services/courseService.js
+import { Course } from '../models/Course.js';
+import { User } from '../models/User.js';
+import { Group } from '../models/Group.js';
+import { log } from '../utils/logger.js';
+
 class CourseService {
-  constructor(CourseModel) {
-    this.CourseModel = CourseModel
+  constructor(courseModel, userModel, groupModel) {
+    this.courseModel = courseModel;
+    this.userModel = userModel;
+    this.groupModel = groupModel;
   }
 
-  async getAllCourses() {
-    try {
-      const courses = await this.CourseModel.findAndCountAll()
-      return {
-        count: courses.count,
-        rows: courses.rows,
-      }
-    } catch (error) {
-      throw new Error('Failed to fetch courses')
-    }
-  }
-
-  async getCourseById(courseId) {
-    try {
-      const course = await this.CourseModel.findByPk(courseId)
-      if (!course) {
-        throw new Error('Course not found')
-      }
-      return course
-    } catch (error) {
-      if (error.message === 'Course not found') {
-        throw error
-      }
-      throw new Error('Failed to fetch course')
-    }
-  }
-
-  async createCourse(
-    name,
-    description,
-    userId = null,
-    studentTeacherGroupId = null,
-    learnerGroupId = null
-  ) {
-    try {
-      // Create a ValidationError class for better error handling
-      class ValidationError extends Error {
-        constructor(message) {
-          super(message)
-          this.name = 'ValidationError'
+    async getAllCourses() {
+        try {
+            // Include associated models for complete data
+            const courses = await this.courseModel.findAll({
+                include: [
+                    { model: this.userModel, as: 'teacher', attributes: ['id', 'first_name', 'last_name', 'email'] }, 
+                    {model: this.groupModel, as: 'learnerGroup', attributes: ['group_id', 'name']},
+                    {model: this.groupModel, as: 'studentTeacherGroup', attributes: ['group_id', 'name']}
+                ],
+            });
+            return courses;
+        } catch (error) {
+            log.error('Error getting all courses:', error);
+            throw new Error('Failed to retrieve courses');
         }
-      }
-
-      // Validate required fields first
-      if (!name || name.trim() === '') {
-        throw new ValidationError('Course name is required')
-      }
-
-      if (name.length > 255) {
-        throw new ValidationError('Course name is too long')
-      }
-
-      // Create course
-      const course = await this.CourseModel.create({
-        name,
-        description,
-        user_id: userId,
-        student_teacher_group_id: studentTeacherGroupId,
-        learner_group_id: learnerGroupId,
-      })
-
-      return course
-    } catch (error) {
-      if (error.name === 'ValidationError') {
-        // Re-throw validation errors to be handled by controller
-        throw error
-      }
-
-      console.error('Course creation failed:', {
-        error: error.message,
-        name
-      })
-      throw new Error(`Failed to create course: ${error.message}`)
     }
-  }
 
-  async assignStudentTeacherGroupCourse(courseId, studentTeacherGroupId) {
+    async getCourseById(id) {
+        try {
+            const course = await this.courseModel.findByPk(id, {
+                include: [
+                  { model: this.userModel, as: 'teacher', attributes: ['id', 'first_name', 'last_name', 'email'] },
+                  {model: this.groupModel, as: 'learnerGroup', attributes: ['group_id', 'name']},
+                  {model: this.groupModel, as: 'studentTeacherGroup', attributes: ['group_id', 'name']}
+                ],
+            });
+            if (!course) {
+                throw new Error('Course not found');
+            }
+            return course;
+        } catch (error) {
+            log.error(`Error getting course by ID ${id}:`, error);
+            throw error; // Re-throw
+        }
+    }
+
+
+  async createCourse(courseData) {
     try {
-      const course = await this.CourseModel.findByPk(courseId)
-      if (!course) {
-        throw new Error('Course not found')
-      }
-
-      course.student_teacher_group_id = studentTeacherGroupId
-      await course.save()
-
-      return course
+      const newCourse = await this.courseModel.create(courseData);
+      return newCourse;
     } catch (error) {
-      if (error.message === 'Course not found') {
-        throw error
+      log.error('Error creating course:', error);
+      // Handle Sequelize validation errors
+      if (error.name === 'SequelizeValidationError') {
+        throw error; // Re-throw validation errors for controller to handle
       }
-      throw new Error('Failed to assign student teacher group to course')
+      // Handle unique constraint violation (course name)
+      if (
+        error.name === 'SequelizeUniqueConstraintError' &&
+        error.errors[0].path === 'name'
+      ) {
+        throw new Error('Course name already exists'); // Specific, user-friendly error
+      }
+
+      throw new Error('Failed to create course'); // Generic error for other issues
     }
   }
 
-  async assignLearnerGroupCourse(courseId, learnerGroupId) {
+  async updateCourse(id, updatedData) {
     try {
-      const course = await this.CourseModel.findByPk(courseId)
+      const course = await this.courseModel.findByPk(id);
       if (!course) {
-        throw new Error('Course not found')
+        throw new Error('Course not found');
       }
 
-      course.learner_group_id = learnerGroupId
-      await course.save()
-
-      return course
+      const updatedCourse = await course.update(updatedData);
+      return updatedCourse;
     } catch (error) {
-      if (error.message === 'Course not found') {
-        throw error
+      log.error(`Error updating course with ID ${id}:`, error);
+      if (error.name === 'SequelizeValidationError') {
+        throw error; // Re-throw for controller
       }
-      throw new Error('Failed to assign learner group to course')
+      if (
+        error.name === 'SequelizeUniqueConstraintError' &&
+        error.errors[0].path === 'name'
+      ) {
+        throw new Error('Course name already exists');
+      }
+      throw new Error('Failed to update course');
     }
   }
 
+  async softDeleteCourse(id) {
+    try {
+      const course = await this.courseModel.findByPk(id);
+      if (!course) {
+        throw new Error('Course not found');
+      }
+      await course.destroy(); // Soft delete (paranoid: true)
+    } catch (error) {
+      log.error(`Error soft-deleting course with ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteCourse(id) {
+    try {
+      const course = await this.courseModel.findByPk(id, { paranoid: false }); // Find even if soft-deleted
+      if (!course) {
+        throw new Error('Course not found');
+      }
+      await course.destroy({ force: true }); // Permanent delete
+    } catch (error) {
+      log.error(`Error deleting course with ID ${id}:`, error);
+      throw error;
+    }
+  }
+//add assign teacher here
   async assignTeacherCourse(courseId, userId) {
     try {
-      const course = await this.CourseModel.findByPk(courseId)
-      if (!course) {
-        throw new Error('Course not found')
-      }
+      const course = await this.courseModel.findByPk(courseId);
+        if (!course) {
+          throw new Error('Course not found');
+        }
 
-      course.user_id = userId
-      await course.save()
+        const teacher = await this.userModel.findByPk(userId);
+        if (!teacher) {
+          throw new Error('Teacher not found');
+        }
+         if (teacher.role !== 'teacher') {
+          throw new Error('Provided user ID is not a teacher.');
+        }
 
-      return course
+
+      course.user_id = userId;  // Use  `course.setUser()`
+      await course.save();
+      return course;
     } catch (error) {
-      if (error.message === 'Course not found') {
-        throw error
-      }
-      throw new Error('Failed to assign teacher to course')
+      log.error(
+        `Error assigning teacher to course. Course ID: ${courseId}, User ID: ${userId}`,
+        error
+      );
+      throw error;
     }
   }
 
-  async softDeleteCourse(courseId) {
+  //add assign learner group
+  async assignLearnerGroupCourse(courseId, learnerGroupId) {
     try {
-      const course = await this.CourseModel.findByPk(courseId)
-      if (!course) {
-        throw new Error('Course not found')
-      }
+        const course = await this.courseModel.findByPk(courseId);
 
-      await course.destroy()
+        if (!course) {
+            throw new Error('Course not found');
+        }
+         const learnerGroup = await this.groupModel.findByPk(learnerGroupId);
+            if(!learnerGroup){
+                throw new Error ("Learner Group not found")
+            }
+            if(learnerGroup.group_type !== 'learner'){
+                throw new Error ("Invalid group type. Expected type is learner")
+            }
 
-      return { message: 'Course marked as deleted' }
+
+        course.learner_group_id = learnerGroupId;  // Use  `course.setLearnerGroup()`
+        await course.save();
+        return course;
     } catch (error) {
-      if (error.message === 'Course not found') {
-        throw error
-      }
-      throw new Error('Failed to soft delete course')
+        log.error("Error assigning learner group to course:", error);
+        throw error;
     }
-  }
+};
 
-  async editCourse(courseId, name, description) {
-    if (!name || name.trim() === '') {
-      throw new Error('Course name is required')
-    }
+ //add assign student teacher group
+ async assignStudentTeacherGroupCourse(courseId, studentTeacherGroupId) {
+        try {
+            const course = await this.courseModel.findByPk(courseId);
+             if (!course) {
+                throw new Error('Course not found');
+            }
+            const studentTeacherGroup = await this.groupModel.findByPk(studentTeacherGroupId);
+            if (!studentTeacherGroup) {
+                throw new Error("Student Teacher Group not found")
+            }
+             if (studentTeacherGroup.group_type !== 'student_teacher') {
+                throw new Error("Invalid group type. Expected type is student_teacher");
+            }
 
-    if (name.length > 255) {
-      throw new Error('Course name is too long')
-    }
-
-    try {
-      const course = await this.CourseModel.findByPk(courseId)
-      if (!course) {
-        throw new Error('Course not found')
-      }
-
-      course.name = name
-      course.description = description
-      await course.save()
-
-      return course
-    } catch (error) {
-      if (error.message === 'Course not found') {
-        throw error
-      }
-      throw new Error('Failed to edit course')
-    }
-  }
+            course.student_teacher_group_id = studentTeacherGroupId; // Use `course.setStudentTeacherGroup()`
+            await course.save();
+            return course;
+        } catch (error) {
+            log.error("Error assigning student teacher group to course:", error);
+            throw error;
+        }
+    };
 }
 
-export default CourseService
+export default CourseService;
