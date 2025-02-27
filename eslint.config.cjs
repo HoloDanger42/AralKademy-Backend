@@ -1,17 +1,22 @@
-module.exports = {
-  env: {
-    browser: true,
-    es2021: true,
-    'jest/globals': true,
-    node: true,
+module.exports = [
+  {
+    files: ['*.js'],
+    languageOptions: {
+      ecmaVersion: 12,
+      sourceType: 'module',
+      globals: {
+        browser: true,
+        node: true,
+        jest: {
+          globals: true,
+        },
+      },
+    },
+    plugins: {
+      jest: require('eslint-plugin-jest'),
+    },
+    rules: {
+      'prettier/prettier': 'error',
+    },
   },
-  extends: ['eslint:recommended', 'plugin:prettier/recommended'],
-  parserOptions: {
-    ecmaVersion: 12,
-    sourceType: 'module',
-  },
-  plugins: ['jest'],
-  rules: {
-    'prettier/prettier': 'error', // Prettier will show as an error in VS Code
-  },
-}
+]
