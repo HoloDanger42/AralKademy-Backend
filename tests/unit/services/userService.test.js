@@ -25,7 +25,8 @@ describe('UserService', () => {
       sequelize.models.Enrollment,
       sequelize.models.Course,
       sequelize.models.Group,
-      sequelize.models.School
+      sequelize.models.School,
+      sequelize.models.Blacklist
     )
   })
 
