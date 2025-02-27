@@ -7,5 +7,17 @@ import { Enrollment } from './Enrollment.js'
 import { Course } from './Course.js'
 import { Group } from './Group.js'
 import { School } from './School.js'
+import { Blacklist } from './Blacklist.js'
 
-export { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School }
+export {
+  User,
+  Teacher,
+  Admin,
+  StudentTeacher,
+  Learner,
+  Enrollment,
+  Course,
+  Group,
+  School,
+  Blacklist,
+}

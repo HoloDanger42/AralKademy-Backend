@@ -21,6 +21,9 @@ import { authRouter } from './routes/auth.js'
 import { usersRouter } from './routes/users.js'
 import { coursesRouter } from './routes/courses.js'
 
+// Token cleanup
+import { scheduleTokenCleanup } from './utils/tokenCleanup.js'
+
 // Enrollment
 import { enrollmentRouter } from './routes/enrollments.js'
 
@@ -147,6 +150,9 @@ export const initializeApp = async () => {
   const server = app.listen(config.port, () => {
     if (config.env !== 'test') {
       console.log(`Server v${config.version} running on port ${config.port} in ${config.env} mode`)
+
+      // Schedule token cleanup to run every hour
+      scheduleTokenCleanup(config.tokenBlacklist.cleanupIntervalMinutes)
     }
   })
   return server

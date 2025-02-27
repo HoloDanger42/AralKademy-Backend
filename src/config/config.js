@@ -51,6 +51,11 @@ const config = {
     refreshTokenExpiry: process.env.JWT_REFRESH_TOKEN_EXPIRY || '7d',
   },
 
+  // Token blacklist configuration
+  tokenBlacklist: {
+    cleanupIntervalMinutes: parseInt(process.env.TOKEN_CLEANUP_INTERVAL, 10) || 60,
+  },
+
   recaptchaSecret: process.env.RECAPTCHA_SECRET_KEY,
 
   // CORS
