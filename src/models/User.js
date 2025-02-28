@@ -30,8 +30,8 @@ const User = sequelize.define(
       allowNull: true,
       validate: {
         len: {
-          args: [0, 3],
-          msg: 'Middle initial must be at most 1 character.',
+          args: [0, 2],
+          msg: 'Middle initial must be at most 2 characters long',
         },
       },
     },
@@ -136,6 +136,14 @@ const User = sequelize.define(
           msg: 'Invalid role type',
         },
       },
+    },
+    refreshToken: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    reset_code: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {

@@ -1,13 +1,12 @@
 import express from 'express'
-import dotenv from 'dotenv'
 import compression from 'compression'
 import rateLimit from 'express-rate-limit'
 import cache from 'memory-cache'
 import paginate from 'express-paginate'
+import config from './config/config.js'
 
-//cors
-import cors from 'cors';
-
+// CORS
+import cors from 'cors'
 
 // Middleware
 import { errorMiddleware, SpecificError } from './middleware/errorMiddleware.js'
@@ -15,42 +14,35 @@ import { logMiddleware } from './middleware/logMiddleware.js'
 import { securityMiddleware } from './middleware/securityMiddleware.js'
 
 // Configuration
-import { databaseConnection } from './config/database.js'
+import { databaseConnection, initializeDatabase } from './config/database.js'
 
 // Routes
+import { authRouter } from './routes/auth.js'
 import { usersRouter } from './routes/users.js'
 import { courseRouter } from './routes/courses.js'
+import { enrollmentRouter } from './routes/enrollments.js'
+import { groupsRouter } from './routes/groups.js'
 
-//enrollment
-import { enrollmentRouter } from './routes/enrollments.js';
-
-//Group
-import { groupsRouter } from './routes/groups.js';
-
-
-dotenv.config()
+// Token cleanup
+import { scheduleTokenCleanup } from './utils/tokenCleanup.js'
 
 const app = express()
 
-//Cors configuration
-const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
-
+// CORS configuration
+const allowedOrigins = config.cors.origins
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+      callback(null, true)
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error('Not allowed by CORS'))
     }
   },
-  optionsSuccessStatus: 200,
-  credentials: true,
-};
+  optionsSuccessStatus: config.cors.optionsSuccessStatus,
+  credentials: config.cors.credentials,
+}
 
-app.use(cors(corsOptions));
-//----
-
-
+app.use(cors(corsOptions))
 
 app.use(express.json())
 
@@ -58,17 +50,17 @@ app.use(express.json())
 app.use(compression())
 
 // Rate limiting
-const FIFTEEN_MINUTES = 15 * 60 * 1000
-const AUTH_MAX_REQUESTS = 5
+const FIFTEEN_MINUTES = config.api.rateLimit.window
+const AUTH_MAX_REQUESTS = config.api.rateLimit.auth.max
 
 // Apply rate limiting based on environment variables
-const applyRateLimiter = process.env.NODE_ENV !== 'test'
+const applyRateLimiter = config.env !== 'test'
 
 // Rate limiting
 if (applyRateLimiter) {
   const limiter = rateLimit({
     windowMs: FIFTEEN_MINUTES,
-    max: 100,
+    max: config.api.rateLimit.max,
     standardHeaders: true,
     legacyHeaders: false,
   })
@@ -87,11 +79,11 @@ if (applyRateLimiter) {
     standardHeaders: true,
     legacyHeaders: false,
   })
-  app.use('/users', authLimiter)
+  app.use('/api/users', authLimiter)
 }
 
 // Pagination middleware
-app.use(paginate.middleware(10, 50))
+app.use(paginate.middleware(config.pagination.defaultLimit, config.pagination.maxLimit))
 
 // Cache middleware (modified to only cache successful responses)
 const cacheMiddleware = (duration) => {
@@ -115,8 +107,9 @@ const cacheMiddleware = (duration) => {
   }
 }
 
-if (process.env.NODE_ENV !== 'test') {
-  app.use('/courses', cacheMiddleware(300))
+const CACHE_DURATION = config.cache.duration[config.env]
+if (config.cache.enabled) {
+  app.use('/api/courses', cacheMiddleware(CACHE_DURATION))
 }
 
 // Other Middleware
@@ -127,15 +120,11 @@ app.get('/', (_req, res) => {
   res.send('API is running')
 })
 
-//IMPORTANT* always put /api/ before the route
 app.use('/api/users', usersRouter)
-app.use('/api/courses', courseRouter);
-
-app.use('/api/enrollment', enrollmentRouter); 
-
-app.use('/api/groups', groupsRouter); // Add this line!
-
-
+app.use('/api/courses', courseRouter)
+app.use('/api/auth', authRouter)
+app.use('/api/enrollment', enrollmentRouter)
+app.use('/api/groups', groupsRouter)
 
 app.get('/error', (_req, _res, next) => {
   next(new Error('Intentional error for testing'))
@@ -151,13 +140,18 @@ app.use((_req, _res, next) => {
 app.use(errorMiddleware)
 
 export const initializeApp = async () => {
-  if (process.env.NODE_ENV !== 'test') {
-    await databaseConnection()
+  await databaseConnection()
+
+  if (config.env !== 'test') {
+    await initializeDatabase()
   }
-  const PORT = process.env.PORT || 3000
-  const server = app.listen(PORT, () => {
-    if (process.env.NODE_ENV !== 'test') {
-      console.log(`Server running on port ${PORT}`)
+
+  const server = app.listen(config.port, () => {
+    if (config.env !== 'test') {
+      console.log(`Server v${config.version} running on port ${config.port} in ${config.env} mode`)
+
+      // Schedule token cleanup to run every hour
+      scheduleTokenCleanup(config.tokenBlacklist.cleanupIntervalMinutes)
     }
   })
   return server
@@ -167,7 +161,7 @@ export const initializeApp = async () => {
 export const startServer = async () => {
   try {
     // Only run database sync when not testing.
-    if (process.env.NODE_ENV !== 'test') {
+    if (config.env !== 'test') {
       await initializeApp()
     }
   } catch (error) {
@@ -182,7 +176,7 @@ export const startServer = async () => {
 // Attach startServer to app for testing purposes
 app.startServer = startServer
 
-if (process.env.NODE_ENV !== 'test') {
+if (config.env !== 'test') {
   startServer()
 }
 

@@ -5,10 +5,10 @@ import rateLimit from 'express-rate-limit'
 import cache from 'memory-cache'
 import { jest } from '@jest/globals'
 import supertest from 'supertest'
-import { errorMiddleware, SpecificError } from '../../src/middleware/errorMiddleware.js'
+import { errorMiddleware, SpecificError } from '../../../src/middleware/errorMiddleware.js'
 
 // Mock modules
-jest.unstable_mockModule('../../src/config/database.js', () => {
+jest.unstable_mockModule('../../../src/config/database.js', () => {
   const mockModelInstance = {
     findAll: jest.fn(),
     findOne: jest.fn(),
@@ -31,6 +31,7 @@ jest.unstable_mockModule('../../src/config/database.js', () => {
 
   return {
     databaseConnection: jest.fn().mockResolvedValue(true),
+    initializeDatabase: jest.fn().mockResolvedValue(true),
     sequelize: {
       authenticate: jest.fn().mockResolvedValue(true),
       sync: jest.fn().mockResolvedValue(true),
@@ -51,11 +52,11 @@ jest.unstable_mockModule('../../src/config/database.js', () => {
   }
 })
 
-jest.unstable_mockModule('../../src/middleware/logMiddleware.js', () => ({
+jest.unstable_mockModule('../../../src/middleware/logMiddleware.js', () => ({
   logMiddleware: (_req, _res, next) => next(),
 }))
 
-jest.unstable_mockModule('../../src/middleware/securityMiddleware.js', () => ({
+jest.unstable_mockModule('../../../src/middleware/securityMiddleware.js', () => ({
   securityMiddleware: [
     (_req, _res, next) => {
       next()
@@ -69,32 +70,32 @@ jest.unstable_mockModule('../../src/middleware/securityMiddleware.js', () => ({
   ],
 }))
 
-jest.unstable_mockModule('../../src/middleware/errorMiddleware.js', () => ({
+jest.unstable_mockModule('../../../src/middleware/errorMiddleware.js', () => ({
   errorMiddleware: errorMiddleware,
   SpecificError: SpecificError,
 }))
 
-jest.unstable_mockModule('../../src/routes/users.js', () => ({
+jest.unstable_mockModule('../../../src/routes/users.js', () => ({
   usersRouter: express.Router(),
 }))
 
-jest.unstable_mockModule('../../src/routes/courses.js', () => ({
+jest.unstable_mockModule('../../../src/routes/courses.js', () => ({
   coursesRouter: express.Router(),
 }))
 
-const mockUsersRoutes = await import('../../src/routes/users.js')
-const mockCoursesRoutes = await import('../../src/routes/courses.js')
-const mockDatabase = await import('../../src/config/database.js')
+const mockUsersRoutes = await import('../../../src/routes/users.js')
+const mockCoursesRoutes = await import('../../../src/routes/courses.js')
+const mockDatabase = await import('../../../src/config/database.js')
 
 // Import the main app
-const appModule = await import('../../src/server.js')
+const appModule = await import('../../../src/server.js')
 
 // Mock the app configuration
 const app = appModule.default
 const FIFTEEN_MINUTES = 15 * 60 * 1000
 const AUTH_MAX_REQUESTS = 5
 
-const { securityMiddleware } = await import('../../src/middleware/securityMiddleware.js')
+const { securityMiddleware } = await import('../../../src/middleware/securityMiddleware.js')
 
 // Create supertest instance
 const request = supertest(app)
@@ -226,7 +227,7 @@ describe('Server Setup', () => {
       process.env.NODE_ENV = 'development'
       try {
         // Import the app initialization function
-        const { initializeApp } = await import('../../src/server.js')
+        const { initializeApp } = await import('../../../src/server.js')
 
         // Initialize the app, which should trigger database connection
         server = await initializeApp()
@@ -442,7 +443,7 @@ describe('Server Setup', () => {
       delete process.env.PORT
 
       const server = await appModule.initializeApp()
-      expect(server.address().port).toBe(3000)
+      expect(server.address().port).toBe(4000)
 
       await server.close()
       process.env.PORT = originalPort

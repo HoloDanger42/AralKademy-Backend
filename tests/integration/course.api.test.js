@@ -1,5 +1,6 @@
 import request from 'supertest'
 import app from '../../src/server.js'
+import bcrypt from 'bcryptjs'
 import { sequelize } from '../../src/config/database.js'
 import { School } from '../../src/models/School.js'
 import { User } from '../../src/models/User.js'
@@ -24,9 +25,10 @@ describe('Course Endpoints (Integration Tests)', () => {
     })
 
     // Create test user/admin
+    const hashedPassword = await bcrypt.hash('testPassword', 10)
     const user = await User.create({
       email: 'testadmin@example.com',
-      password: 'testPassword',
+      password: hashedPassword,
       first_name: 'Test',
       last_name: 'Admin',
       birth_date: new Date('1990-01-01'),
@@ -43,9 +45,10 @@ describe('Course Endpoints (Integration Tests)', () => {
     server = app.listen(0)
 
     // Login to get auth token
-    const loginRes = await request(app).post('/users/login').send({
+    const loginRes = await request(app).post('/api/users/login').send({
       email: 'testadmin@example.com',
       password: 'testPassword',
+      captchaResponse: 'test-bypass-captcha',
     })
 
     authToken = loginRes.body.token
@@ -69,7 +72,7 @@ describe('Course Endpoints (Integration Tests)', () => {
       }
 
       const res = await request(app)
-        .post('/courses')
+        .post('/api/courses')
         .set('Authorization', `Bearer ${authToken}`)
         .send(courseData)
 
@@ -77,7 +80,7 @@ describe('Course Endpoints (Integration Tests)', () => {
       expect(res.body.course).toEqual(
         expect.objectContaining({
           name: courseData.name,
-          description: courseData.description
+          description: courseData.description,
         })
       )
     })
@@ -85,11 +88,11 @@ describe('Course Endpoints (Integration Tests)', () => {
     describe('error handling', () => {
       it('should handle empty course name', async () => {
         const res = await request(app)
-          .post('/courses')
+          .post('/api/courses')
           .set('Authorization', `Bearer ${authToken}`)
           .send({
             name: '',
-            description: 'Test description'
+            description: 'Test description',
           })
 
         expect(res.status).toBe(400)
@@ -100,11 +103,11 @@ describe('Course Endpoints (Integration Tests)', () => {
 
       it('should handle course name too long', async () => {
         const res = await request(app)
-          .post('/courses')
+          .post('/api/courses')
           .set('Authorization', `Bearer ${authToken}`)
           .send({
             name: 'a'.repeat(256),
-            description: 'Test description'
+            description: 'Test description',
           })
 
         expect(res.status).toBe(400)
@@ -125,15 +128,15 @@ describe('Course Endpoints (Integration Tests)', () => {
       await Course.bulkCreate([
         {
           name: 'Course 1',
-          description: 'Description 1'
+          description: 'Description 1',
         },
         {
           name: 'Course 2',
-          description: 'Description 2'
+          description: 'Description 2',
         },
       ])
 
-      const res = await request(app).get('/courses').set('Authorization', `Bearer ${authToken}`)
+      const res = await request(app).get('/api/courses').set('Authorization', `Bearer ${authToken}`)
 
       expect(res.status).toBe(200)
       expect(res.body).toEqual(
@@ -142,7 +145,7 @@ describe('Course Endpoints (Integration Tests)', () => {
           rows: expect.arrayContaining([
             expect.objectContaining({
               name: expect.any(String),
-              description: expect.any(String)
+              description: expect.any(String),
             }),
           ]),
         })

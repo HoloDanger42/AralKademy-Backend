@@ -1,10 +1,21 @@
 // userService.js
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+// import nodemailer from 'nodemailer';
+
 //
 import dotenv from 'dotenv'
 dotenv.config()
 //
+
+/* Configure nodemailer
+const transporter = nodemailer.createTransport({
+  service: 'gmail', // You can use any email service provider
+  auth: {
+    user: process.env.EMAIL_USER, // Your email address
+    pass: process.env.EMAIL_PASS, // Your email password or app-specific password
+  },
+}); */
 
 class UserService {
   constructor(
@@ -16,7 +27,8 @@ class UserService {
     EnrollmentModel,
     CourseModel,
     GroupModel,
-    SchoolModel
+    SchoolModel,
+    BlacklistModel
   ) {
     this.UserModel = UserModel
     this.TeacherModel = TeacherModel
@@ -28,6 +40,7 @@ class UserService {
     this.Group = GroupModel
     this.School = SchoolModel
     this.jwtSecret = process.env.JWT_SECRET
+    this.BlacklistModel = BlacklistModel
   }
 
   validateUserData(userData) {
@@ -133,7 +146,7 @@ class UserService {
 
       return { user, token }
     } catch (error) {
-      console.error('Error in loginUser:', error) // LOG THE ERROR
+      console.error('Error in loginUser:', error)
       throw error
     }
   }
@@ -303,6 +316,101 @@ class UserService {
       where: { school_id: schoolId },
       attributes: { exclude: ['password'] },
     })
+  }
+
+  async logoutUser(token) {
+    try {
+      // Verify and decode the token to get the expiration time
+      const decoded = jwt.verify(token, this.jwtSecret)
+
+      // Calculate expiration date from jwt exp claim (which is in seconds)
+      // If exp is not available, set a default expiration (e.g., 1 hour from now)
+      const expiresAt = decoded.exp
+        ? new Date(decoded.exp * 1000)
+        : new Date(Date.now() + 60 * 60 * 1000) // 1 hour from now
+
+      // Add token to blacklist with expiration
+      if (this.BlacklistModel) {
+        await this.BlacklistModel.create({
+          token,
+          expiresAt,
+        })
+        if (decoded.id) {
+          await this.UserModel.update({ refreshToken: null }, { where: { id: decoded.id } })
+        }
+      } else {
+        throw new Error('BlacklistModel not initialized')
+      }
+
+      return { message: 'User logged out successfully' }
+    } catch (error) {
+      console.error('Logout error:', error)
+      throw new Error('Invalid token or logout failed')
+    }
+  }
+
+  async forgotPassword(email) {
+    try {
+      const user = await this.UserModel.findOne({ where: { email } })
+      if (!user) throw new Error('User not found')
+      
+      // Generate a random 6-digit code
+      const code = Math.floor(100000 + Math.random() * 900000)
+
+      user.reset_code = code
+      await user.save()
+
+      /* Send the code to the user's email
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Password Reset Code',
+        text: `Your password reset code is: ${code}`,
+      };
+
+      await transporter.sendMail(mailOptions); */
+      
+      // For now, just return the code
+      return code
+    } catch (error) {
+      console.error('Forgot password error:', error)
+      throw error
+    }
+  }
+
+  async verifyResetCode(email, code) {
+    try {
+      const user = await this.UserModel.findOne({ where: { email } })
+      if (!user) throw new Error('User not found')
+
+      if (user.reset_code !== code) {
+        throw new Error('Invalid code')
+      }
+
+      return true
+    } catch (error) {
+      console.error('Confirm forgot password code error:', error)
+      throw error
+    }
+  }
+
+  async resetPassword(email, newPassword) {
+    try {
+      const user = await this.UserModel.findOne({ where: { email } })
+      if (!user) throw new Error('User not found')
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+      this.validatePassword(newPassword)
+
+      user.password = hashedPassword
+      await user.save()
+
+      return true
+    } catch (error) {
+      console.error('Reset password error:', error)
+      throw error
+    }
   }
 }
 

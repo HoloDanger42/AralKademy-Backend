@@ -54,6 +54,18 @@ describe('Enrollment Controller', () => {
   })
 
   describe('createEnrollment', () => {
+    beforeEach(() => {
+      // Reset all mocks before each test
+      mockReq = {
+        body: {}, // Empty body to test missing fields
+      }
+      mockRes = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      }
+      // Mock the logger
+      jest.spyOn(log, 'info')
+    })
     test('should create enrollment successfully', async () => {
       // Arrange
       const enrollmentData = validEnrollments[0]
@@ -75,7 +87,6 @@ describe('Enrollment Controller', () => {
 
     test('should handle missing required fields', async () => {
       // Arrange
-      mockReq.body = { email: 'test@example.com' }
       const expectedErrors = {
         first_name: 'First name is required.',
         last_name: 'Last name is required.',
@@ -84,6 +95,7 @@ describe('Enrollment Controller', () => {
         year_level: 'Year level is required.',
         password: 'Password is required.',
         contact_no: 'Contact number is required.',
+        email: 'Email is required.',
         confirm_password: 'Passwords do not match.',
       }
 
@@ -93,7 +105,7 @@ describe('Enrollment Controller', () => {
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({ errors: expectedErrors })
-      expect(log.error).toHaveBeenCalled() // No specific error message to mock, as validation happens in controller
+      expect(log.error).toHaveBeenCalled()
     })
 
     test('should handle password mismatch', async () => {
