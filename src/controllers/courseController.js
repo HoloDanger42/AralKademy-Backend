@@ -1,4 +1,3 @@
-// controllers/courseController.js
 import CourseService from '../services/courseService.js';
 import { Course } from '../models/Course.js';
 import { User } from '../models/User.js'; // Import User model
@@ -7,6 +6,11 @@ import { log } from '../utils/logger.js';
 
 const courseService = new CourseService(Course, User, Group); // Pass User model
 
+/**
+ * Retrieves all courses.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
 const getAllCourses = async (req, res) => {
     try {
         const courses = await courseService.getAllCourses();
@@ -17,6 +21,11 @@ const getAllCourses = async (req, res) => {
     }
 };
 
+/**
+ * Retrieves a course by ID.
+ * @param {Object} req - The request object containing the course ID in req.params.
+ * @param {Object} res - The response object.
+ */
 const getCourseById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -31,6 +40,11 @@ const getCourseById = async (req, res) => {
     }
 };
 
+/**
+ * Creates a new course.
+ * @param {Object} req - The request object containing course details.
+ * @param {Object} res - The response object.
+ */
 const createCourse = async (req, res) => {
     try {
         // --- ROLE CHECK (Admin Only) ---
@@ -51,7 +65,7 @@ const createCourse = async (req, res) => {
                 errors.user_id = 'Invalid teacher ID.';
             }
         }
-         // Validate learner_group_id if provided
+        // Validate learner_group_id if provided
         if (courseData.learner_group_id) {
             const learnerGroup = await Group.findByPk(courseData.learner_group_id);
             if (!learnerGroup) {
@@ -66,7 +80,6 @@ const createCourse = async (req, res) => {
                 errors.student_teacher_group_id = 'Invalid student teacher group ID.';
             }
         }
-
 
         if (Object.keys(errors).length > 0) {
             return res.status(400).json({ errors });
@@ -98,8 +111,11 @@ const createCourse = async (req, res) => {
     }
 };
 
-
-
+/**
+ * Updates a course.
+ * @param {Object} req - The request object containing the course ID in req.params and updated data in req.body.
+ * @param {Object} res - The response object.
+ */
 const updateCourse = async (req, res) => {
     try {
         // --- ROLE CHECK (Admin Only) ---
@@ -121,7 +137,7 @@ const updateCourse = async (req, res) => {
             errors.user_id = 'Invalid teacher ID.';
           }
         }
-           // Validate learner_group_id if provided
+        // Validate learner_group_id if provided
         if (courseData.learner_group_id) {
             const learnerGroup = await Group.findByPk(courseData.learner_group_id);
             if (!learnerGroup) {
@@ -164,8 +180,11 @@ const updateCourse = async (req, res) => {
     }
 };
 
-
-
+/**
+ * Soft deletes a course.
+ * @param {Object} req - The request object containing the course ID in req.params.
+ * @param {Object} res - The response object.
+ */
 const softDeleteCourse = async (req, res) => {
     try {
         // --- ROLE CHECK (Admin Only) ---
@@ -186,6 +205,11 @@ const softDeleteCourse = async (req, res) => {
     }
 };
 
+/**
+ * Permanently deletes a course.
+ * @param {Object} req - The request object containing the course ID in req.params.
+ * @param {Object} res - The response object.
+ */
 const deleteCourse = async (req, res) => {
     try {
         // --- ROLE CHECK (Admin Only) ---
@@ -208,7 +232,11 @@ const deleteCourse = async (req, res) => {
       }
 };
 
-// --- Assign Teacher (Simplified) ---
+/**
+ * Assigns a teacher to a course.
+ * @param {Object} req - The request object containing the course ID in req.params and the teacher's user ID in req.body.
+ * @param {Object} res - The response object.
+ */
 const assignTeacherCourse = async (req, res) => {
     try {
         if (req.user.role !== 'admin') {
@@ -237,7 +265,11 @@ const assignTeacherCourse = async (req, res) => {
     }
 };
 
-// --- Assign Learner Group (Simplified) ---
+/**
+ * Assigns a learner group to a course.
+ * @param {Object} req - The request object containing the course ID in req.params and the learner group ID in req.body.
+ * @param {Object} res - The response object.
+ */
 const assignLearnerGroupCourse = async (req, res) => {
     try {
         if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
@@ -272,7 +304,11 @@ const assignLearnerGroupCourse = async (req, res) => {
     }
   };
 
-// --- Assign Student Teacher Group (Simplified) ---
+/**
+ * Assigns a student teacher group to a course.
+ * @param {Object} req - The request object containing the course ID in req.params and the student teacher group ID in req.body.
+ * @param {Object} res - The response object.
+ */
 const assignStudentTeacherGroupCourse = async (req, res) => {
     try {
          if (req.user.role !== 'admin' && req.user.role !== 'teacher') {

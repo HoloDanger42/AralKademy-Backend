@@ -4,6 +4,12 @@ import config from '../config/config.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 
 export const AuthController = {
+  /**
+   * Refreshes the access token using a valid refresh token.
+   * @param {Object} req - The request object containing the refresh token in req.body.
+   * @param {Object} res - The response object.
+   * @param {Function} next - The next middleware function.
+   */
   refreshToken: asyncHandler(async (req, res, next) => {
     const { refreshToken } = req.body
 
