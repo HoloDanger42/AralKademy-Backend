@@ -141,6 +141,10 @@ const User = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    reset_code: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     tableName: 'users',
