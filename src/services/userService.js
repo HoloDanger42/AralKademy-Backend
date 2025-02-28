@@ -1,9 +1,20 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+// import nodemailer from 'nodemailer';
+
 //
 import dotenv from 'dotenv'
 dotenv.config()
 //
+
+/* Configure nodemailer
+const transporter = nodemailer.createTransport({
+  service: 'gmail', // You can use any email service provider
+  auth: {
+    user: process.env.EMAIL_USER, // Your email address
+    pass: process.env.EMAIL_PASS, // Your email password or app-specific password
+  },
+}); */
 
 class UserService {
   constructor(
@@ -332,6 +343,70 @@ class UserService {
     } catch (error) {
       console.error('Logout error:', error)
       throw new Error('Invalid token or logout failed')
+    }
+  }
+
+  async forgotPassword(email) {
+    try {
+      const user = await this.UserModel.findOne({ where: { email } })
+      if (!user) throw new Error('User not found')
+      
+      // Generate a random 6-digit code
+      const code = Math.floor(100000 + Math.random() * 900000)
+
+      user.reset_code = code
+      await user.save()
+
+      /* Send the code to the user's email
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Password Reset Code',
+        text: `Your password reset code is: ${code}`,
+      };
+
+      await transporter.sendMail(mailOptions); */
+      
+      // For now, just return the code
+      return code
+    } catch (error) {
+      console.error('Forgot password error:', error)
+      throw error
+    }
+  }
+
+  async verifyResetCode(email, code) {
+    try {
+      const user = await this.UserModel.findOne({ where: { email } })
+      if (!user) throw new Error('User not found')
+
+      if (user.reset_code !== code) {
+        throw new Error('Invalid code')
+      }
+
+      return true
+    } catch (error) {
+      console.error('Confirm forgot password code error:', error)
+      throw error
+    }
+  }
+
+  async resetPassword(email, newPassword) {
+    try {
+      const user = await this.UserModel.findOne({ where: { email } })
+      if (!user) throw new Error('User not found')
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+      this.validatePassword(newPassword)
+
+      user.password = hashedPassword
+      await user.save()
+
+      return true
+    } catch (error) {
+      console.error('Reset password error:', error)
+      throw error
     }
   }
 }

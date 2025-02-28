@@ -186,4 +186,55 @@ const logoutUser = async (req, res) => {
   }
 }
 
-export { login, logoutUser, createUser, getAllUsers, getUserById }
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body
+    await userService.forgotPassword(email)
+    res.status(200).json({ message: 'Password reset email sent successfully' })
+    log.info(`Password reset email sent to ${email}`)
+  } catch (error) {
+    log.error('Forgot password error:', error)
+    if (error.message === 'User not found') {
+      return res.status(404).json({ message: 'User not found' })
+    }
+    return res.status(500).json({ message: 'Failed to send password reset email' })
+  }
+}
+
+const verifyResetCode = async (req, res) => {
+  try {
+    const { email, code } = req.body
+    await userService.confirmForgotPasswordCode(email, code)
+    res.status(200).json({ message: 'Code confirmed successfully' })
+    log.info(`Code confirmed for ${email}`)
+  } catch (error) {
+    log.error('Confirm code error:', error)
+    if (error.message === 'User not found') {
+      return res.status(404).json({ message: 'User not found' })
+    }
+    if (error.message === 'Invalid code') {
+      return res.status(400).json({ message: 'Invalid code' })
+    }
+    return res.status(500).json({ message: 'Failed to confirm code' })
+  }
+}
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email, password } = req.body
+    await userService.resetPassword(email, password)
+    res.status(200).json({ message: 'Password reset successfully' })
+    log.info(`Password reset for ${email}`)
+  } catch (error) {
+    log.error('Reset password error:', error)
+    if (error.message === 'User not found') {
+      return res.status(404).json({ message: 'User not found' })
+    }
+    if (error.message === ('Password must be at least 8 characters')) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters'})
+    }
+    return res.status(500).json({ message: 'Failed to reset password' })
+  }
+}
+
+export { login, logoutUser, createUser, getAllUsers, getUserById, forgotPassword, verifyResetCode, resetPassword }
