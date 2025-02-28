@@ -1,4 +1,3 @@
-// userService.js
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 // import nodemailer from 'nodemailer';
@@ -66,18 +65,18 @@ class UserService {
   }
 
   async createUser(
-      email,
-      password,
-      firstName,
-      lastName,
-      birthDate,
-      contactNo,
-      schoolId,
-      role,
-      middleInitial = null, // default to null
-      department = null,
-      section = null,
-      groupId = null
+    email,
+    password,
+    firstName,
+    lastName,
+    birthDate,
+    contactNo,
+    schoolId,
+    role,
+    middleInitial = null,
+    department = null,
+    section = null,
+    groupId = null
   ) {
     const transaction = await this.UserModel.sequelize.transaction()
     try {
@@ -92,7 +91,7 @@ class UserService {
         birth_date: birthDate,
         contact_no: contactNo,
         school_id: schoolId,
-        middle_initial: middleInitial, // Include middle_initial
+        middle_initial: middleInitial,
       }
 
       this.validateUserData(userData)
@@ -111,14 +110,12 @@ class UserService {
           { transaction }
         )
       } else if (role === 'learner') {
-        //---------
-
         if (groupId) {
           await this.LearnerModel.create({ user_id: user.id, group_id: groupId }, { transaction })
         } else {
           await this.LearnerModel.create({ user_id: user.id }, { transaction }) //create without group
         }
-      } //---------------
+      }
 
       await transaction.commit()
       return user
@@ -353,7 +350,7 @@ class UserService {
     try {
       const user = await this.UserModel.findOne({ where: { email } })
       if (!user) throw new Error('User not found')
-      
+
       // Generate a random 6-digit code
       const code = Math.floor(100000 + Math.random() * 900000)
 
@@ -369,7 +366,7 @@ class UserService {
       };
 
       await transporter.sendMail(mailOptions); */
-      
+
       // For now, just return the code
       return code
     } catch (error) {

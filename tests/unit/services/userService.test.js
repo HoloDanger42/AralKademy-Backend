@@ -88,6 +88,7 @@ describe('UserService', () => {
         userData.contact_no,
         school.school_id,
         userData.role,
+        null,
         userData.department
       )
 

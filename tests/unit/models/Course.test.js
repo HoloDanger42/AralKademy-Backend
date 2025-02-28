@@ -1,7 +1,5 @@
 import { sequelize } from '../../../src/config/database.js'
-import { Course } from '../../../src/models/Course.js'
-import { Teacher } from '../../../src/models/Teacher.js'
-import { Group } from '../../../src/models/Group.js'
+import { Course, Teacher, Group, User } from '../../../src/models/index.js'
 import { createTestUser, createTestGroup } from '../../helpers/testData.js'
 import '../../../src/models/associate.js'
 
@@ -110,11 +108,11 @@ describe('Course Model', () => {
 
       const found = await Course.findOne({
         where: { id: course.id },
-        include: [{ model: Teacher, as: 'teacher' }],
+        include: [{ model: User, as: 'teacher' }],
       })
 
       expect(found.teacher).not.toBeNull()
-      expect(found.teacher.user_id).toBe(teacher.id)
+      expect(found.teacher.id).toBe(teacher.id)
     })
 
     it('should associate with groups', async () => {

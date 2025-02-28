@@ -70,8 +70,6 @@ if (applyRateLimiter) {
     windowMs: FIFTEEN_MINUTES,
     max: AUTH_MAX_REQUESTS,
     handler: (req, res) => {
-      res.setHeader('ratelimit-remaining', options.max - req.rateLimit.current)
-      res.setHeader('ratelimit-reset', Math.ceil(options.windowMs / 1000))
       res.status(429).json({
         message: 'Too many authentication requests',
       })
@@ -123,7 +121,7 @@ app.get('/', (_req, res) => {
 app.use('/api/users', usersRouter)
 app.use('/api/courses', courseRouter)
 app.use('/api/auth', authRouter)
-app.use('/api/enrollment', enrollmentRouter)
+app.use('/api/enrollments', enrollmentRouter)
 app.use('/api/groups', groupsRouter)
 
 app.get('/error', (_req, _res, next) => {

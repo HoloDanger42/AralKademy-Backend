@@ -80,7 +80,7 @@ jest.unstable_mockModule('../../../src/routes/users.js', () => ({
 }))
 
 jest.unstable_mockModule('../../../src/routes/courses.js', () => ({
-  coursesRouter: express.Router(),
+  courseRouter: express.Router(),
 }))
 
 const mockUsersRoutes = await import('../../../src/routes/users.js')
@@ -166,7 +166,7 @@ describe('Server Setup', () => {
   describe('Routing', () => {
     it('should register /users and /courses routes', () => {
       const users = mockUsersRoutes.usersRouter
-      const courses = mockCoursesRoutes.coursesRouter
+      const courses = mockCoursesRoutes.courseRouter
 
       expect(courses).toBeDefined()
 
