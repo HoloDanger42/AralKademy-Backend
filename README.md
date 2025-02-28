@@ -168,6 +168,7 @@ aralkademy-backend/
 
       # Server Configuration
 
+      NODE_ENV=development (test, development)
       PORT=4000
       ENABLE_RECAPTCHA=true
       ENABLE_EMAIL_VERIFICATION=false

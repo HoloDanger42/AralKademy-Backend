@@ -15,7 +15,7 @@ class EnrollmentService {
       const hashedPassword = await bcrypt.hash(enrollmentData.password, 12)
 
       // 2. Set default values
-      enrollmentData.handled_by_id = enrollmentData.handled_by_id || 4 // Default admin ID - 4 (for dev)
+      enrollmentData.handled_by_id = enrollmentData.handled_by_id || null
       enrollmentData.status = enrollmentData.status || 'pending' // Default status
 
       // 3. Replace the plaintext password with the HASHED password

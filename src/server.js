@@ -20,19 +20,15 @@ import { databaseConnection, initializeDatabase } from './config/database.js'
 import { authRouter } from './routes/auth.js'
 import { usersRouter } from './routes/users.js'
 import { courseRouter } from './routes/courses.js'
+import { enrollmentRouter } from './routes/enrollments.js'
+import { groupsRouter } from './routes/groups.js'
 
 // Token cleanup
 import { scheduleTokenCleanup } from './utils/tokenCleanup.js'
 
-// Enrollment
-import { enrollmentRouter } from './routes/enrollments.js'
-
-// Group
-import { groupsRouter } from './routes/groups.js';
-
 const app = express()
 
-// Cors configuration
+// CORS configuration
 const allowedOrigins = config.cors.origins
 const corsOptions = {
   origin: (origin, callback) => {
@@ -124,14 +120,11 @@ app.get('/', (_req, res) => {
   res.send('API is running')
 })
 
-//IMPORTANT* always put /api/ before the route
 app.use('/api/users', usersRouter)
 app.use('/api/courses', courseRouter)
 app.use('/api/auth', authRouter)
-app.use('/api/enrollment', enrollmentRouter); 
-app.use('/api/groups', groupsRouter);
-
-
+app.use('/api/enrollment', enrollmentRouter)
+app.use('/api/groups', groupsRouter)
 
 app.get('/error', (_req, _res, next) => {
   next(new Error('Intentional error for testing'))
