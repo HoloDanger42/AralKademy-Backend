@@ -1,3 +1,4 @@
+// userService.js
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 //
@@ -52,17 +53,18 @@ class UserService {
   }
 
   async createUser(
-    email,
-    password,
-    firstName,
-    lastName,
-    birthDate,
-    contactNo,
-    schoolId,
-    role,
-    department = null,
-    section = null,
-    groupId = null
+      email,
+      password,
+      firstName,
+      lastName,
+      birthDate,
+      contactNo,
+      schoolId,
+      role,
+      middleInitial = null, // default to null
+      department = null,
+      section = null,
+      groupId = null
   ) {
     const transaction = await this.UserModel.sequelize.transaction()
     try {
@@ -77,6 +79,7 @@ class UserService {
         birth_date: birthDate,
         contact_no: contactNo,
         school_id: schoolId,
+        middle_initial: middleInitial, // Include middle_initial
       }
 
       this.validateUserData(userData)

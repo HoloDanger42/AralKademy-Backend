@@ -1,12 +1,18 @@
-import express from 'express'
-import { login, getAllUsers, getUserById } from '../controllers/userController.js'
-import { authLimiter } from '../middleware/securityMiddleware.js'
-import { authMiddleware } from '../middleware/authMiddleware.js'
+// routes/users.js
+import express from 'express';
+import { login, createUser, getAllUsers, getUserById, deleteUser } from '../controllers/userController.js'; // Import deleteUser
+import { authLimiter } from '../middleware/securityMiddleware.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
 
-const usersRouter = express.Router()
+const usersRouter = express.Router();
 
-usersRouter.post('/login', authLimiter, login)
-usersRouter.get('/', getAllUsers)
-usersRouter.get('/:id', authMiddleware, getUserById)
+// --- Authentication ---
+usersRouter.post('/login', authLimiter, login);
 
-export { usersRouter }
+// --- User Management (all require authentication) ---
+usersRouter.post('/', authMiddleware, createUser);
+usersRouter.get('/', authMiddleware, getAllUsers);
+usersRouter.get('/:id', authMiddleware, getUserById);
+usersRouter.delete('/:id', authMiddleware, deleteUser); // Add this line!
+
+export { usersRouter };
