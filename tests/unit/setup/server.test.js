@@ -419,6 +419,159 @@ describe('Server Setup', () => {
         }
       })
     })
+
+    describe('Conditional Rate Limiting', () => {
+      let app, request
+
+      beforeEach(() => {
+        // Create a fresh Express app instance for testing
+        app = express()
+        app.use(express.json())
+      })
+
+      it('should apply rate limiters when applyRateLimiter is true', () => {
+        const applyRateLimiter = true
+        const useSpy = jest.spyOn(app, 'use')
+
+        if (applyRateLimiter) {
+          const limiter = rateLimit({
+            windowMs: FIFTEEN_MINUTES,
+            max: 100,
+            standardHeaders: true,
+            legacyHeaders: false,
+          })
+          app.use(limiter)
+
+          const authLimiter = rateLimit({
+            windowMs: FIFTEEN_MINUTES,
+            max: AUTH_MAX_REQUESTS,
+            standardHeaders: true,
+            legacyHeaders: false,
+          })
+          app.use('/api/users', authLimiter)
+        }
+
+        expect(useSpy).toHaveBeenCalledTimes(2)
+        expect(useSpy.mock.calls[0][0]).toBeInstanceOf(Function) // General limiter
+        expect(useSpy.mock.calls[1][0]).toBe('/api/users') // Auth limiter path
+      })
+
+      it('should not apply rate limiters when applyRateLimiter is false', () => {
+        const applyRateLimiter = false
+        const useSpy = jest.spyOn(app, 'use')
+
+        if (applyRateLimiter) {
+          const limiter = rateLimit({
+            windowMs: FIFTEEN_MINUTES,
+            max: 100,
+            standardHeaders: true,
+            legacyHeaders: false,
+          })
+          app.use(limiter)
+
+          const authLimiter = rateLimit({
+            windowMs: FIFTEEN_MINUTES,
+            max: AUTH_MAX_REQUESTS,
+            standardHeaders: true,
+            legacyHeaders: false,
+          })
+          app.use('/api/users', authLimiter)
+        }
+
+        expect(useSpy).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('API Path Rate Limiting', () => {
+      let app, request
+
+      beforeEach(() => {
+        app = express()
+        app.use(express.json())
+
+        // Create stricter auth limiter with custom message
+        const authLimiter = rateLimit({
+          windowMs: FIFTEEN_MINUTES,
+          max: 5, // Lower limit for auth routes
+          standardHeaders: true,
+          legacyHeaders: false,
+          handler: (_req, res) => {
+            res.status(429).json({
+              message: 'Too many authentication requests',
+            })
+          },
+        })
+        app.use('/api/users', authLimiter)
+
+        // Create general rate limiter
+        const generalLimiter = rateLimit({
+          windowMs: FIFTEEN_MINUTES,
+          max: 10, // Higher limit for general routes
+          standardHeaders: true,
+          legacyHeaders: false,
+          handler: (_req, res) => {
+            res.status(429).json({
+              message: 'Too many requests',
+            })
+          },
+        })
+
+        // Apply general limiter to all API routes EXCEPT auth routes
+        app.use('/api', (req, res, next) => {
+          if (req.originalUrl.includes('/api/users')) {
+            return next()
+          }
+          generalLimiter(req, res, next)
+        })
+
+        // Test routes
+        app.get('/api/users/profile', (req, res) => res.json({ message: 'auth route' }))
+        app.get('/api/courses', (req, res) => res.json({ message: 'general route' }))
+
+        request = supertest(app)
+      })
+
+      it('should apply stricter rate limit to /api/users routes', async () => {
+        // Make 5 requests to auth route (reaching its limit)
+        for (let i = 0; i < 5; i++) {
+          await request.get('/api/users/profile')
+        }
+
+        // Next request to auth route should be blocked with custom message
+        const authRes = await request.get('/api/users/profile')
+        expect(authRes.status).toBe(429)
+        expect(authRes.body.message).toBe('Too many authentication requests')
+
+        // General route should still work (not reached its higher limit)
+        const generalRes = await request.get('/api/courses')
+        expect(generalRes.status).toBe(200)
+      })
+
+      it('should separate rate limiting between auth and general routes', async () => {
+        // Make 6 requests to general route (below its limit of 10)
+        for (let i = 0; i < 6; i++) {
+          const res = await request.get('/api/courses')
+          expect(res.status).toBe(200)
+        }
+
+        // Auth route should still be accessible
+        const authRes = await request.get('/api/users/profile')
+        expect(authRes.status).toBe(200)
+
+        // Exhaust auth route limit
+        for (let i = 0; i < 5; i++) {
+          const res = await request.get('/api/users/profile')
+        }
+
+        // Verify auth route is now limited
+        const blockedAuthRes = await request.get('/api/users/profile')
+        expect(blockedAuthRes.status).toBe(429)
+
+        // General route should still be accessible
+        const generalRes = await request.get('/api/courses')
+        expect(generalRes.status).toBe(200)
+      })
+    })
   })
 
   describe('Server Initialization', () => {

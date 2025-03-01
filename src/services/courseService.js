@@ -1,13 +1,67 @@
 import { Course, User, Group } from '../models/index.js'
 import { log } from '../utils/logger.js'
 
+/**
+ * Service class for managing courses in the AralKademy application.
+ *
+ * This service handles all operations related to courses, including:
+ * - Retrieving courses (all courses or by ID)
+ * - Creating new courses
+ * - Updating existing courses
+ * - Deleting courses (soft delete and permanent delete)
+ * - Assigning teachers to courses
+ * - Assigning learner groups to courses
+ * - Assigning student-teacher groups to courses
+ *
+ * The service interacts with the course, user, and group models to perform database operations
+ * and maintain relationships between these entities.
+ *
+ * @class
+ * @requires log - A logging utility for error reporting
+ * @example
+ * // Create a new course service instance
+ * const courseService = new CourseService(CourseModel, UserModel, GroupModel);
+ *
+ * // Get all courses
+ * const courses = await courseService.getAllCourses();
+ *
+ * // Create a new course
+ * const newCourse = await courseService.createCourse({
+ *   name: 'Introduction to Programming',
+ *   description: 'Learn the basics of programming',
+ *   user_id: 123, // Teacher ID
+ *   learner_group_id: 456,
+ *   student_teacher_group_id: 789
+ * });
+ */
 class CourseService {
+  /**
+   * Creates an instance of the course service.
+   *
+   * @param {Object} courseModel - The model representing courses.
+   * @param {Object} userModel - The model representing users.
+   * @param {Object} groupModel - The model representing groups.
+   */
   constructor(courseModel, userModel, groupModel) {
     this.courseModel = courseModel
     this.userModel = userModel
     this.groupModel = groupModel
   }
 
+  /**
+   * Retrieves all courses with complete associated data including teacher and groups information.
+   *
+   * This asynchronous function fetches all courses from the database along with their associated
+   * teacher, learner group, and student teacher group details. If an error occurs during the
+   * retrieval, an error is logged and an exception is thrown.
+   *
+   * @async
+   * @function getAllCourses
+   * @returns {Promise<{count: number, rows: Array<Object>}>} A promise that resolves to an object containing:
+   *   - count: The total number of courses.
+   *   - rows: An array of course objects including their associated teacher and group data.
+   * @throws {Error} If the courses cannot be retrieved due to a database error.
+   */
   async getAllCourses() {
     try {
       // Include associated models for complete data
@@ -29,6 +83,18 @@ class CourseService {
     }
   }
 
+  /**
+   * Retrieves a course by its ID with associated teacher and group information
+   *
+   * @async
+   * @param {number|string} id - The unique identifier of the course to retrieve
+   * @returns {Promise<Object>} The course object with its associated teacher and groups
+   * @throws {Error} When the course is not found or when there's a database error
+   *
+   * @example
+   * // Get course with ID 123
+   * const course = await courseService.getCourseById(123);
+   */
   async getCourseById(id) {
     try {
       const course = await this.courseModel.findByPk(id, {
@@ -58,6 +124,21 @@ class CourseService {
     }
   }
 
+  /**
+   * Creates a new course with the specified properties
+   *
+   * @async
+   * @param {Object} options - The course creation options
+   * @param {string} options.name - The name of the course (required, max 255 chars)
+   * @param {string} [options.description] - The description of the course
+   * @param {number|null} [options.user_id] - The ID of the user associated with the course
+   * @param {number|null} [options.learner_group_id] - The ID of the learner group associated with the course
+   * @param {number|null} [options.student_teacher_group_id] - The ID of the student-teacher group associated with the course
+   * @returns {Promise<Object>} The newly created course
+   * @throws {Error} When course name is not provided or exceeds 255 characters
+   * @throws {Error} When course name already exists (unique constraint violation)
+   * @throws {Error} When validation fails or other errors occur during creation
+   */
   async createCourse({ name, description, user_id, learner_group_id, student_teacher_group_id }) {
     try {
       // Create course data object
@@ -139,6 +220,17 @@ class CourseService {
     }
   }
 
+  /**
+   * Updates an existing course with the provided data
+   * @async
+   * @param {number|string} id - The ID of the course to update
+   * @param {Object} updatedData - The data to update the course with
+   * @returns {Promise<Object>} The updated course object
+   * @throws {Error} When the course is not found
+   * @throws {Error} When a course with the same name already exists
+   * @throws {Error} When validation fails
+   * @throws {Error} When the update operation fails for other reasons
+   */
   async updateCourse(id, updatedData) {
     try {
       const course = await this.courseModel.findByPk(id)
@@ -160,6 +252,15 @@ class CourseService {
     }
   }
 
+  /**
+   * Performs a soft deletion of a course by its ID.
+   * Soft deletion marks the record as deleted in the database without actually removing it.
+   *
+   * @async
+   * @param {number|string} id - The unique identifier of the course to delete
+   * @returns {Promise<Object>} A promise that resolves to an object with a success message
+   * @throws {Error} Throws an error if the course is not found or if the deletion fails
+   */
   async softDeleteCourse(id) {
     try {
       const course = await this.courseModel.findByPk(id)
@@ -181,6 +282,14 @@ class CourseService {
     }
   }
 
+  /**
+   * Permanently deletes a course from the database by its ID
+   * @async
+   * @param {number|string} id - The ID of the course to delete
+   * @returns {Promise<Object>} A message confirming the course was permanently deleted
+   * @throws {Error} When the course with the specified ID is not found
+   * @throws {Error} When the deletion fails for any other reason
+   */
   async deleteCourse(id) {
     try {
       const course = await this.courseModel.findByPk(id, { paranoid: false }) // Find even if soft-deleted
@@ -202,7 +311,18 @@ class CourseService {
     }
   }
 
-  // Add assign teacher
+  /**
+   * Assigns a teacher to a specific course.
+   *
+   * @async
+   * @param {number|string} courseId - The ID of the course to assign a teacher to
+   * @param {number|string} userId - The ID of the teacher user
+   * @returns {Promise<Object>} The updated course object with the teacher assigned
+   * @throws {Error} When the course is not found
+   * @throws {Error} When the teacher is not found
+   * @throws {Error} When the provided user is not a teacher
+   * @throws {Error} When assignment fails for other reasons
+   */
   async assignTeacherCourse(courseId, userId) {
     try {
       const course = await this.courseModel.findByPk(courseId)
@@ -241,7 +361,17 @@ class CourseService {
     }
   }
 
-  // Add assign learner group
+  /**
+   * Assigns a learner group to a course
+   * @async
+   * @param {number|string} courseId - The ID of the course to assign
+   * @param {number|string} learnerGroupId - The ID of the learner group to assign to the course
+   * @returns {Promise<Object>} The updated course object
+   * @throws {Error} When course is not found
+   * @throws {Error} When learner group is not found
+   * @throws {Error} When group type is not 'learner'
+   * @throws {Error} When assignment fails for any other reason
+   */
   async assignLearnerGroupCourse(courseId, learnerGroupId) {
     try {
       const course = await this.courseModel.findByPk(courseId)
@@ -277,7 +407,17 @@ class CourseService {
     }
   }
 
-  // Add assign student teacher group
+  /**
+   * Assigns a student-teacher group to a course.
+   *
+   * @async
+   * @param {number|string} courseId - The ID of the course to assign the group to.
+   * @param {number|string} studentTeacherGroupId - The ID of the student-teacher group to assign.
+   * @returns {Promise<Object>} The updated course object with the assigned student-teacher group.
+   * @throws {Error} Throws an error if the course is not found.
+   * @throws {Error} Throws an error if the student-teacher group is not found.
+   * @throws {Error} Throws an error if the group type is not 'student_teacher'.
+   */
   async assignStudentTeacherGroupCourse(courseId, studentTeacherGroupId) {
     try {
       const course = await this.courseModel.findByPk(courseId)

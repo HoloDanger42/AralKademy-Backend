@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, jest } from '@jest/globals'
+import { jest } from '@jest/globals'
+import { User, Group } from '../../../src/models/index.js'
 import {
   getAllCourses,
   createCourse,
@@ -8,6 +9,7 @@ import {
   assignTeacherCourse,
   softDeleteCourse,
   getCourseById,
+  updateCourse,
 } from '../../../src/controllers/courseController.js'
 import CourseService from '../../../src/services/courseService.js'
 import { log } from '../../../src/utils/logger.js'
@@ -488,6 +490,128 @@ describe('Course Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(409)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course name already exists' })
       expect(log.error).toHaveBeenCalledWith('Edit course error:', expect.any(Object))
+    })
+  })
+
+  describe('updateCourse', () => {
+    beforeEach(() => {
+      // Clear any previous params/body/user values
+      mockReq.params = {}
+      mockReq.body = {}
+      mockReq.user = {}
+    })
+
+    test('should return 403 if user is not an admin', async () => {
+      mockReq.user = { role: 'teacher' } // non-admin role
+      await updateCourse(mockReq, mockRes)
+      expect(mockRes.status).toHaveBeenCalledWith(403)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Forbidden: Only admins can update courses.',
+      })
+    })
+
+    test('should return 400 if course name is missing', async () => {
+      mockReq.user = { role: 'admin' }
+      mockReq.params = { id: '1' }
+      mockReq.body = { description: 'Updated Description' } // missing name
+
+      await updateCourse(mockReq, mockRes)
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { name: 'Course name is required.' },
+      })
+    })
+
+    test('should update the course successfully', async () => {
+      mockReq.user = { role: 'admin' }
+      mockReq.params = { id: '1' }
+      // Valid course data
+      mockReq.body = {
+        name: 'Updated Course Name',
+        description: 'Updated Description',
+        user_id: 2,
+        learner_group_id: 3,
+        student_teacher_group_id: 4,
+      }
+
+      const updatedCourse = { id: 1, ...mockReq.body }
+
+      jest.spyOn(CourseService.prototype, 'updateCourse').mockResolvedValue(updatedCourse)
+      jest.spyOn(User, 'findByPk').mockImplementation((id) => {
+        if (id === 2) return Promise.resolve({ id: 2, role: 'teacher' })
+        return Promise.resolve(null)
+      })
+
+      jest.spyOn(Group, 'findByPk').mockImplementation((id) => {
+        if (id === 3 || id === 4) return Promise.resolve({ id })
+        return Promise.resolve(null)
+      })
+
+      await updateCourse(mockReq, mockRes)
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith(updatedCourse)
+      expect(log.info).toHaveBeenCalledWith('Course with id 1 updated successfully')
+    })
+
+    test('should return 404 if course not found', async () => {
+      mockReq.user = { role: 'admin' }
+      mockReq.params = { id: '1' }
+      mockReq.body = { name: 'Updated Course Name', description: 'Updated Description' }
+
+      const error = new Error('Course not found')
+      jest.spyOn(CourseService.prototype, 'updateCourse').mockRejectedValue(error)
+
+      await updateCourse(mockReq, mockRes)
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
+    })
+
+    test('should return 400 for SequelizeValidationError', async () => {
+      mockReq.user = { role: 'admin' }
+      mockReq.params = { id: '1' }
+      mockReq.body = { name: 'Invalid Name', description: 'Updated Description' }
+
+      const sequelizeError = new Error('Validation error')
+      sequelizeError.name = 'SequelizeValidationError'
+      sequelizeError.errors = [{ path: 'name', message: 'Course name is invalid.' }]
+
+      jest.spyOn(CourseService.prototype, 'updateCourse').mockRejectedValue(sequelizeError)
+
+      await updateCourse(mockReq, mockRes)
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { name: 'Course name is invalid.' },
+      })
+    })
+
+    test('should return 409 if course name already exists', async () => {
+      mockReq.user = { role: 'admin' }
+      mockReq.params = { id: '1' }
+      mockReq.body = { name: 'Existing Course Name', description: 'Updated Description' }
+
+      const uniqueError = new Error('Course name already exists')
+      jest.spyOn(CourseService.prototype, 'updateCourse').mockRejectedValue(uniqueError)
+
+      await updateCourse(mockReq, mockRes)
+      expect(mockRes.status).toHaveBeenCalledWith(409)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { name: 'Course name already exists' },
+      })
+    })
+
+    test('should return 500 for other errors', async () => {
+      mockReq.user = { role: 'admin' }
+      mockReq.params = { id: '1' }
+      mockReq.body = { name: 'Updated Course Name', description: 'Updated Description' }
+
+      const genericError = new Error('Unexpected error')
+      jest.spyOn(CourseService.prototype, 'updateCourse').mockRejectedValue(genericError)
+
+      await updateCourse(mockReq, mockRes)
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Unexpected error',
+      })
     })
   })
 })

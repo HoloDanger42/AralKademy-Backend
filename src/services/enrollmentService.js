@@ -1,7 +1,32 @@
 import bcrypt from 'bcryptjs'
 import { log } from '../utils/logger.js'
 
+/**
+ * Service class that manages enrollment operations in the system.
+ *
+ * This service handles the complete lifecycle of enrollment records including:
+ * - Creating enrollment applications
+ * - Approving enrollments and creating associated learner records
+ * - Rejecting enrollments
+ * - Retrieving enrollment information (single, all, or by school)
+ * - Checking enrollment status
+ * - Updating enrollment records
+ * - Deleting enrollments (soft delete)
+ *
+ * @class EnrollmentService
+ * @description Manages the business logic for student enrollment processes
+ * @requires bcrypt - For password hashing
+ * @requires log - For logging errors and operations
+ */
 class EnrollmentService {
+  /**
+   * Creates an instance of the EnrollmentService.
+   * @constructor
+   * @param {Object} EnrollmentModel - The model for enrollment data.
+   * @param {Object} SchoolModel - The model for school data.
+   * @param {Object} UserModel - The model for user data.
+   * @param {Object} LearnerModel - The model for learner data.
+   */
   constructor(EnrollmentModel, SchoolModel, UserModel, LearnerModel) {
     this.EnrollmentModel = EnrollmentModel
     this.SchoolModel = SchoolModel
@@ -9,6 +34,23 @@ class EnrollmentService {
     this.LearnerModel = LearnerModel
   }
 
+  /**
+   * Creates a new enrollment record
+   *
+   * @async
+   * @param {Object} enrollmentData - The enrollment information
+   * @param {string} enrollmentData.password - The user's plaintext password (will be hashed)
+   * @param {string} [enrollmentData.confirm_password] - Password confirmation (will be removed)
+   * @param {string} [enrollmentData.handled_by_id] - ID of admin handling the enrollment (defaults to null)
+   * @param {string} [enrollmentData.status] - Enrollment status (defaults to 'pending')
+   * @param {string} enrollmentData.email - User's email address (must be unique)
+   *
+   * @returns {Promise<Object>} The created enrollment record
+   *
+   * @throws {Error} If email already exists ("Email already exists")
+   * @throws {Error} If there's a validation error (passes through Sequelize validation errors)
+   * @throws {Error} For any other errors ("Failed to create enrollment")
+   */
   async createEnrollment(enrollmentData) {
     try {
       // 1. Hash the password (using bcrypt)
@@ -38,6 +80,18 @@ class EnrollmentService {
       throw new Error('Failed to create enrollment') // Generic error for other issues
     }
   }
+
+  /**
+   * Approves an enrollment application and creates a learner record if it doesn't exist.
+   *
+   * @async
+   * @param {number|string} enrollmentId - The ID of the enrollment to approve
+   * @param {number|string} adminId - The ID of the admin handling the approval
+   * @returns {Promise<Object>} The updated enrollment record with status set to 'approved'
+   * @throws {Error} If enrollment is not found
+   * @throws {Error} If the associated user is not found (indicating data integrity issues)
+   * @throws {Error} If there's any error during the approval process
+   */
   async approveEnrollment(enrollmentId, adminId) {
     try {
       const enrollment = await this.EnrollmentModel.findByPk(enrollmentId)
@@ -81,6 +135,14 @@ class EnrollmentService {
     }
   }
 
+  /**
+   * Rejects an enrollment request by updating its status and setting the admin who handled it
+   * @async
+   * @param {number|string} enrollmentId - The ID of the enrollment to reject
+   * @param {number|string} adminId - The ID of the admin who is rejecting the enrollment
+   * @returns {Promise<Object>} The updated enrollment object
+   * @throws {Error} If the enrollment is not found or if there's an issue during the update process
+   */
   async rejectEnrollment(enrollmentId, adminId) {
     try {
       const enrollment = await this.EnrollmentModel.findByPk(enrollmentId)
@@ -97,6 +159,15 @@ class EnrollmentService {
     }
   }
 
+  /**
+   * Retrieves all enrollments from the database
+   * @async
+   * @function getAllEnrollments
+   * @returns {Promise<Array>} Array of enrollment objects with associated school data
+   * @throws {Error} If there's an error fetching the enrollments from the database
+   * @description Fetches all enrollment records from the database, excluding password fields
+   * and including the associated school information for each enrollment
+   */
   async getAllEnrollments() {
     try {
       const enrollments = await this.EnrollmentModel.findAll({
@@ -110,6 +181,12 @@ class EnrollmentService {
     }
   }
 
+  /**
+   * Retrieves an enrollment record by its ID
+   * @param {number|string} enrollmentId - The unique identifier of the enrollment to retrieve
+   * @returns {Promise<Object>} The enrollment object with its associated school data (password excluded)
+   * @throws {Error} If the enrollment is not found or if there's a database error
+   */
   async getEnrollmentById(enrollmentId) {
     try {
       const enrollment = await this.EnrollmentModel.findByPk(enrollmentId, {
@@ -127,6 +204,18 @@ class EnrollmentService {
     }
   }
 
+  /**
+   * Retrieves all enrollments associated with a specific school.
+   *
+   * @async
+   * @param {number|string} schoolId - The ID of the school to fetch enrollments for
+   * @returns {Promise<Array>} A promise that resolves to an array of enrollment objects
+   * @throws {Error} If the school is not found or if there's an error fetching enrollments
+   *
+   * @example
+   * // Get all enrollments for school with ID 123
+   * const enrollments = await enrollmentService.getEnrollmentsBySchool(123);
+   */
   async getEnrollmentsBySchool(schoolId) {
     try {
       const school = await this.SchoolModel.findByPk(schoolId)
@@ -145,6 +234,14 @@ class EnrollmentService {
       throw error // Re-throw for consistent error handling
     }
   }
+
+  /**
+   * Checks the enrollment status of a user by their email.
+   * @async
+   * @param {string} email - The email address of the user to check enrollment status for
+   * @returns {Promise<string|null>} The enrollment status if found, or null if no enrollment exists
+   * @throws {Error} If there's an error during the database operation
+   */
   async checkEnrollmentStatus(email) {
     try {
       const enrollment = await this.EnrollmentModel.findOne({
@@ -163,6 +260,22 @@ class EnrollmentService {
     }
   }
 
+  /**
+   * Updates an enrollment record in the database with the provided data
+   *
+   * @async
+   * @param {number|string} enrollmentId - The unique identifier of the enrollment to update
+   * @param {Object} updatedData - The data to update the enrollment with
+   * @returns {Promise<Object>} The updated enrollment record
+   * @throws {Error} When enrollment is not found
+   * @throws {SequelizeValidationError} When validation fails
+   * @throws {Error} When email already exists (from SequelizeUniqueConstraintError)
+   *
+   * @description
+   * This method finds an enrollment by ID and updates it with the provided data.
+   * Password fields are explicitly removed from the update data for security.
+   * Various database-related errors are caught and handled appropriately.
+   */
   async updateEnrollment(enrollmentId, updatedData) {
     try {
       const enrollment = await this.EnrollmentModel.findByPk(enrollmentId)
@@ -189,6 +302,13 @@ class EnrollmentService {
     }
   }
 
+  /**
+   * Deletes an enrollment by its ID (uses soft delete if paranoid is true)
+   * @async
+   * @param {number|string} enrollmentId - The ID of the enrollment to delete
+   * @throws {Error} Throws an error if the enrollment is not found or deletion fails
+   * @returns {Promise<void>} A promise that resolves when the enrollment is deleted
+   */
   async deleteEnrollment(enrollmentId) {
     try {
       const enrollment = await this.EnrollmentModel.findByPk(enrollmentId)

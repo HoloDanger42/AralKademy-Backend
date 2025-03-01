@@ -1,12 +1,55 @@
 import { log } from '../utils/logger.js'
 
+/**
+ * @class GroupService
+ * @description Service class for managing educational group operations including creation, assignment of members, and retrieval
+ *
+ * @property {Object} GroupModel - The database model for groups
+ * @property {Object} StudentTeacherModel - The database model for student-teacher relationships
+ * @property {Object} LearnerModel - The database model for learners
+ *
+ * @example
+ * const groupService = new GroupService(GroupModel, StudentTeacherModel, LearnerModel);
+ *
+ * // Create a new group
+ * const group = await groupService.createGroup('group123', 'Math Class', 'academic');
+ *
+ * // Assign teachers or student teachers to the group
+ * await groupService.assignStudentTeacherMembers('group123', ['teacher1', 'teacher2']);
+ *
+ * // Assign learners to the group
+ * await groupService.assignLearnerMembers(['student1', 'student2'], 'group123');
+ *
+ * // Get all groups of a specific type
+ * const academicGroups = await groupService.getAllGroups({ group_type: 'academic' });
+ *
+ * // Get a specific group by ID
+ * const specificGroup = await groupService.getGroupById('group123');
+ */
 class GroupService {
+  /**
+   * @class GroupService
+   * @description Service class for handling group-related operations
+   * @param {Object} GroupModel - The model for groups
+   * @param {Object} StudentTeacherModel - The model for student-teacher relationships
+   * @param {Object} LearnerModel - The model for learners
+   */
   constructor(GroupModel, StudentTeacherModel, LearnerModel) {
     this.GroupModel = GroupModel
     this.StudentTeacherModel = StudentTeacherModel
     this.LearnerModel = LearnerModel
   }
 
+  /**
+   * Creates a new group in the system
+   *
+   * @async
+   * @param {string} groupId - The unique identifier for the group
+   * @param {string} name - The name of the group
+   * @param {string} groupType - The type of the group
+   * @returns {Promise<object>} The created group object
+   * @throws {Error} If any required fields are missing or if group creation fails
+   */
   async createGroup(groupId, name, groupType) {
     if (!groupId || !name || !groupType) {
       throw new Error('All fields are required')
@@ -23,6 +66,14 @@ class GroupService {
     }
   }
 
+  /**
+   * Assigns student-teacher members to a specific group.
+   *
+   * @param {string|number} groupId - The ID of the group to assign members to.
+   * @param {Array<string|number>} userIds - An array of user IDs to be assigned to the group.
+   * @returns {Promise<Array>} A promise that resolves to an array of the updated student-teacher records.
+   * @throws {Error} Throws an error if any required fields are missing or if the assignment process fails.
+   */
   async assignStudentTeacherMembers(groupId, userIds) {
     if (!groupId || !userIds) {
       throw new Error('All fields are required')
@@ -44,6 +95,13 @@ class GroupService {
     }
   }
 
+  /**
+   * Assigns multiple learners to a specific group
+   * @param {Array<number|string>} userIds - Array of user IDs to assign to the group
+   * @param {number|string} groupId - ID of the group to which the learners will be assigned
+   * @returns {Promise<Array>} Promise resolving to an array of updated learner objects
+   * @throws {Error} If any required fields are missing or if the assignment process fails
+   */
   async assignLearnerMembers(userIds, groupId) {
     if (!groupId || !userIds) {
       throw new Error('All fields are required')
@@ -63,6 +121,15 @@ class GroupService {
     }
   }
 
+  /**
+   * Retrieves all groups from the database, optionally filtered by group_type.
+   *
+   * @async
+   * @param {Object} [options={}] - Optional filter parameters
+   * @param {string} [options.group_type] - Type of group to filter by
+   * @returns {Promise<Array>} A promise that resolves to an array of group objects
+   * @throws {Error} If there is an issue fetching groups from the database
+   */
   async getAllGroups(options = {}) {
     try {
       const whereClause = {}
@@ -78,6 +145,14 @@ class GroupService {
     }
   }
 
+  /**
+   * Retrieves a group by its ID from the database.
+   *
+   * @async
+   * @param {number|string} groupId - The ID of the group to retrieve
+   * @returns {Promise<Object>} The retrieved group object
+   * @throws {Error} If the group is not found or if there's an error during the fetch operation
+   */
   async getGroupById(groupId) {
     try {
       const group = await this.GroupModel.findByPk(groupId)
