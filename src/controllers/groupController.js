@@ -11,22 +11,19 @@ const groupService = new GroupService(Group)
  */
 const getAllGroups = async (req, res) => {
   try {
-    const { group_type } = req.query // Get group_type from query parameters.
+    const { group_type } = req.query
 
-    const whereClause = {} // Start with an empty WHERE clause.
-
+    let options = {}
     if (group_type) {
-      // IMPORTANT: Validate the group_type to prevent SQL injection
       if (group_type !== 'learner' && group_type !== 'student_teacher') {
         return res.status(400).json({ message: 'Invalid group_type' })
       }
-      whereClause.group_type = group_type // Add group_type filter if provided and valid.
+      options.group_type = group_type
     }
 
-    const groups = await Group.findAll({
-      where: whereClause, // Use the WHERE clause
-    })
+    const groups = await groupService.getAllGroups(options)
     res.status(200).json(groups)
+    log.info('Retrieved all groups')
   } catch (error) {
     log.error('Error getting groups:', error)
     res.status(500).json({ message: 'Failed to retrieve groups' })
@@ -127,4 +124,10 @@ const assignStudentTeacherMembers = async (req, res) => {
   }
 }
 
-export { getAllGroups, createGroup, assignLearnerMembers, assignStudentTeacherMembers, getGroupById }
+export {
+  getAllGroups,
+  createGroup,
+  assignLearnerMembers,
+  assignStudentTeacherMembers,
+  getGroupById,
+}

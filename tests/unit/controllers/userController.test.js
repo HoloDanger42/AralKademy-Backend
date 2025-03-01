@@ -278,14 +278,23 @@ describe('User Controller', () => {
         id: index + 1,
         ...user,
       }))
-      getAllUsersSpy.mockResolvedValue(mockUsers)
+
+      getAllUsersSpy.mockResolvedValue({
+        count: mockUsers.length,
+        rows: mockUsers.map((user) => ({
+          get: jest.fn().mockReturnValue(user), // Mock Sequelize's get() method
+        })),
+      })
 
       // Act
       await getAllUsers(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(200)
-      expect(mockRes.json).toHaveBeenCalledWith(mockUsers)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        count: mockUsers.length,
+        users: mockUsers.map(({ password, ...rest }) => rest), // Remove passwords
+      })
       expect(log.info).toHaveBeenCalled()
     })
   })
@@ -301,14 +310,18 @@ describe('User Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(200)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Password reset email sent successfully' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Password reset email sent successfully',
+      })
       expect(log.info).toHaveBeenCalledWith(`Password reset email sent to ${validUsers[0].email}`)
     })
 
     test('should return 404 if user is not found', async () => {
       // Arrange
       mockReq.body = { email: 'nonexistent@example.com' }
-      jest.spyOn(UserServiceModule.default.prototype, 'forgotPassword').mockRejectedValue(new Error('User not found'))
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'forgotPassword')
+        .mockRejectedValue(new Error('User not found'))
 
       // Act
       await userControllerModule.forgotPassword(mockReq, mockRes)
@@ -321,7 +334,9 @@ describe('User Controller', () => {
     test('should return 500 if an error occurs', async () => {
       // Arrange
       mockReq.body = { email: validUsers[0].email }
-      jest.spyOn(UserServiceModule.default.prototype, 'forgotPassword').mockRejectedValue(new Error('Server error'))
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'forgotPassword')
+        .mockRejectedValue(new Error('Server error'))
 
       // Act
       await userControllerModule.forgotPassword(mockReq, mockRes)
@@ -350,7 +365,9 @@ describe('User Controller', () => {
     test('should return 404 if user is not found', async () => {
       // Arrange
       mockReq.body = { email: 'nonexistent@example.com', code: '123456' }
-      jest.spyOn(UserServiceModule.default.prototype, 'verifyResetCode').mockRejectedValue(new Error('User not found'))
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'verifyResetCode')
+        .mockRejectedValue(new Error('User not found'))
 
       // Act
       await userControllerModule.verifyResetCode(mockReq, mockRes)
@@ -363,7 +380,9 @@ describe('User Controller', () => {
     test('should return 400 if code is invalid', async () => {
       // Arrange
       mockReq.body = { email: validUsers[0].email, code: 'invalid-code' }
-      jest.spyOn(UserServiceModule.default.prototype, 'verifyResetCode').mockRejectedValue(new Error('Invalid code'))
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'verifyResetCode')
+        .mockRejectedValue(new Error('Invalid code'))
 
       // Act
       await userControllerModule.verifyResetCode(mockReq, mockRes)
@@ -376,7 +395,9 @@ describe('User Controller', () => {
     test('should return 500 if an error occurs', async () => {
       // Arrange
       mockReq.body = { email: validUsers[0].email, code: '123456' }
-      jest.spyOn(UserServiceModule.default.prototype, 'verifyResetCode').mockRejectedValue(new Error('Server error'))
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'verifyResetCode')
+        .mockRejectedValue(new Error('Server error'))
 
       // Act
       await userControllerModule.verifyResetCode(mockReq, mockRes)
@@ -405,7 +426,9 @@ describe('User Controller', () => {
     test('should return 404 if user is not found', async () => {
       // Arrange
       mockReq.body = { email: 'nonexistent@example.com', password: 'NewPass123' }
-      jest.spyOn(UserServiceModule.default.prototype, 'resetPassword').mockRejectedValue(new Error('User not found'))
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'resetPassword')
+        .mockRejectedValue(new Error('User not found'))
 
       // Act
       await userControllerModule.resetPassword(mockReq, mockRes)
@@ -418,7 +441,9 @@ describe('User Controller', () => {
     test('should return 500 if an error occurs', async () => {
       // Arrange
       mockReq.body = { email: validUsers[0].email, password: 'NewPass123' }
-      jest.spyOn(UserServiceModule.default.prototype, 'resetPassword').mockRejectedValue(new Error('Server error'))
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'resetPassword')
+        .mockRejectedValue(new Error('Server error'))
 
       // Act
       await userControllerModule.resetPassword(mockReq, mockRes)
@@ -431,15 +456,18 @@ describe('User Controller', () => {
     test('should return 400 if password is invalid', async () => {
       // Arrange
       mockReq.body = { email: validUsers[0].email, password: 'password' }
-      jest.spyOn(UserServiceModule.default.prototype, 'resetPassword').mockRejectedValue(new Error('Password must be at least 8 characters'))
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'resetPassword')
+        .mockRejectedValue(new Error('Password must be at least 8 characters'))
 
       // Act
       await userControllerModule.resetPassword(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Password must be at least 8 characters' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Password must be at least 8 characters',
+      })
     })
   })
-
 })

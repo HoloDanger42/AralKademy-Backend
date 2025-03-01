@@ -116,7 +116,11 @@ describe('User Model', () => {
     })
 
     it('should have one StudentTeacher', async () => {
-      const userData = validUsers[2]
+      const school = await createTestSchool()
+      const userData = {
+        ...validUsers[2],
+        school_id: school.school_id,
+      }
       const user = await User.create(userData)
       const studentTeacher = await user.createStudentTeacher({
         section: 'Test Section',
@@ -128,7 +132,12 @@ describe('User Model', () => {
     })
 
     it('should have one Teacher', async () => {
-      const userData = validUsers[1]
+      const school = await createTestSchool()
+
+      const userData = {
+        ...validUsers[1],
+        school_id: school.school_id,
+      }
       const user = await User.create(userData)
       const teacher = await user.createTeacher({
         department: 'Test Department',
@@ -140,7 +149,12 @@ describe('User Model', () => {
     })
 
     it('should have one Admin', async () => {
-      const userData = validUsers[3]
+      const school = await createTestSchool()
+
+      const userData = {
+        ...validUsers[3],
+        school_id: school.school_id,
+      }
       const user = await User.create(userData)
       const admin = await user.createAdmin()
 

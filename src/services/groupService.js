@@ -1,83 +1,92 @@
 class GroupService {
   constructor(GroupModel, StudentTeacherModel, LearnerModel) {
-    this.GroupModel = GroupModel;
-    this.StudentTeacherModel = StudentTeacherModel;
-    this.LearnerModel = LearnerModel;
+    this.GroupModel = GroupModel
+    this.StudentTeacherModel = StudentTeacherModel
+    this.LearnerModel = LearnerModel
   }
 
   async createGroup(groupId, name, groupType) {
     if (!groupId || !name || !groupType) {
-      throw new Error('All fields are required');
+      throw new Error('All fields are required')
     }
 
     try {
       return await this.GroupModel.create({
         group_id: groupId,
         name,
-        group_type: groupType
-      });
+        group_type: groupType,
+      })
     } catch (error) {
-      throw new Error('Failed to create group');
+      throw new Error('Failed to create group')
     }
   }
 
   async assignStudentTeacherMembers(groupId, userIds) {
     if (!groupId || !userIds) {
-      throw new Error('All fields are required');
+      throw new Error('All fields are required')
     }
 
     try {
-      const studentTeachers = await this.StudentTeacherModel.findAll({ where: { user_id: userIds } });
+      const studentTeachers = await this.StudentTeacherModel.findAll({
+        where: { user_id: userIds },
+      })
 
       for (const studentTeacher of studentTeachers) {
-        studentTeacher.group_id = groupId;
-        await studentTeacher.save();
+        studentTeacher.group_id = groupId
+        await studentTeacher.save()
       }
 
-      return studentTeachers;
+      return studentTeachers
     } catch (error) {
-      throw new Error('Failed to assign student teacher members');
+      throw new Error('Failed to assign student teacher members')
     }
   }
 
   async assignLearnerMembers(userIds, groupId) {
     if (!groupId || !userIds) {
-      throw new Error('All fields are required');
+      throw new Error('All fields are required')
     }
 
     try {
-      const learners = await this.LearnerModel.findAll({ where: { user_id: userIds } });
+      const learners = await this.LearnerModel.findAll({ where: { user_id: userIds } })
 
       for (const learner of learners) {
-        learner.group_id = groupId;
-        await learner.save();
+        learner.group_id = groupId
+        await learner.save()
       }
 
-      return learners;
+      return learners
     } catch (error) {
-      throw new Error('Failed to assign learner members');
+      throw new Error('Failed to assign learner members')
     }
   }
 
-  async getAllGroups() {
+  async getAllGroups(options = {}) {
     try {
-      return await this.GroupModel.findAll();
+      const whereClause = {}
+
+      if (options.group_type) {
+        whereClause.group_type = options.group_type
+      }
+
+      return await this.GroupModel.findAll({ where: whereClause })
     } catch (error) {
-      throw new Error('Failed to fetch groups');
+      log.error('Error fetching groups:', error)
+      throw new Error('Error fetching groups')
     }
   }
 
   async getGroupById(groupId) {
     try {
-      const group = await this.GroupModel.findByPk(groupId);
+      const group = await this.GroupModel.findByPk(groupId)
       if (!group) {
-        throw new Error('Group not found');
+        throw new Error('Group not found')
       }
-      return group;
+      return group
     } catch (error) {
-      throw new Error('Failed to fetch group');
+      throw new Error('Failed to fetch group')
     }
   }
 }
 
-export default GroupService;
+export default GroupService
