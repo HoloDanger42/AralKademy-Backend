@@ -19,6 +19,7 @@ describe('Course Endpoints (Integration Tests)', () => {
 
     // Create test school
     testSchool = await School.create({
+      school_id: Math.floor(10000 + Math.random() * 90000),
       name: 'Test School',
       address: '123 Test St., Test City',
       contact_no: '02-8123-4567',
@@ -66,9 +67,6 @@ describe('Course Endpoints (Integration Tests)', () => {
       const courseData = {
         name: 'Introduction to Programming',
         description: 'Learn the basics of programming.',
-        user_id: null,
-        student_teacher_group_id: null,
-        learner_group_id: null,
       }
 
       const res = await request(app)
@@ -97,7 +95,9 @@ describe('Course Endpoints (Integration Tests)', () => {
 
         expect(res.status).toBe(400)
         expect(res.body).toEqual({
-          message: 'Course name is required',
+          errors: {
+            name: 'Course name is required.',
+          },
         })
       })
 
@@ -112,7 +112,9 @@ describe('Course Endpoints (Integration Tests)', () => {
 
         expect(res.status).toBe(400)
         expect(res.body).toEqual({
-          message: 'Course name is too long',
+          errors: {
+            name: 'Course name is too long.',
+          },
         })
       })
     })

@@ -17,9 +17,9 @@ describe('Security Middleware', () => {
 
   describe('CORS', () => {
     it('should allow requests from allowed origins', async () => {
-      const res = await request(app).get('/test').set('Origin', 'http://localhost:4000')
+      const res = await request(app).get('/test').set('Origin', 'http://localhost:3000')
 
-      expect(res.headers['access-control-allow-origin']).toBe('http://localhost:4000')
+      expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3000')
       expect(res.headers['access-control-allow-credentials']).toBe('true')
     })
 

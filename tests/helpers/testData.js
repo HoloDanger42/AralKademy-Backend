@@ -83,6 +83,7 @@ export const createTestSchool = async (overrides = {}) => {
     const timestamp = Date.now()
     const schoolData = {
       ...validSchools[0],
+      school_id: overrides.school_id || Math.floor(10000 + Math.random() * 90000),
       name: `Test School ${timestamp}`,
       ...overrides,
     }

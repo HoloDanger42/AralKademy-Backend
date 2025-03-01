@@ -1,180 +1,231 @@
-import { beforeEach, describe, expect, jest } from '@jest/globals';
-import { getAllGroups, createGroup, assignLearnerMembers, assignStudentTeacherMembers, getGroupById } from '../../../src/controllers/groupController.js';
-import GroupService from '../../../src/services/groupService.js';
-import { log } from '../../../src/utils/logger.js';
+import { beforeEach, describe, expect, jest } from '@jest/globals'
+import {
+  getAllGroups,
+  createGroup,
+  assignLearnerMembers,
+  assignStudentTeacherMembers,
+  getGroupById,
+} from '../../../src/controllers/groupController.js'
+import GroupService from '../../../src/services/groupService.js'
+import { log } from '../../../src/utils/logger.js'
 
 describe('Group Controller', () => {
-  let mockReq;
-  let mockRes;
+  let mockReq
+  let mockRes
+  let mockGroupService
 
   beforeEach(() => {
     mockReq = {
       body: {},
       params: {},
-    };
+      query: {},
+    }
     mockRes = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
-    };
-    jest.spyOn(log, 'info');
-    jest.spyOn(log, 'error');
-    jest.clearAllMocks();
-  });
+    }
+
+    mockGroupService = {
+      getAllGroups: jest.fn(),
+    }
+
+    jest
+      .spyOn(GroupService.prototype, 'getAllGroups')
+      .mockImplementation(mockGroupService.getAllGroups)
+
+    jest.spyOn(log, 'info')
+    jest.spyOn(log, 'error')
+    jest.clearAllMocks()
+  })
 
   describe('getAllGroups', () => {
     test('should retrieve all groups successfully (get all groups)', async () => {
-      const groups = [{ id: 1, name: 'Test Group' }];
-      jest.spyOn(GroupService.prototype, 'getAllGroups').mockResolvedValue(groups);
+      const groups = [{ id: 1, name: 'Test Group' }]
 
-      await getAllGroups(mockReq, mockRes);
+      jest.spyOn(GroupService.prototype, 'getAllGroups').mockResolvedValue(groups)
 
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith(groups);
-      expect(log.info).toHaveBeenCalledWith('Retrieved all groups');
-    });
+      await getAllGroups(mockReq, mockRes)
+
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith(groups)
+      expect(log.info).toHaveBeenCalledWith('Retrieved all groups')
+    })
 
     test('should handle errors when retrieving all groups (get all groups)', async () => {
-      jest.spyOn(GroupService.prototype, 'getAllGroups').mockRejectedValue(new Error('Error fetching groups'));
+      mockGroupService.getAllGroups.mockRejectedValue(new Error('Error fetching groups'))
 
-      await getAllGroups(mockReq, mockRes);
+      await getAllGroups(mockReq, mockRes)
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to retrieve groups' });
-      expect(log.error).toHaveBeenCalledWith('Get all groups error:', expect.any(Error));
-    });
-  });
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to retrieve groups' })
+      expect(log.error).toHaveBeenCalledWith('Error getting groups:', expect.any(Error))
+    })
+  })
 
   describe('createGroup', () => {
     test('should create a new group successfully (create group)', async () => {
-      mockReq.body = { groupId: 1, name: 'New Group', groupType: 'Study' };
-      const newGroup = { id: 1, name: 'New Group' };
-      jest.spyOn(GroupService.prototype, 'createGroup').mockResolvedValue(newGroup);
+      mockReq.body = { groupId: 1, name: 'New Group', groupType: 'Study' }
+      const newGroup = { id: 1, name: 'New Group' }
+      jest.spyOn(GroupService.prototype, 'createGroup').mockResolvedValue(newGroup)
 
-      await createGroup(mockReq, mockRes);
+      await createGroup(mockReq, mockRes)
 
-      expect(mockRes.status).toHaveBeenCalledWith(201);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Group created successfully', group: newGroup });
-      expect(log.info).toHaveBeenCalledWith('Group New Group was successfully created');
-    });
+      expect(mockRes.status).toHaveBeenCalledWith(201)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Group created successfully',
+        group: newGroup,
+      })
+      expect(log.info).toHaveBeenCalledWith('Group New Group was successfully created')
+    })
 
     test('should handle missing fields when creating a group (create group)', async () => {
-      jest.spyOn(GroupService.prototype, 'createGroup').mockRejectedValue(new Error('All fields are required'));
+      jest
+        .spyOn(GroupService.prototype, 'createGroup')
+        .mockRejectedValue(new Error('All fields are required'))
 
-      await createGroup(mockReq, mockRes);
+      await createGroup(mockReq, mockRes)
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'All fields are required' });
-      expect(log.error).toHaveBeenCalledWith('Create group error:', expect.any(Error));
-    });
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'All fields are required' })
+      expect(log.error).toHaveBeenCalledWith('Create group error:', expect.any(Error))
+    })
 
     test('should handle errors when creating a group (create group)', async () => {
-      jest.spyOn(GroupService.prototype, 'createGroup').mockRejectedValue(new Error('Error creating group'));
+      jest
+        .spyOn(GroupService.prototype, 'createGroup')
+        .mockRejectedValue(new Error('Error creating group'))
 
-      await createGroup(mockReq, mockRes);
+      await createGroup(mockReq, mockRes)
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to create group' });
-      expect(log.error).toHaveBeenCalledWith('Create group error:', expect.any(Error));
-    });
-  });
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to create group' })
+      expect(log.error).toHaveBeenCalledWith('Create group error:', expect.any(Error))
+    })
+  })
 
   describe('getGroupById', () => {
     test('should return a group by ID successfully (get group by id)', async () => {
-      mockReq.params = { groupId: 1 };
-      const group = { id: 1, name: 'Test Group' };
-      jest.spyOn(GroupService.prototype, 'getGroupById').mockResolvedValue(group);
+      mockReq.params = { groupId: 1 }
+      const group = { id: 1, name: 'Test Group' }
+      jest.spyOn(GroupService.prototype, 'getGroupById').mockResolvedValue(group)
 
-      await getGroupById(mockReq, mockRes);
+      await getGroupById(mockReq, mockRes)
 
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith(group);
-    });
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith(group)
+    })
 
     test('should handle when group is not found (get group by id)', async () => {
-        jest.spyOn(GroupService.prototype, 'getGroupById').mockResolvedValue(null); // Return null instead of throwing
-      
-        await getGroupById(mockReq, mockRes);
-      
-        expect(mockRes.status).toHaveBeenCalledWith(404);
-        expect(mockRes.json).toHaveBeenCalledWith({ message: 'Group not found' });
-      });
+      jest.spyOn(GroupService.prototype, 'getGroupById').mockResolvedValue(null) // Return null instead of throwing
+
+      await getGroupById(mockReq, mockRes)
+
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Group not found' })
+    })
 
     test('should handle errors when retrieving a group by ID (get group by id)', async () => {
-      jest.spyOn(GroupService.prototype, 'getGroupById').mockRejectedValue(new Error('Error fetching group'));
+      jest
+        .spyOn(GroupService.prototype, 'getGroupById')
+        .mockRejectedValue(new Error('Error fetching group'))
 
-      await getGroupById(mockReq, mockRes);
+      await getGroupById(mockReq, mockRes)
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to retrieve group' });
-      expect(log.error).toHaveBeenCalledWith('Get group by id error:', expect.any(Error));
-    });
-  });
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to retrieve group' })
+      expect(log.error).toHaveBeenCalledWith('Get group by id error:', expect.any(Error))
+    })
+  })
 
   describe('assignLearnerMembers', () => {
     test('should assign learners to a group successfully (assign learner members)', async () => {
-      mockReq.body = { userIds: [1, 2], groupId: 1 };
-      const learners = [{ userId: 1 }, { userId: 2 }];
-      jest.spyOn(GroupService.prototype, 'assignLearnerMembers').mockResolvedValue(learners);
+      mockReq.body = { userIds: [1, 2], groupId: 1 }
+      const learners = [{ userId: 1 }, { userId: 2 }]
+      jest.spyOn(GroupService.prototype, 'assignLearnerMembers').mockResolvedValue(learners)
 
-      await assignLearnerMembers(mockReq, mockRes);
+      await assignLearnerMembers(mockReq, mockRes)
 
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Learners assigned successfully', learners });
-      expect(log.info).toHaveBeenCalledWith('Learners assigned successfully');
-    });
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Learners assigned successfully',
+        learners,
+      })
+      expect(log.info).toHaveBeenCalledWith('Learners assigned successfully')
+    })
 
     test('should handle errors when assigning learners to a group (assign learner members)', async () => {
-      jest.spyOn(GroupService.prototype, 'assignLearnerMembers').mockRejectedValue(new Error('Error assigning learners'));
+      jest
+        .spyOn(GroupService.prototype, 'assignLearnerMembers')
+        .mockRejectedValue(new Error('Error assigning learners'))
 
-      await assignLearnerMembers(mockReq, mockRes);
+      await assignLearnerMembers(mockReq, mockRes)
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to assign learner members' });
-      expect(log.error).toHaveBeenCalledWith('Assign learner members error:', expect.any(Error));
-    });
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to assign learner members' })
+      expect(log.error).toHaveBeenCalledWith('Assign learner members error:', expect.any(Error))
+    })
 
     test('should handle missing fields when assigning learners to a group (assign learner members)', async () => {
-      jest.spyOn(GroupService.prototype, 'assignLearnerMembers').mockRejectedValue(new Error('All fields are required'));
+      jest
+        .spyOn(GroupService.prototype, 'assignLearnerMembers')
+        .mockRejectedValue(new Error('All fields are required'))
 
-      await assignLearnerMembers(mockReq, mockRes);
+      await assignLearnerMembers(mockReq, mockRes)
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'All fields are required' });
-      expect(log.error).toHaveBeenCalledWith('Assign learner members error:', expect.any(Error));
-    });
-  });
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'All fields are required' })
+      expect(log.error).toHaveBeenCalledWith('Assign learner members error:', expect.any(Error))
+    })
+  })
 
   describe('assignStudentTeacherMembers', () => {
     test('should assign student teachers to a group successfully (assign student teacher members)', async () => {
-      mockReq.body = { userIds: [1, 2], groupId: 1 };
-      const studentTeachers = [{ userId: 1 }, { userId: 2 }];
-      jest.spyOn(GroupService.prototype, 'assignStudentTeacherMembers').mockResolvedValue(studentTeachers);
+      mockReq.body = { userIds: [1, 2], groupId: 1 }
+      const studentTeachers = [{ userId: 1 }, { userId: 2 }]
+      jest
+        .spyOn(GroupService.prototype, 'assignStudentTeacherMembers')
+        .mockResolvedValue(studentTeachers)
 
-      await assignStudentTeacherMembers(mockReq, mockRes);
+      await assignStudentTeacherMembers(mockReq, mockRes)
 
-      expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Student teachers assigned successfully', studentTeachers });
-      expect(log.info).toHaveBeenCalledWith('Student teachers assigned successfully');
-    });
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Student teachers assigned successfully',
+        studentTeachers,
+      })
+      expect(log.info).toHaveBeenCalledWith('Student teachers assigned successfully')
+    })
 
     test('should handle errors when assigning student teachers to a group (assign student teacher members)', async () => {
-        jest.spyOn(GroupService.prototype, 'assignStudentTeacherMembers').mockRejectedValue(new Error('Error assigning student teachers'));
-      
-        await assignStudentTeacherMembers(mockReq, mockRes);
-      
-        expect(mockRes.status).toHaveBeenCalledWith(500);
-        expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to assign student teacher members' });
-        expect(log.error).toHaveBeenCalledWith('Assign student teacher members error:', expect.any(Error)); 
-      });
+      jest
+        .spyOn(GroupService.prototype, 'assignStudentTeacherMembers')
+        .mockRejectedValue(new Error('Error assigning student teachers'))
+
+      await assignStudentTeacherMembers(mockReq, mockRes)
+
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Failed to assign student teacher members',
+      })
+      expect(log.error).toHaveBeenCalledWith(
+        'Assign student teacher members error:',
+        expect.any(Error)
+      )
+    })
 
     test('should handle missing fields when assigning student teachers to a group (assign student teacher members)', async () => {
-        jest.spyOn(GroupService.prototype, 'assignStudentTeacherMembers').mockRejectedValue(new Error('All fields are required'));
-    
-        await assignStudentTeacherMembers(mockReq, mockRes);
-    
-        expect(mockRes.status).toHaveBeenCalledWith(400);
-        expect(mockRes.json).toHaveBeenCalledWith({ message: 'All fields are required' });
-        expect(log.error).toHaveBeenCalledWith('Assign student teacher members error:', expect.any(Error));
-        });
-  });
-});
+      jest
+        .spyOn(GroupService.prototype, 'assignStudentTeacherMembers')
+        .mockRejectedValue(new Error('All fields are required'))
+
+      await assignStudentTeacherMembers(mockReq, mockRes)
+
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'All fields are required' })
+      expect(log.error).toHaveBeenCalledWith(
+        'Assign student teacher members error:',
+        expect.any(Error)
+      )
+    })
+  })
+})

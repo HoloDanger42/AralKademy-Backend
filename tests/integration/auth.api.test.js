@@ -17,6 +17,7 @@ describe('Token Refresh API', () => {
 
     // Create a test school first
     testSchool = await School.create({
+      school_id: Math.floor(10000 + Math.random() * 90000),
       name: 'Test School',
       address: '123 Test St., Test City',
       contact_no: '02-8123-4567',

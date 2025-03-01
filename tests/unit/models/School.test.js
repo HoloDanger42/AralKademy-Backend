@@ -16,6 +16,7 @@ describe('School Model', () => {
   describe('Creation', () => {
     it('should create a valid school', async () => {
       const school = await School.create({
+        school_id: Math.floor(10000 + Math.random() * 90000),
         name: 'Test School',
         address: 'Test Address',
         contact_no: '02-8123-4567',
@@ -64,6 +65,7 @@ describe('School Model', () => {
 
       for (const contact_no of validFormats) {
         const school = await School.create({
+          school_id: Math.floor(10000 + Math.random() * 90000),
           name: `Test School ${contact_no}`,
           address: 'Test Address',
           contact_no,
@@ -118,6 +120,7 @@ describe('School Model', () => {
   describe('Constraints', () => {
     it('should enforce unique school name', async () => {
       await School.create({
+        school_id: Math.floor(10000 + Math.random() * 90000),
         name: 'Test School',
         address: 'Test Address',
         contact_no: '02-8123-4567',
@@ -125,6 +128,7 @@ describe('School Model', () => {
 
       await expect(
         School.create({
+          school_id: Math.floor(10000 + Math.random() * 90000),
           name: 'Test School',
           address: 'Different Address',
           contact_no: '02-8123-4567',
@@ -136,6 +140,7 @@ describe('School Model', () => {
   describe('Soft Deletion', () => {
     it('should soft delete school', async () => {
       const school = await School.create({
+        school_id: Math.floor(10000 + Math.random() * 90000),
         name: 'Test School',
         address: 'Test Address',
         contact_no: '02-8123-4567',
@@ -154,6 +159,7 @@ describe('School Model', () => {
   describe('Updates', () => {
     it('should update school details', async () => {
       const school = await School.create({
+        school_id: Math.floor(10000 + Math.random() * 90000),
         name: 'Old Name',
         address: 'Old Address',
         contact_no: '02-8123-4567',
@@ -191,6 +197,7 @@ describe('School Model', () => {
       // Create multiple schools
       for (let i = 0; i < 5; i++) {
         await School.create({
+          school_id: Math.floor(10000 + Math.random() * 90000),
           name: `School ${i}`,
           address: `Address ${i}`,
           contact_no: '02-8123-4567',
@@ -208,6 +215,7 @@ describe('School Model', () => {
 
     it('should search schools by name', async () => {
       await School.create({
+        school_id: Math.floor(10000 + Math.random() * 90000),
         name: 'Target School',
         address: 'Test Address',
         contact_no: '02-8123-4567',

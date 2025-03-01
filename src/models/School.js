@@ -77,43 +77,43 @@ const School = sequelize.define(
   }
 )
 
-/* // Function to ensure only hardcoded data exists
-const hardCodeSchoolData = async () => {
-  const hardcodedSchools = [
-    {
-      school_id: 1001,
-      name: 'University of Santo Tomas',
-      address: 'Espana Blvd, Sampaloc, Manila, 1008 Metro Manila',
-      contact_no: '+6324061611',
-    },
-    {
-      school_id: 1002,
-      name: 'Asuncion Consunji Elementary School',
-      address: 'Samal, Bataan',
-      contact_no: '+6324061611',
-    },
-  ]
+// // Function to ensure only hardcoded data exists
+// const hardCodeSchoolData = async () => {
+//   const hardcodedSchools = [
+//     {
+//       school_id: 1001,
+//       name: 'University of Santo Tomas',
+//       address: 'Espana Blvd, Sampaloc, Manila, 1008 Metro Manila',
+//       contact_no: '+6324061611',
+//     },
+//     {
+//       school_id: 1002,
+//       name: 'Asuncion Consunji Elementary School',
+//       address: 'Samal, Bataan',
+//       contact_no: '+6324061611',
+//     },
+//   ]
 
-  // Remove any schools that are not in the hardcoded list
-  await School.destroy({
-    where: {
-      school_id: {
-        [Op.notIn]: hardcodedSchools.map((school) => school.school_id),
-      },
-    },
-    force: true, // Ensures permanent deletion
-  })
+//   // Remove any schools that are not in the hardcoded list
+//   await School.destroy({
+//     where: {
+//       school_id: {
+//         [Op.notIn]: hardcodedSchools.map((school) => school.school_id),
+//       },
+//     },
+//     force: true, // Ensures permanent deletion
+//   })
 
-  // Insert only if missing
-  for (const school of hardcodedSchools) {
-    await School.findOrCreate({
-      where: { school_id: school.school_id },
-      defaults: school,
-    })
-  }
-}
+//   // Insert only if missing
+//   for (const school of hardcodedSchools) {
+//     await School.findOrCreate({
+//       where: { school_id: school.school_id },
+//       defaults: school,
+//     })
+//   }
+// }
 
-// Call the function to enforce data consistency
-hardCodeSchoolData() */
+// // Call the function to enforce data consistency
+// hardCodeSchoolData()
 
 export { School }

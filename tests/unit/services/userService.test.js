@@ -88,6 +88,7 @@ describe('UserService', () => {
         userData.contact_no,
         school.school_id,
         userData.role,
+        null,
         userData.department
       )
 
@@ -404,7 +405,7 @@ describe('UserService', () => {
 
   describe('Password Reset', () => {
     let user
-  
+
     beforeEach(async () => {
       user = await userService.createUser(
         'reset@example.com',
@@ -417,40 +418,44 @@ describe('UserService', () => {
         'teacher'
       )
     })
-  
+
     it('should generate reset code for valid email', async () => {
       const code = await userService.forgotPassword(user.email)
       expect(code).toBeDefined()
-      
+
       const updatedUser = await sequelize.models.User.findOne({ where: { email: user.email } })
       expect(updatedUser.reset_code).toBe(code)
     })
-  
+
     it('should fail for non-existent email', async () => {
-      await expect(userService.forgotPassword('nonexistent@example.com')).rejects.toThrow('User not found')
+      await expect(userService.forgotPassword('nonexistent@example.com')).rejects.toThrow(
+        'User not found'
+      )
     })
-  
+
     it('should verify correct reset code', async () => {
       const code = await userService.forgotPassword(user.email)
       const result = await userService.verifyResetCode(user.email, code)
       expect(result).toBe(true)
     })
-  
+
     it('should fail verification for incorrect reset code', async () => {
       await userService.forgotPassword(user.email)
       await expect(userService.verifyResetCode(user.email, 123456)).rejects.toThrow('Invalid code')
     })
-  
+
     it('should reset password with valid reset code', async () => {
       await userService.forgotPassword(user.email)
       await userService.resetPassword(user.email, 'newpassword123')
-      
+
       const updatedUser = await sequelize.models.User.findOne({ where: { email: user.email } })
       expect(updatedUser.password).not.toBe('password123')
     })
-  
+
     it('should fail to reset password for non-existent user', async () => {
-      await expect(userService.resetPassword('nonexistent@example.com', 'newpassword123')).rejects.toThrow('User not found')
+      await expect(
+        userService.resetPassword('nonexistent@example.com', 'newpassword123')
+      ).rejects.toThrow('User not found')
     })
   })
 })

@@ -24,7 +24,7 @@ import { enrollmentRouter } from './routes/enrollments.js'
 import { groupsRouter } from './routes/groups.js'
 
 // Token cleanup
-import { scheduleTokenCleanup } from './utils/tokenCleanup.js'
+import TokenCleanup from './utils/tokenCleanup.js'
 
 const app = express()
 
@@ -58,20 +58,17 @@ const applyRateLimiter = config.env !== 'test'
 
 // Rate limiting
 if (applyRateLimiter) {
-  const limiter = rateLimit({
+  const generalLimiter = rateLimit({
     windowMs: FIFTEEN_MINUTES,
     max: config.api.rateLimit.max,
     standardHeaders: true,
     legacyHeaders: false,
   })
-  app.use(limiter)
 
   const authLimiter = rateLimit({
     windowMs: FIFTEEN_MINUTES,
     max: AUTH_MAX_REQUESTS,
-    handler: (req, res) => {
-      res.setHeader('ratelimit-remaining', options.max - req.rateLimit.current)
-      res.setHeader('ratelimit-reset', Math.ceil(options.windowMs / 1000))
+    handler: (_req, res) => {
       res.status(429).json({
         message: 'Too many authentication requests',
       })
@@ -79,13 +76,35 @@ if (applyRateLimiter) {
     standardHeaders: true,
     legacyHeaders: false,
   })
+
+  // Apply auth limiter to auth routes
   app.use('/api/users', authLimiter)
+  app.use('/api/auth', authLimiter)
+
+  // Apply general limiter to all API routes EXCEPT those with their own limiters
+  app.use('/api', (req, res, next) => {
+    // Skip general limiter for routes that already have their own limiters
+    if (req.path.startsWith('/users') || req.path.startsWith('/auth')) {
+      return next()
+    }
+    // Apply general limiter to all other API routes
+    generalLimiter(req, res, next)
+  })
 }
 
 // Pagination middleware
 app.use(paginate.middleware(config.pagination.defaultLimit, config.pagination.maxLimit))
 
-// Cache middleware (modified to only cache successful responses)
+/**
+ * Middleware function for caching responses.
+ *
+ * @param {number} duration - The cache duration in seconds
+ * @returns {Function} - Express middleware function that:
+ *   1. Checks if a cached response exists for the request URL and body
+ *   2. Returns the cached response if available
+ *   3. Otherwise, intercepts the response to cache it before sending
+ *   4. Only caches successful responses (status code 200-299)
+ */
 const cacheMiddleware = (duration) => {
   return (req, res, next) => {
     const key = `__express__${req.originalUrl || req.url}${JSON.stringify(req.body)}`
@@ -123,10 +142,10 @@ app.get('/', (_req, res) => {
 app.use('/api/users', usersRouter)
 app.use('/api/courses', courseRouter)
 app.use('/api/auth', authRouter)
-app.use('/api/enrollment', enrollmentRouter)
+app.use('/api/enrollments', enrollmentRouter)
 app.use('/api/groups', groupsRouter)
 
-app.get('/error', (_req, _res, next) => {
+app.get('/api/error', (_req, _res, next) => {
   next(new Error('Intentional error for testing'))
 })
 
@@ -139,6 +158,16 @@ app.use((_req, _res, next) => {
 
 app.use(errorMiddleware)
 
+/**
+ * Initializes the application by establishing a database connection,
+ * setting up the database (except in test environment), and starting the server.
+ * Also schedules token cleanup in non-test environments.
+ *
+ * @async
+ * @function initializeApp
+ * @returns {Promise<Object>} A Promise that resolves to the server instance
+ * @throws {Error} If database connection or initialization fails
+ */
 export const initializeApp = async () => {
   await databaseConnection()
 
@@ -151,13 +180,24 @@ export const initializeApp = async () => {
       console.log(`Server v${config.version} running on port ${config.port} in ${config.env} mode`)
 
       // Schedule token cleanup to run every hour
-      scheduleTokenCleanup(config.tokenBlacklist.cleanupIntervalMinutes)
+      TokenCleanup.scheduleTokenCleanup(config.tokenBlacklist.cleanupIntervalMinutes)
     }
   })
   return server
 }
 
-// Start server after database connection
+/**
+ * Starts the server and initializes the application
+ *
+ * This function attempts to initialize the application by connecting to the database
+ * and performing any necessary setup. It skips database synchronization when running
+ * in test mode.
+ *
+ * @async
+ * @function startServer
+ * @returns {Promise<void>} A promise that resolves when the server has started successfully
+ * @throws {Error} If the server fails to start, with specific handling for database connection refusal
+ */
 export const startServer = async () => {
   try {
     // Only run database sync when not testing.

@@ -48,7 +48,7 @@ const Course = sequelize.define(
     //   type: DataTypes.INTEGER,
     //   allowNull: true,
     //   references: {
-    //     model: 'users', // Reference the users table
+    //     model: 'users',
     //     key: 'user_id',
     //   },
     // },

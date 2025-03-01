@@ -5,6 +5,8 @@ import { validCourses, invalidCourses } from '../../fixtures/courseData'
 describe('Course Service', () => {
   let courseService
   let mockCourseModel
+  let mockUserModel
+  let mockGroupModel
 
   beforeEach(() => {
     mockCourseModel = {
@@ -15,7 +17,15 @@ describe('Course Service', () => {
       update: jest.fn(),
       destroy: jest.fn(),
     }
-    courseService = new CourseService(mockCourseModel)
+
+    mockUserModel = {
+      findByPk: jest.fn(),
+    }
+
+    mockGroupModel = {
+      findByPk: jest.fn(),
+    }
+    courseService = new CourseService(mockCourseModel, mockUserModel, mockGroupModel)
   })
 
   describe('getAllCourses', () => {
@@ -46,7 +56,7 @@ describe('Course Service', () => {
       mockCourseModel.findAndCountAll.mockRejectedValue(new Error('Database error'))
 
       // Act & Assert
-      await expect(courseService.getAllCourses()).rejects.toThrow('Failed to fetch courses')
+      await expect(courseService.getAllCourses()).rejects.toThrow('Failed to retrieve courses')
       expect(mockCourseModel.findAndCountAll).toHaveBeenCalled()
     })
   })
@@ -65,13 +75,13 @@ describe('Course Service', () => {
       mockCourseModel.create.mockResolvedValue({ id: 1, ...expectedData })
 
       // Act
-      const course = await courseService.createCourse(
-        courseData.name,
-        courseData.description,
-        courseData.user_id,
-        courseData.learner_group_id,
-        courseData.student_teacher_group_id
-      )
+      const course = await courseService.createCourse({
+        name: courseData.name,
+        description: courseData.description,
+        user_id: courseData.user_id,
+        learner_group_id: courseData.learner_group_id,
+        student_teacher_group_id: courseData.student_teacher_group_id,
+      })
 
       // Assert
       expect(course).toEqual({ id: 1, ...expectedData })
@@ -83,9 +93,9 @@ describe('Course Service', () => {
       const invalidCourse = invalidCourses[0]
 
       // Act & Assert
-      await expect(
-        courseService.createCourse('', invalidCourse.description)
-      ).rejects.toThrow('Course name is required')
+      await expect(courseService.createCourse('', invalidCourse.description)).rejects.toThrow(
+        'Course name is required'
+      )
     })
 
     test('should throw error when course name is too long (create course)', async () => {
@@ -94,7 +104,10 @@ describe('Course Service', () => {
 
       // Act & Assert
       await expect(
-        courseService.createCourse(invalidCourse.name, invalidCourse.description)
+        courseService.createCourse({
+          name: invalidCourse.name,
+          description: invalidCourse.description,
+        })
       ).rejects.toThrow('Course name is too long')
     })
 
@@ -107,7 +120,10 @@ describe('Course Service', () => {
 
       // Act & Assert
       await expect(
-        courseService.createCourse(courseData.name, courseData.description)
+        courseService.createCourse({
+          name: courseData.name,
+          description: courseData.description,
+        })
       ).rejects.toThrow('Failed to create course')
     })
   })
@@ -124,7 +140,12 @@ describe('Course Service', () => {
 
       // Assert
       expect(course).toEqual(expectedCourse)
-      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId)
+
+      // Verify the first argument is correct (courseId)
+      expect(mockCourseModel.findByPk.mock.calls[0][0]).toBe(courseId)
+
+      // Optionally verify include is present
+      expect(mockCourseModel.findByPk.mock.calls[0][1]).toHaveProperty('include')
     })
 
     test('should throw an error when the course does not exist (get course by id)', async () => {
@@ -134,7 +155,12 @@ describe('Course Service', () => {
 
       // Act & Assert
       await expect(courseService.getCourseById(courseId)).rejects.toThrow('Course not found')
-      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId)
+
+      // Verify the first argument is correct (courseId)
+      expect(mockCourseModel.findByPk.mock.calls[0][0]).toBe(courseId)
+
+      // Optionally verify include is present
+      expect(mockCourseModel.findByPk.mock.calls[0][1]).toHaveProperty('include')
     })
 
     test('should throw an error when the query fails (get course by id)', async () => {
@@ -144,7 +170,12 @@ describe('Course Service', () => {
 
       // Act & Assert
       await expect(courseService.getCourseById(courseId)).rejects.toThrow('Failed to fetch course')
-      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId)
+
+      // Verify the first argument is correct (courseId)
+      expect(mockCourseModel.findByPk.mock.calls[0][0]).toBe(courseId)
+
+      // Optionally verify include is present
+      expect(mockCourseModel.findByPk.mock.calls[0][1]).toHaveProperty('include')
     })
   })
 
@@ -154,7 +185,10 @@ describe('Course Service', () => {
       const courseId = 1
       const studentTeacherGroupId = 101
       const course = { id: courseId, save: jest.fn() }
+      const group = { id: studentTeacherGroupId, group_type: 'student_teacher' }
+
       mockCourseModel.findByPk = jest.fn().mockResolvedValue(course)
+      mockGroupModel.findByPk = jest.fn().mockResolvedValue(group)
 
       // Act
       const updatedCourse = await courseService.assignStudentTeacherGroupCourse(
@@ -167,6 +201,7 @@ describe('Course Service', () => {
       expect(course.save).toHaveBeenCalled()
       expect(updatedCourse).toEqual(course)
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId)
+      expect(mockGroupModel.findByPk).toHaveBeenCalledWith(studentTeacherGroupId)
     })
 
     test('should throw an error if the course does not exist (assign student teacher group course)', async () => {
@@ -186,13 +221,20 @@ describe('Course Service', () => {
       // Arrange
       const courseId = 1
       const studentTeacherGroupId = 101
+
+      // Mock successful course lookup
       const course = { id: courseId, save: jest.fn().mockRejectedValue(new Error('Assign error')) }
       mockCourseModel.findByPk = jest.fn().mockResolvedValue(course)
+
+      // Mock successful group lookup
+      const group = { id: studentTeacherGroupId, group_type: 'student_teacher' }
+      mockGroupModel.findByPk = jest.fn().mockResolvedValue(group)
 
       // Act & Assert
       await expect(
         courseService.assignStudentTeacherGroupCourse(courseId, studentTeacherGroupId)
-      ).rejects.toThrow('Failed to assign student teacher group to course')
+      ).rejects.toThrow('Assign error') // Now expecting the actual error message
+
       expect(course.save).toHaveBeenCalled()
     })
   })
@@ -203,7 +245,10 @@ describe('Course Service', () => {
       const courseId = 1
       const learnerGroupId = 101
       const course = { id: courseId, save: jest.fn() }
+      const group = { id: learnerGroupId, group_type: 'learner' }
+
       mockCourseModel.findByPk = jest.fn().mockResolvedValue(course)
+      mockGroupModel.findByPk = jest.fn().mockResolvedValue(group)
 
       // Act
       const updatedCourse = await courseService.assignLearnerGroupCourse(courseId, learnerGroupId)
@@ -233,7 +278,10 @@ describe('Course Service', () => {
       const courseId = 1
       const learnerGroupId = 101
       const course = { id: courseId, save: jest.fn().mockRejectedValue(new Error('Assign error')) }
+      const group = { id: learnerGroupId, group_type: 'learner' }
+
       mockCourseModel.findByPk = jest.fn().mockResolvedValue(course)
+      mockGroupModel.findByPk = jest.fn().mockResolvedValue(group)
 
       // Act & Assert
       await expect(
@@ -249,7 +297,10 @@ describe('Course Service', () => {
       const courseId = 1
       const userId = 101
       const course = { id: courseId, save: jest.fn() }
+      const teacher = { id: userId, role: 'teacher' }
+
       mockCourseModel.findByPk = jest.fn().mockResolvedValue(course)
+      mockUserModel.findByPk = jest.fn().mockResolvedValue(teacher)
 
       // Act
       const updatedCourse = await courseService.assignTeacherCourse(courseId, userId)
@@ -259,6 +310,7 @@ describe('Course Service', () => {
       expect(course.save).toHaveBeenCalled()
       expect(updatedCourse).toEqual(course)
       expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId)
+      expect(mockUserModel.findByPk).toHaveBeenCalledWith(userId)
     })
 
     test('should throw an error if the course does not exist (assign teacher course)', async () => {
@@ -279,6 +331,9 @@ describe('Course Service', () => {
       const courseId = 1
       const userId = 101
       const course = { id: courseId, save: jest.fn().mockRejectedValue(new Error('Assign error')) }
+      const teacher = { id: userId, role: 'teacher' }
+
+      mockUserModel.findByPk = jest.fn().mockResolvedValue(teacher)
       mockCourseModel.findByPk = jest.fn().mockResolvedValue(course)
 
       // Act & Assert

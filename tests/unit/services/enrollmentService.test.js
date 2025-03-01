@@ -73,7 +73,7 @@ describe('Enrollment Service', () => {
       expect(mockEnrollmentModel.create).toHaveBeenCalledWith({
         ...expectedEnrollmentData,
         password: hashedPassword,
-        handled_by_id: 4,
+        handled_by_id: null,
       })
     })
 
