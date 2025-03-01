@@ -5,6 +5,11 @@ import { log } from '../utils/logger.js'
 
 const enrollmentService = new EnrollmentService(Enrollment, School)
 
+/**
+ * Creates a new enrollment.
+ * @param {Object} req - The request object containing enrollment details.
+ * @param {Object} res - The response object.
+ */
 const createEnrollment = async (req, res) => {
   try {
     const {
@@ -112,6 +117,11 @@ const createEnrollment = async (req, res) => {
   }
 }
 
+/**
+ * Retrieves an enrollment by ID.
+ * @param {Object} req - The request object containing the enrollment ID in req.params.
+ * @param {Object} res - The response object.
+ */
 const getEnrollmentById = async (req, res) => {
   try {
     const enrollmentId = req.params.enrollmentId
@@ -127,6 +137,11 @@ const getEnrollmentById = async (req, res) => {
   }
 }
 
+/**
+ * Approves an enrollment.
+ * @param {Object} req - The request object containing the enrollment ID in req.params.
+ * @param {Object} res - The response object.
+ */
 const approveEnrollment = async (req, res) => {
   try {
     const enrollmentId = req.params.enrollmentId
@@ -143,6 +158,11 @@ const approveEnrollment = async (req, res) => {
   }
 }
 
+/**
+ * Rejects an enrollment.
+ * @param {Object} req - The request object containing the enrollment ID in req.params.
+ * @param {Object} res - The response object.
+ */
 const rejectEnrollment = async (req, res) => {
   try {
     const enrollmentId = req.params.enrollmentId
@@ -159,6 +179,11 @@ const rejectEnrollment = async (req, res) => {
   }
 }
 
+/**
+ * Retrieves all enrollments.
+ * @param {Object} _req - The request object (not used).
+ * @param {Object} res - The response object.
+ */
 const getAllEnrollments = async (_req, res) => {
   try {
     const enrollments = await enrollmentService.getAllEnrollments()
@@ -170,6 +195,11 @@ const getAllEnrollments = async (_req, res) => {
   }
 }
 
+/**
+ * Retrieves enrollments by school ID.
+ * @param {Object} req - The request object containing the school ID in req.params.
+ * @param {Object} res - The response object.
+ */
 const getEnrollmentsBySchool = async (req, res) => {
   try {
     const { schoolId } = req.params
@@ -185,6 +215,11 @@ const getEnrollmentsBySchool = async (req, res) => {
   }
 }
 
+/**
+ * Checks the enrollment status by email.
+ * @param {Object} req - The request object containing the email in req.body.
+ * @param {Object} res - The response object.
+ */
 const checkEnrollmentStatus = async (req, res) => {
   try {
     const { email } = req.body
@@ -206,6 +241,11 @@ const checkEnrollmentStatus = async (req, res) => {
   }
 }
 
+/**
+ * Updates an enrollment.
+ * @param {Object} req - The request object containing the enrollment ID in req.params and updated data in req.body.
+ * @param {Object} res - The response object.
+ */
 const updateEnrollment = async (req, res) => {
   try {
     const enrollmentId = req.params.enrollmentId
@@ -235,6 +275,12 @@ const updateEnrollment = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' })
   }
 }
+
+/**
+ * Deletes an enrollment.
+ * @param {Object} req - The request object containing the enrollment ID in req.params.
+ * @param {Object} res - The response object.
+ */
 const deleteEnrollment = async (req, res) => {
   try {
     const enrollmentId = req.params.enrollmentId
