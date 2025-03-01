@@ -14,6 +14,7 @@ describe('Users API Integration Tests', () => {
     await sequelize.sync({ force: true })
 
     const school = await School.create({
+      school_id: Math.floor(10000 + Math.random() * 90000),
       name: 'Test School',
       address: '123 Test St., Test City',
       contact_no: '02-8123-4567',
@@ -74,13 +75,13 @@ describe('Users API Integration Tests', () => {
       expect(res.body).toEqual(
         expect.objectContaining({
           count: expect.any(Number),
-          rows: expect.any(Array),
+          users: expect.any(Array),
         })
       )
 
       // Verify the user data
-      expect(res.body.rows.length).toBeGreaterThan(0)
-      expect(res.body.rows[0]).toEqual(
+      expect(res.body.users.length).toBeGreaterThan(0)
+      expect(res.body.users[0]).toEqual(
         expect.objectContaining({
           id: expect.any(Number),
           email: 'testUser@example.com',

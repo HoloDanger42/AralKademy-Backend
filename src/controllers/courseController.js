@@ -1,10 +1,8 @@
 import CourseService from '../services/courseService.js'
-import { Course } from '../models/Course.js'
-import { User } from '../models/User.js' // Import User model
-import { Group } from '../models/Group.js'
+import { Course, User, Group } from '../models/index.js'
 import { log } from '../utils/logger.js'
 
-const courseService = new CourseService(Course, User, Group) // Pass User model
+const courseService = new CourseService(Course, User, Group)
 
 /**
  * Retrieves all courses.
@@ -15,9 +13,10 @@ const getAllCourses = async (req, res) => {
   try {
     const courses = await courseService.getAllCourses()
     res.status(200).json(courses)
+    log.info('Retrieved all courses')
   } catch (error) {
-    log.error('Error getting all courses:', error)
-    res.status(500).json({ message: 'Failed to retrieve courses' })
+    log.error('Get all courses error:', error)
+    res.status(500).json({ message: 'Error retrieving courses' })
   }
 }
 
@@ -36,7 +35,10 @@ const getCourseById = async (req, res) => {
     res.status(200).json(course)
   } catch (error) {
     log.error(`Error getting course by ID ${req.params.id}:`, error)
-    res.status(500).json({ message: 'Failed to retrieve course' })
+    if (error.message === 'Course not found') {
+      return res.status(404).json({ message: error.message })
+    }
+    res.status(500).json({ message: 'Error fetching course' })
   }
 }
 
@@ -54,80 +56,12 @@ const createCourse = async (req, res) => {
 
     const courseData = req.body
 
-    // --- Validation (Controller's Responsibility) ---
     const errors = {}
-    if (!courseData.name) errors.name = 'Course name is required.'
-    if (courseData.description === undefined) errors.description = 'Description is required.'
-    // Validate user_id (teacher) if provided
-    if (courseData.user_id) {
-      const teacher = await User.findByPk(courseData.user_id)
-      if (!teacher || teacher.role !== 'teacher') {
-        errors.user_id = 'Invalid teacher ID.'
-      }
+    if (!courseData.name) {
+      errors.name = 'Course name is required.'
+    } else if (courseData.name.length > 255) {
+      errors.name = 'Course name is too long.'
     }
-    // Validate learner_group_id if provided
-    if (courseData.learner_group_id) {
-      const learnerGroup = await Group.findByPk(courseData.learner_group_id)
-      if (!learnerGroup) {
-        errors.learner_group_id = 'Invalid learner group ID.'
-      }
-    }
-
-    // Validate student_teacher_group_id if provided
-    if (courseData.student_teacher_group_id) {
-      const studentTeacherGroup = await Group.findByPk(courseData.student_teacher_group_id)
-      if (!studentTeacherGroup) {
-        errors.student_teacher_group_id = 'Invalid student teacher group ID.'
-      }
-    }
-
-    if (Object.keys(errors).length > 0) {
-      return res.status(400).json({ errors })
-    }
-    // --- End Validation ---
-
-    const newCourse = await courseService.createCourse(courseData)
-
-    res.status(201).json({
-      message: 'Course created successfully',
-      course: newCourse,
-    })
-    log.info(`Course ${newCourse.name} created successfully`)
-  } catch (error) {
-    log.error('Create course error:', error)
-    if (error.name === 'SequelizeValidationError') {
-      const sequelizeErrors = {}
-      error.errors.forEach((err) => {
-        sequelizeErrors[err.path] = err.message
-      })
-      return res.status(400).json({ errors: sequelizeErrors })
-    }
-    // Handle unique constraint violation (course name)
-    if (error.message === 'Course name already exists') {
-      return res.status(409).json({ errors: { name: error.message } }) // 409 Conflict
-    }
-    return res.status(500).json({ message: 'Failed to create course' })
-  }
-}
-
-/**
- * Updates a course.
- * @param {Object} req - The request object containing the course ID in req.params and updated data in req.body.
- * @param {Object} res - The response object.
- */
-const updateCourse = async (req, res) => {
-  try {
-    // --- ROLE CHECK (Admin Only) ---
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Forbidden: Only admins can update courses.' })
-    }
-
-    const { id } = req.params
-    const courseData = req.body
-    // --- Validation ---
-    const errors = {}
-    if (!courseData.name) errors.name = 'Course name is required.'
-    if (courseData.description === undefined) errors.description = 'Description is required'
 
     // Validate user_id (teacher), if provided
     if (courseData.user_id) {
@@ -155,7 +89,77 @@ const updateCourse = async (req, res) => {
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({ errors })
     }
-    // --- End Validation ---
+
+    const newCourse = await courseService.createCourse(courseData)
+
+    res.status(201).json({
+      message: 'Course created successfully',
+      course: newCourse,
+    })
+    log.info(`Course ${newCourse.name} was successfully created`)
+  } catch (error) {
+    log.error('Create course error:', error)
+    // Handle errors (validation, unique constraints, etc.)
+    if (error.name === 'SequelizeValidationError' || error.name === 'ValidationError') {
+      if (error.errors && Array.isArray(error.errors)) {
+        const sequelizeErrors = {}
+        error.errors.forEach((err) => {
+          sequelizeErrors[err.path] = err.message
+        })
+        return res.status(400).json({ errors: sequelizeErrors })
+      }
+      return res.status(400).json({ errors: { name: error.message } })
+    }
+    if (error.message === 'Course name already exists') {
+      return res.status(409).json({ errors: { name: error.message } })
+    }
+    return res.status(500).json({ message: 'Error creating course' })
+  }
+}
+
+/**
+ * Updates a course.
+ * @param {Object} req - The request object containing the course ID in req.params and updated data in req.body.
+ * @param {Object} res - The response object.
+ */
+const updateCourse = async (req, res) => {
+  try {
+    // --- ROLE CHECK (Admin Only) ---
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden: Only admins can update courses.' })
+    }
+
+    const { id } = req.params
+    const courseData = req.body
+    const errors = {}
+    if (!courseData.name) errors.name = 'Course name is required.'
+
+    // Validate user_id (teacher), if provided
+    if (courseData.user_id) {
+      const teacher = await User.findByPk(courseData.user_id)
+      if (!teacher || teacher.role !== 'teacher') {
+        errors.user_id = 'Invalid teacher ID.'
+      }
+    }
+    // Validate learner_group_id if provided
+    if (courseData.learner_group_id) {
+      const learnerGroup = await Group.findByPk(courseData.learner_group_id)
+      if (!learnerGroup) {
+        errors.learner_group_id = 'Invalid learner group ID.'
+      }
+    }
+
+    // Validate student_teacher_group_id if provided
+    if (courseData.student_teacher_group_id) {
+      const studentTeacherGroup = await Group.findByPk(courseData.student_teacher_group_id)
+      if (!studentTeacherGroup) {
+        errors.student_teacher_group_id = 'Invalid student teacher group ID.'
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({ errors })
+    }
 
     const updatedCourse = await courseService.updateCourse(id, courseData)
     res.status(200).json(updatedCourse)
@@ -175,7 +179,7 @@ const updateCourse = async (req, res) => {
     if (error.message === 'Course name already exists') {
       return res.status(409).json({ errors: { name: error.message } }) // 409 Conflict
     }
-    return res.status(500).json({ message: error.message || 'Failed to update course' })
+    return res.status(500).json({ message: error.message || 'Error updating course' })
   }
 }
 
@@ -191,15 +195,18 @@ const softDeleteCourse = async (req, res) => {
       return res.status(403).json({ message: 'Forbidden: Only admins can soft-delete courses.' })
     }
     const { id } = req.params
-    await courseService.softDeleteCourse(id)
-    res.status(204).end() // No Content
-    log.info(`Course with ID ${id} soft-deleted successfully`)
+    const deletedCourse = await courseService.softDeleteCourse(id)
+    res.status(200).json({
+      message: 'Course deleted successfully',
+      course: deletedCourse,
+    })
+    log.info(`Course ${id} was successfully deleted`)
   } catch (error) {
     log.error(`Error soft-deleting course with ID ${req.params.id}:`, error)
     if (error.message === 'Course not found') {
       return res.status(404).json({ message: error.message })
     }
-    return res.status(500).json({ message: 'Failed to delete course' })
+    return res.status(500).json({ message: 'Error deleting course' })
   }
 }
 
@@ -210,17 +217,38 @@ const softDeleteCourse = async (req, res) => {
  */
 const editCourse = async (req, res) => {
   try {
-    const { id } = req.params
+    const { courseId } = req.params
     const courseData = req.body
-    const updatedCourse = await courseService.editCourse(id, courseData)
-    res.status(200).json(updatedCourse)
-    log.info(`Course with id ${id} edited successfully`)
+
+    const updatedCourse = await courseService.editCourse(courseId, courseData)
+
+    // Return the response in the expected format
+    res.status(200).json({
+      message: 'Course edited successfully',
+      course: updatedCourse,
+    })
+
+    log.info(`Course ${courseId} was successfully edited`)
   } catch (error) {
-    log.error(`Error editing course with ID ${req.params.id}:`, error)
+    log.error('Edit course error:', error)
+
     if (error.message === 'Course not found') {
       return res.status(404).json({ message: error.message })
     }
-    return res.status(500).json({ message: 'Failed to edit course' })
+
+    if (error.message === 'Course name is required') {
+      return res.status(400).json({ message: error.message })
+    }
+
+    if (error.message === 'Course name is too long') {
+      return res.status(400).json({ message: error.message })
+    }
+
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({ message: 'Course name already exists' })
+    }
+
+    res.status(500).json({ message: 'Error editing course' })
   }
 }
 
@@ -247,7 +275,7 @@ const deleteCourse = async (req, res) => {
     if (error.message === 'Course not found') {
       return res.status(404).json({ message: error.message })
     }
-    return res.status(500).json({ message: 'Failed to delete course' })
+    return res.status(500).json({ message: 'Error deleting course' })
   }
 }
 
@@ -268,7 +296,9 @@ const assignTeacherCourse = async (req, res) => {
     const { userId } = req.body // Teacher's user ID
 
     const updatedCourse = await courseService.assignTeacherCourse(id, userId)
-    res.status(200).json({ message: 'Teacher assigned successfully', course: updatedCourse })
+    res
+      .status(200)
+      .json({ message: 'Teacher assigned to course successfully', course: updatedCourse })
     log.info(`Teacher ${userId} assigned to course ${id}`)
   } catch (error) {
     log.error('Error assigning teacher to course:', error)
@@ -281,7 +311,7 @@ const assignTeacherCourse = async (req, res) => {
     if (error.message === 'Provided user ID is not a teacher.') {
       return res.status(400).json({ message: error.message }) // Bad request
     }
-    return res.status(500).json({ message: error.message || 'Failed to assign teacher' })
+    return res.status(500).json({ message: error.message || 'Error assigning teacher' })
   }
 }
 
@@ -302,7 +332,7 @@ const assignLearnerGroupCourse = async (req, res) => {
 
     const updatedCourse = await courseService.assignLearnerGroupCourse(id, learnerGroupId)
     res.status(200).json({
-      message: 'Learner group assigned successfully',
+      message: 'Learner group assigned to course successfully',
       course: updatedCourse,
     })
     log.info(`Learner group ${learnerGroupId} assigned to course ${id}`)
@@ -317,7 +347,7 @@ const assignLearnerGroupCourse = async (req, res) => {
     if (error.message === 'Invalid group type. Expected type is learner') {
       return res.status(400).json({ message: error.message })
     }
-    return res.status(500).json({ message: error.message || 'Failed to assign learner group' })
+    return res.status(500).json({ message: error.message || 'Error assigning learner group' })
   }
 }
 
@@ -341,7 +371,7 @@ const assignStudentTeacherGroupCourse = async (req, res) => {
       studentTeacherGroupId
     )
     res.status(200).json({
-      message: 'Student teacher group assigned successfully',
+      message: 'Student teacher group assigned to course successfully',
       course: updatedCourse,
     })
     log.info(`Student teacher group ${studentTeacherGroupId} assigned to course ${id}`)
@@ -358,7 +388,7 @@ const assignStudentTeacherGroupCourse = async (req, res) => {
     }
     return res
       .status(500)
-      .json({ message: error.message || 'Failed to assign student teacher group' })
+      .json({ message: error.message || 'Error assigning student teacher group' })
   }
 }
 

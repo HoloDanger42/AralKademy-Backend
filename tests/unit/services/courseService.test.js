@@ -75,13 +75,13 @@ describe('Course Service', () => {
       mockCourseModel.create.mockResolvedValue({ id: 1, ...expectedData })
 
       // Act
-      const course = await courseService.createCourse(
-        courseData.name,
-        courseData.description,
-        courseData.user_id,
-        courseData.learner_group_id,
-        courseData.student_teacher_group_id
-      )
+      const course = await courseService.createCourse({
+        name: courseData.name,
+        description: courseData.description,
+        user_id: courseData.user_id,
+        learner_group_id: courseData.learner_group_id,
+        student_teacher_group_id: courseData.student_teacher_group_id,
+      })
 
       // Assert
       expect(course).toEqual({ id: 1, ...expectedData })
@@ -104,7 +104,10 @@ describe('Course Service', () => {
 
       // Act & Assert
       await expect(
-        courseService.createCourse(invalidCourse.name, invalidCourse.description)
+        courseService.createCourse({
+          name: invalidCourse.name,
+          description: invalidCourse.description,
+        })
       ).rejects.toThrow('Course name is too long')
     })
 
@@ -117,7 +120,10 @@ describe('Course Service', () => {
 
       // Act & Assert
       await expect(
-        courseService.createCourse(courseData.name, courseData.description)
+        courseService.createCourse({
+          name: courseData.name,
+          description: courseData.description,
+        })
       ).rejects.toThrow('Failed to create course')
     })
   })

@@ -18,6 +18,7 @@ describe('Group Controller', () => {
     mockReq = {
       body: {},
       params: {},
+      query: {},
     }
     mockRes = {
       status: jest.fn().mockReturnThis(),
@@ -39,20 +40,15 @@ describe('Group Controller', () => {
 
   describe('getAllGroups', () => {
     test('should retrieve all groups successfully (get all groups)', async () => {
-      try {
-        const groups = [{ id: 1, name: 'Test Group' }]
+      const groups = [{ id: 1, name: 'Test Group' }]
 
-        jest.spyOn(GroupService.prototype, 'getAllGroups').mockResolvedValue(groups)
+      jest.spyOn(GroupService.prototype, 'getAllGroups').mockResolvedValue(groups)
 
-        await getAllGroups(mockReq, mockRes)
+      await getAllGroups(mockReq, mockRes)
 
-        expect(mockRes.status).toHaveBeenCalledWith(200)
-        expect(mockRes.json).toHaveBeenCalledWith(groups)
-        expect(log.info).toHaveBeenCalledWith('Retrieved all groups')
-      } catch (error) {
-        console.error(error)
-        throw error
-      }
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith(groups)
+      expect(log.info).toHaveBeenCalledWith('Retrieved all groups')
     })
 
     test('should handle errors when retrieving all groups (get all groups)', async () => {

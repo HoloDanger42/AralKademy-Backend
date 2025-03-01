@@ -58,12 +58,12 @@ class CourseService {
     }
   }
 
-  async createCourse(name, description, user_id, learner_group_id, student_teacher_group_id) {
+  async createCourse({ name, description, user_id, learner_group_id, student_teacher_group_id }) {
     try {
       // Create course data object
       const courseData = {
         name,
-        description,
+        description: description || null,
         user_id: user_id || null,
         learner_group_id: learner_group_id || null,
         student_teacher_group_id: student_teacher_group_id || null,

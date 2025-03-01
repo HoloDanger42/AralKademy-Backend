@@ -1,5 +1,5 @@
 import { sequelize } from '../../../src/config/database.js'
-import { Blacklist } from '../../../src/models/Blacklist.js'
+import { Blacklist } from '../../../src/models/index.js'
 
 describe('Blacklist Model', () => {
   beforeEach(async () => {

@@ -1,3 +1,5 @@
+import { log } from '../utils/logger.js'
+
 class GroupService {
   constructor(GroupModel, StudentTeacherModel, LearnerModel) {
     this.GroupModel = GroupModel
@@ -72,7 +74,7 @@ class GroupService {
       return await this.GroupModel.findAll({ where: whereClause })
     } catch (error) {
       log.error('Error fetching groups:', error)
-      throw new Error('Error fetching groups')
+      throw new Error('Failed to fetch groups')
     }
   }
 
