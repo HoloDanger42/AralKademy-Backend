@@ -355,7 +355,7 @@ class UserService {
       if (!user) throw new Error('User not found')
       
       // Generate a random 6-digit code
-      const code = Math.floor(100000 + Math.random() * 900000)
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
 
       user.reset_code = code
       await user.save()

@@ -31,6 +31,11 @@ const userService = new UserService(
 )
 
 // Create a separate function for reCAPTCHA verification that can be mocked in tests
+/**
+ * Verifies the reCAPTCHA response.
+ * @param {string} captchaResponse - The reCAPTCHA response token from the client.
+ * @returns {Promise<Object>} - An object containing the verification result.
+ */
 export const verifyCaptcha = async (captchaResponse) => {
   // Skip verification in test environment
   if (process.env.NODE_ENV === 'test' && captchaResponse === 'test-bypass-captcha') {
@@ -48,6 +53,11 @@ export const verifyCaptcha = async (captchaResponse) => {
 }
 
 // Login function
+/**
+ * Handles user login.
+ * @param {Object} req - The request object containing email, password, and captchaResponse.
+ * @param {Object} res - The response object.
+ */
 const login = async (req, res) => {
   try {
     const { email, password, captchaResponse } = req.body // Get captchaResponse
@@ -100,6 +110,11 @@ const login = async (req, res) => {
   }
 }
 
+/**
+ * Creates a new user.
+ * @param {Object} req - The request object containing user details.
+ * @param {Object} res - The response object.
+ */
 const createUser = async (req, res) => {
     console.log('Create user request:', req.body);
     try {
@@ -147,6 +162,11 @@ const createUser = async (req, res) => {
 };
 
 
+/**
+ * Retrieves all users.
+ * @param {Object} _req - The request object (not used).
+ * @param {Object} res - The response object.
+ */
 const getAllUsers = async (_req, res) => {
   try {
         const users = await userService.getAllUsers()
@@ -174,6 +194,11 @@ const getAllUsers = async (_req, res) => {
     }
 }
 
+/**
+ * Retrieves a user by ID.
+ * @param {Object} req - The request object containing the user ID in req.params.
+ * @param {Object} res - The response object.
+ */
 const getUserById = async (req, res) => {
   try {
     const { id } = req.params
@@ -208,6 +233,11 @@ const deleteUser = async (req, res) => {
     }
 };
 
+/**
+ * Logs out a user.
+ * @param {Object} req - The request object containing the authorization token in headers.
+ * @param {Object} res - The response object.
+ */
 const logoutUser = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1]
@@ -226,6 +256,11 @@ const logoutUser = async (req, res) => {
   }
 }
 
+/**
+ * Handles forgot password requests.
+ * @param {Object} req - The request object containing the user's email.
+ * @param {Object} res - The response object.
+ */
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body
@@ -241,10 +276,15 @@ const forgotPassword = async (req, res) => {
   }
 }
 
+/**
+ * Verifies the password reset code.
+ * @param {Object} req - The request object containing the user's email and reset code.
+ * @param {Object} res - The response object.
+ */
 const verifyResetCode = async (req, res) => {
   try {
     const { email, code } = req.body
-    await userService.confirmForgotPasswordCode(email, code)
+    await userService.verifyResetCode(email, code)
     res.status(200).json({ message: 'Code confirmed successfully' })
     log.info(`Code confirmed for ${email}`)
   } catch (error) {
@@ -259,6 +299,11 @@ const verifyResetCode = async (req, res) => {
   }
 }
 
+/**
+ * Resets the user's password.
+ * @param {Object} req - The request object containing the user's email and new password.
+ * @param {Object} res - The response object.
+ */
 const resetPassword = async (req, res) => {
   try {
     const { email, password } = req.body
