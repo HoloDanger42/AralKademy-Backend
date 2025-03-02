@@ -458,4 +458,185 @@ describe('Enrollment Service', () => {
       })
     })
   })
+
+  describe('updateEnrollment', () => {
+    test('should update enrollment data successfully', async () => {
+      // Arrange
+      const enrollmentId = 1
+      const updateData = {
+        first_name: 'Updated',
+        last_name: 'Name',
+        contact_no: '9876543210',
+        // Adding password fields that should be removed
+        password: 'newpassword',
+        confirm_password: 'newpassword',
+      }
+
+      const existingEnrollment = {
+        enrollment_id: enrollmentId,
+        first_name: 'Original',
+        last_name: 'User',
+        update: jest.fn().mockImplementation((data) => {
+          return Promise.resolve({
+            enrollment_id: enrollmentId,
+            ...data,
+          })
+        }),
+      }
+
+      mockEnrollmentModel.findByPk.mockResolvedValue(existingEnrollment)
+
+      // Act
+      const result = await enrollmentService.updateEnrollment(enrollmentId, updateData)
+
+      // Assert
+      expect(result).toEqual({
+        enrollment_id: enrollmentId,
+        first_name: 'Updated',
+        last_name: 'Name',
+        contact_no: '9876543210',
+      })
+
+      // Verify password fields were removed before update
+      expect(existingEnrollment.update).toHaveBeenCalledWith({
+        first_name: 'Updated',
+        last_name: 'Name',
+        contact_no: '9876543210',
+      })
+      expect(existingEnrollment.update).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          password: 'newpassword',
+          confirm_password: 'newpassword',
+        })
+      )
+    })
+
+    test('should throw an error if enrollment is not found', async () => {
+      // Arrange
+      const enrollmentId = 999
+      const updateData = { first_name: 'Updated' }
+      mockEnrollmentModel.findByPk.mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(enrollmentService.updateEnrollment(enrollmentId, updateData)).rejects.toThrow(
+        'Enrollment not found'
+      )
+      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId)
+    })
+
+    test('should handle validation errors correctly', async () => {
+      // Arrange
+      const enrollmentId = 1
+      const updateData = { email: 'invalid-email' }
+      const validationError = {
+        name: 'SequelizeValidationError',
+        errors: [{ message: 'Invalid email format' }],
+      }
+
+      const mockEnrollment = {
+        enrollment_id: enrollmentId,
+        update: jest.fn().mockRejectedValue(validationError),
+      }
+
+      mockEnrollmentModel.findByPk.mockResolvedValue(mockEnrollment)
+
+      // Act & Assert
+      await expect(enrollmentService.updateEnrollment(enrollmentId, updateData)).rejects.toEqual(
+        validationError
+      )
+      expect(mockEnrollment.update).toHaveBeenCalledWith(updateData)
+    })
+
+    test('should handle unique constraint violations (email already exists)', async () => {
+      // Arrange
+      const enrollmentId = 1
+      const updateData = { email: 'existing@example.com' }
+      const uniqueConstraintError = {
+        name: 'SequelizeUniqueConstraintError',
+        errors: [{ path: 'email' }],
+      }
+
+      const mockEnrollment = {
+        enrollment_id: enrollmentId,
+        update: jest.fn().mockRejectedValue(uniqueConstraintError),
+      }
+
+      mockEnrollmentModel.findByPk.mockResolvedValue(mockEnrollment)
+
+      // Act & Assert
+      await expect(enrollmentService.updateEnrollment(enrollmentId, updateData)).rejects.toThrow(
+        'Email already exists'
+      )
+      expect(mockEnrollment.update).toHaveBeenCalledWith(updateData)
+    })
+
+    test('should re-throw other errors during update', async () => {
+      // Arrange
+      const enrollmentId = 1
+      const updateData = { first_name: 'Updated' }
+      const mockError = new Error('Database connection failed')
+
+      const mockEnrollment = {
+        enrollment_id: enrollmentId,
+        update: jest.fn().mockRejectedValue(mockError),
+      }
+
+      mockEnrollmentModel.findByPk.mockResolvedValue(mockEnrollment)
+
+      // Act & Assert
+      await expect(enrollmentService.updateEnrollment(enrollmentId, updateData)).rejects.toEqual(
+        mockError
+      )
+      expect(mockEnrollment.update).toHaveBeenCalledWith(updateData)
+    })
+  })
+
+  describe('deleteEnrollment', () => {
+    test('should delete enrollment successfully', async () => {
+      // Arrange
+      const enrollmentId = 1
+      const mockEnrollment = {
+        enrollment_id: enrollmentId,
+        destroy: jest.fn().mockResolvedValue(true),
+      }
+
+      mockEnrollmentModel.findByPk.mockResolvedValue(mockEnrollment)
+
+      // Act
+      await enrollmentService.deleteEnrollment(enrollmentId)
+
+      // Assert
+      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId)
+      expect(mockEnrollment.destroy).toHaveBeenCalled()
+    })
+
+    test('should throw an error if enrollment is not found', async () => {
+      // Arrange
+      const enrollmentId = 999
+      mockEnrollmentModel.findByPk.mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(enrollmentService.deleteEnrollment(enrollmentId)).rejects.toThrow(
+        'Enrollment not found'
+      )
+      expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId)
+    })
+
+    test('should re-throw errors during deletion', async () => {
+      // Arrange
+      const enrollmentId = 1
+      const mockError = new Error('Database error during deletion')
+
+      const mockEnrollment = {
+        enrollment_id: enrollmentId,
+        destroy: jest.fn().mockRejectedValue(mockError),
+      }
+
+      mockEnrollmentModel.findByPk.mockResolvedValue(mockEnrollment)
+
+      // Act & Assert
+      await expect(enrollmentService.deleteEnrollment(enrollmentId)).rejects.toEqual(mockError)
+      expect(mockEnrollment.destroy).toHaveBeenCalled()
+    })
+  })
 })

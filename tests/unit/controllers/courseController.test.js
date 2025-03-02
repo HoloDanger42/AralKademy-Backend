@@ -10,6 +10,7 @@ import {
   softDeleteCourse,
   getCourseById,
   updateCourse,
+  deleteCourse,
 } from '../../../src/controllers/courseController.js'
 import CourseService from '../../../src/services/courseService.js'
 import { log } from '../../../src/utils/logger.js'
@@ -147,6 +148,149 @@ describe('Course Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error creating course' })
       expect(log.error).toHaveBeenCalledWith('Create course error:', expect.any(Error))
+    })
+
+    test('should validate teacher ID and return 400 for invalid teacher', async () => {
+      // Setup for admin user
+      mockReq.user = { role: 'admin' }
+      mockReq.body = {
+        name: 'New Course',
+        description: 'Description',
+        user_id: 123, // Invalid teacher ID
+      }
+
+      // Mock User.findByPk to return null (teacher not found)
+      jest.spyOn(User, 'findByPk').mockResolvedValue(null)
+
+      await createCourse(mockReq, mockRes)
+
+      expect(User.findByPk).toHaveBeenCalledWith(123)
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { user_id: 'Invalid teacher ID.' },
+      })
+    })
+
+    test('should validate teacher role and return 400 for non-teacher user', async () => {
+      // Setup for admin user
+      mockReq.user = { role: 'admin' }
+      mockReq.body = {
+        name: 'New Course',
+        description: 'Description',
+        user_id: 123, // User ID with wrong role
+      }
+
+      // Mock User.findByPk to return a user with non-teacher role
+      jest.spyOn(User, 'findByPk').mockResolvedValue({
+        id: 123,
+        role: 'student', // Not a teacher
+      })
+
+      await createCourse(mockReq, mockRes)
+
+      expect(User.findByPk).toHaveBeenCalledWith(123)
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { user_id: 'Invalid teacher ID.' },
+      })
+    })
+
+    test('should validate learner group ID and return 400 for invalid learner group', async () => {
+      // Setup for admin user
+      mockReq.user = { role: 'admin' }
+      mockReq.body = {
+        name: 'New Course',
+        description: 'Description',
+        learner_group_id: 456, // Invalid group ID
+      }
+
+      // Mock Group.findByPk to return null (group not found)
+      jest.spyOn(Group, 'findByPk').mockResolvedValue(null)
+
+      await createCourse(mockReq, mockRes)
+
+      expect(Group.findByPk).toHaveBeenCalledWith(456)
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { learner_group_id: 'Invalid learner group ID.' },
+      })
+    })
+
+    test('should validate student teacher group ID and return 400 for invalid student teacher group', async () => {
+      // Setup for admin user
+      mockReq.user = { role: 'admin' }
+      mockReq.body = {
+        name: 'New Course',
+        description: 'Description',
+        student_teacher_group_id: 789, // Invalid group ID
+      }
+
+      // Mock Group.findByPk to return null (group not found)
+      jest.spyOn(Group, 'findByPk').mockResolvedValue(null)
+
+      await createCourse(mockReq, mockRes)
+
+      expect(Group.findByPk).toHaveBeenCalledWith(789)
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { student_teacher_group_id: 'Invalid student teacher group ID.' },
+      })
+    })
+
+    test('should validate multiple fields and return combined errors', async () => {
+      // Setup for admin user
+      mockReq.user = { role: 'admin' }
+      mockReq.body = {
+        name: '', // Invalid (empty)
+        user_id: 123, // Invalid teacher
+        learner_group_id: 456, // Invalid group
+        student_teacher_group_id: 789, // Invalid group
+      }
+
+      // Mock dependencies to fail validation
+      jest.spyOn(User, 'findByPk').mockResolvedValue(null)
+      jest.spyOn(Group, 'findByPk').mockResolvedValue(null)
+
+      await createCourse(mockReq, mockRes)
+
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: {
+          name: 'Course name is required.',
+          user_id: 'Invalid teacher ID.',
+          learner_group_id: 'Invalid learner group ID.',
+          student_teacher_group_id: 'Invalid student teacher group ID.',
+        },
+      })
+    })
+
+    test('should successfully create course with valid IDs', async () => {
+      // Setup for admin user with all IDs provided
+      mockReq.user = { role: 'admin' }
+      mockReq.body = {
+        name: 'Complete Course',
+        description: 'Full setup course',
+        user_id: 123,
+        learner_group_id: 456,
+        student_teacher_group_id: 789,
+      }
+
+      // Mock all validations to pass
+      jest.spyOn(User, 'findByPk').mockResolvedValue({ id: 123, role: 'teacher' })
+      jest.spyOn(Group, 'findByPk').mockImplementation((id) => {
+        return Promise.resolve({ id })
+      })
+
+      const newCourse = { id: 1, name: 'Complete Course' }
+      jest.spyOn(CourseService.prototype, 'createCourse').mockResolvedValue(newCourse)
+
+      await createCourse(mockReq, mockRes)
+
+      expect(mockRes.status).toHaveBeenCalledWith(201)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Course created successfully',
+        course: newCourse,
+      })
     })
   })
 
@@ -612,6 +756,90 @@ describe('Course Controller', () => {
       expect(mockRes.json).toHaveBeenCalledWith({
         message: 'Unexpected error',
       })
+    })
+  })
+
+  describe('deleteCourse', () => {
+    beforeEach(() => {
+      // Add end method to mockRes for 204 responses
+      mockRes.end = jest.fn()
+
+      // Reset request objects
+      mockReq.params = {}
+      mockReq.user = {}
+    })
+
+    test('should return 403 if user is not an admin', async () => {
+      // Arrange
+      mockReq.user = { role: 'teacher' } // Non-admin role
+
+      // Import the function first in the file
+      const { deleteCourse } = await import('../../../src/controllers/courseController.js')
+
+      // Act
+      await deleteCourse(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(403)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Forbidden: Only admins can permanently delete courses.',
+      })
+    })
+
+    test('should permanently delete course and return 204 when successful', async () => {
+      // Arrange
+      mockReq.user = { role: 'admin' }
+      mockReq.params = { id: '1' }
+
+      jest.spyOn(CourseService.prototype, 'deleteCourse').mockResolvedValue({
+        message: 'Course permanently deleted',
+      })
+
+      // Act
+      await deleteCourse(mockReq, mockRes)
+
+      // Assert
+      expect(CourseService.prototype.deleteCourse).toHaveBeenCalledWith('1')
+      expect(mockRes.status).toHaveBeenCalledWith(204)
+      expect(mockRes.end).toHaveBeenCalled()
+      expect(log.info).toHaveBeenCalledWith('Course with ID 1 permanently deleted successfully')
+    })
+
+    test('should return 404 if course not found', async () => {
+      // Arrange
+      mockReq.user = { role: 'admin' }
+      mockReq.params = { id: '999' }
+
+      const error = new Error('Course not found')
+      jest.spyOn(CourseService.prototype, 'deleteCourse').mockRejectedValue(error)
+
+      // Act
+      await deleteCourse(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
+      expect(log.error).toHaveBeenCalledWith(
+        'Error deleting course with ID 999:',
+        expect.any(Error)
+      )
+    })
+
+    test('should return 500 for any other error', async () => {
+      // Arrange
+      mockReq.user = { role: 'admin' }
+      mockReq.params = { id: '1' }
+
+      const error = new Error('Database connection error')
+      jest.spyOn(CourseService.prototype, 'deleteCourse').mockRejectedValue(error)
+
+      // Act
+      await deleteCourse(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error deleting course' })
+      expect(log.error).toHaveBeenCalledWith('Error deleting course with ID 1:', expect.any(Error))
     })
   })
 })
