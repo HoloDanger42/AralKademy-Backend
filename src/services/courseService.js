@@ -242,12 +242,19 @@ class CourseService {
       return updatedCourse
     } catch (error) {
       log.error(`Error updating course with ID ${id}:`, error)
+
+      if (error.message === 'Course not found') {
+        throw error
+      }
+
       if (error.name === 'SequelizeValidationError') {
         throw error // Re-throw for controller
       }
+
       if (error.name === 'SequelizeUniqueConstraintError' && error.errors[0].path === 'name') {
         throw new Error('Course name already exists')
       }
+
       throw new Error('Failed to update course')
     }
   }

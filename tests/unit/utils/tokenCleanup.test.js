@@ -2,6 +2,7 @@ import { jest } from '@jest/globals'
 import TokenCleanup from '../../../src/utils/tokenCleanup.js'
 import { Blacklist } from '../../../src/models/index.js'
 import { sequelize } from '../../../src/config/database.js'
+import { log } from '../../../src/utils/logger.js'
 
 describe('Token Cleanup', () => {
   beforeEach(async () => {
@@ -40,6 +41,28 @@ describe('Token Cleanup', () => {
       const remainingTokens = await Blacklist.findAll()
       expect(remainingTokens.length).toBe(1)
       expect(remainingTokens[0].token).toBe('valid-token')
+    })
+
+    it('should log and throw an error when database operation fails', async () => {
+      // Mock Blacklist.destroy to throw an error
+      const mockError = new Error('Database connection error')
+      const originalDestroy = Blacklist.destroy
+      Blacklist.destroy = jest.fn().mockRejectedValue(mockError)
+
+      // Mock the logger
+      const originalLogError = log.error
+      log.error = jest.fn()
+
+      // Act & Assert - ensure the error is thrown
+      await expect(TokenCleanup.cleanupExpiredTokens()).rejects.toThrow('Database connection error')
+
+      // Verify the error was logged
+      expect(Blacklist.destroy).toHaveBeenCalled()
+      expect(log.error).toHaveBeenCalledWith('Token cleanup error:', mockError)
+
+      // Restore original implementations
+      Blacklist.destroy = originalDestroy
+      log.error = originalLogError
     })
   })
 

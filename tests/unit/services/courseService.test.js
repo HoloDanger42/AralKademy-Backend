@@ -463,4 +463,151 @@ describe('Course Service', () => {
       expect(mockCourseModel.findByPk).not.toHaveBeenCalled()
     })
   })
+
+  describe('deleteCourse', () => {
+    test('should permanently delete a course successfully', async () => {
+      // Arrange
+      const courseId = 1
+      const course = { id: courseId, destroy: jest.fn() }
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course)
+
+      // Act
+      const result = await courseService.deleteCourse(courseId)
+
+      // Assert
+      expect(result).toEqual({ message: 'Course permanently deleted' })
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId, { paranoid: false })
+      expect(course.destroy).toHaveBeenCalledWith({ force: true })
+    })
+
+    test('should throw an error if the course does not exist', async () => {
+      // Arrange
+      const courseId = 1
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(courseService.deleteCourse(courseId)).rejects.toThrow('Course not found')
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId, { paranoid: false })
+    })
+
+    test('should throw an error if permanently deleting the course fails', async () => {
+      // Arrange
+      const courseId = 1
+      const course = {
+        id: courseId,
+        destroy: jest.fn().mockRejectedValue(new Error('Delete error')),
+      }
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course)
+
+      // Act & Assert
+      await expect(courseService.deleteCourse(courseId)).rejects.toThrow(
+        'Failed to permanently delete course'
+      )
+      expect(course.destroy).toHaveBeenCalledWith({ force: true })
+    })
+  })
+
+  describe('updateCourse', () => {
+    test('should update a course successfully', async () => {
+      // Arrange
+      const courseId = 1
+      const updatedData = {
+        name: 'Updated Course Name',
+        description: 'Updated Course Description',
+      }
+      const mockCourse = {
+        id: courseId,
+        name: 'Original Course',
+        update: jest.fn().mockResolvedValue({ id: courseId, ...updatedData }),
+      }
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(mockCourse)
+
+      // Act
+      const result = await courseService.updateCourse(courseId, updatedData)
+
+      // Assert
+      expect(result).toEqual({ id: courseId, ...updatedData })
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId)
+      expect(mockCourse.update).toHaveBeenCalledWith(updatedData)
+    })
+
+    test('should throw an error if the course does not exist', async () => {
+      // Arrange
+      const courseId = 1
+      const updatedData = {
+        name: 'Updated Course Name',
+        description: 'Updated Course Description',
+      }
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(courseService.updateCourse(courseId, updatedData)).rejects.toThrow(
+        'Course not found'
+      )
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId)
+    })
+
+    test('should throw an error if updating with duplicate course name', async () => {
+      // Arrange
+      const courseId = 1
+      const updatedData = {
+        name: 'Updated Course Name',
+        description: 'Updated Course Description',
+      }
+      const mockCourse = {
+        id: courseId,
+        update: jest.fn().mockRejectedValue({
+          name: 'SequelizeUniqueConstraintError',
+          errors: [{ path: 'name' }],
+        }),
+      }
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(mockCourse)
+
+      // Act & Assert
+      await expect(courseService.updateCourse(courseId, updatedData)).rejects.toThrow(
+        'Course name already exists'
+      )
+      expect(mockCourse.update).toHaveBeenCalledWith(updatedData)
+    })
+
+    test('should re-throw validation errors as-is', async () => {
+      // Arrange
+      const courseId = 1
+      const updatedData = {
+        name: 'Updated Course Name',
+      }
+      const mockCourse = {
+        id: courseId,
+        update: jest.fn().mockRejectedValue({
+          name: 'SequelizeValidationError',
+        }),
+      }
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(mockCourse)
+
+      // Act & Assert
+      await expect(courseService.updateCourse(courseId, updatedData)).rejects.toEqual({
+        name: 'SequelizeValidationError',
+      })
+      expect(mockCourse.update).toHaveBeenCalledWith(updatedData)
+    })
+
+    test('should throw a generic error for other failures', async () => {
+      // Arrange
+      const courseId = 1
+      const updatedData = {
+        name: 'Updated Course Name',
+      }
+      const mockCourse = {
+        id: courseId,
+        update: jest.fn().mockRejectedValue(new Error('Database error')),
+      }
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(mockCourse)
+
+      // Act & Assert
+      await expect(courseService.updateCourse(courseId, updatedData)).rejects.toThrow(
+        'Failed to update course'
+      )
+      expect(mockCourse.update).toHaveBeenCalledWith(updatedData)
+    })
+  })
 })

@@ -53,6 +53,21 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Create .env file
+        run: |
+          echo "NODE_ENV=$NODE_ENV" >> .env
+          echo "DB_HOST=$DB_HOST" >> .env
+          echo "DB_USER=$DB_USER" >> .env
+          echo "DB_PASSWORD=$DB_PASSWORD" >> .env
+          echo "DB_NAME=$DB_NAME" >> .env
+          echo "DB_DIALECT=$DB_DIALECT" >> .env
+          echo "PORT=$PORT" >> .env
+          echo "JWT_SECRET=$JWT_SECRET" >> .env
+          echo "RECAPTCHA_SECRET_KEY=$RECAPTCHA_SECRET_KEY" >> .env
+          echo "ADMIN_PASSWORD=$ADMIN_PASSWORD" >> .env
+          echo "ENABLE_RECAPTCHA=$ENABLE_RECAPTCHA" >> .env
+          echo "ENABLE_EMAIL_VERIFICATION=$ENABLE_EMAIL_VERIFICATION" >> .env
+          echo "RUN_SEEDERS=$RUN_SEEDERS" >> .env
       - name: Install dependencies
         run: npm ci
       - name: Run linters

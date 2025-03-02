@@ -3,8 +3,11 @@ import dotenv from 'dotenv'
 // Load environment variables based on NODE_ENV
 const envResult = dotenv.config()
 
-if (envResult.error) {
+// Only throw for errors other than "file not found"
+if (envResult.error && envResult.error.code !== 'ENOENT') {
   throw new Error(`Error loading .env file: ${envResult.error.message}`)
+} else if (envResult.error) {
+  console.warn('No .env file found. Using environment variables from the system.')
 }
 
 // Required environment variables
