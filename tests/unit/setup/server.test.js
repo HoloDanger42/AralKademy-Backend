@@ -189,7 +189,7 @@ describe('Server Setup', () => {
 
     it('should handle server errors gracefully', async () => {
       // Find the /error route
-      const errorRoute = app._router.stack.find((r) => r.route && r.route.path === '/error')
+      const errorRoute = app._router.stack.find((r) => r.route && r.route.path === '/api/error')
 
       // Save the original handler
       const originalErrorHandler = errorRoute.handle
@@ -199,7 +199,7 @@ describe('Server Setup', () => {
         next(new Error('Intentional error for testing'))
       }
 
-      const res = await request.get('/error')
+      const res = await request.get('/api/error')
 
       errorRoute.handle = originalErrorHandler
 
