@@ -81,11 +81,7 @@ if (applyRateLimiter) {
   })
 
   // Apply auth limiter to auth routes
-  app.use('/api/auth/login', authLimiter)
-  app.use('/api/auth/register', authLimiter)
   app.use('/api/auth/refresh', authLimiter)
-  app.use('/api/auth/forgot-password', authLimiter)
-  app.use('/api/auth/reset-password', authLimiter)
 
   // Apply auth limiter only to user authentication endpoints
   app.use('/api/users/login', authLimiter)

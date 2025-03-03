@@ -582,7 +582,7 @@ describe('Course Controller', () => {
     })
 
     test('should handle when course not found (edit course)', async () => {
-      mockReq.params = { id: 1 }
+      mockReq.params = { courseId: 1 }
       jest
         .spyOn(CourseService.prototype, 'editCourse')
         .mockRejectedValue(new Error('Course not found'))
@@ -595,7 +595,7 @@ describe('Course Controller', () => {
     })
 
     test('should handle course name is required (edit course)', async () => {
-      mockReq.params = { id: 1 }
+      mockReq.params = { courseId: 1 }
 
       jest
         .spyOn(CourseService.prototype, 'editCourse')
@@ -609,6 +609,8 @@ describe('Course Controller', () => {
     })
 
     test('should handle course name is too long (edit course)', async () => {
+      mockReq.params = { courseId: 1 }
+
       jest
         .spyOn(CourseService.prototype, 'editCourse')
         .mockRejectedValue(new Error('Course name is too long'))
@@ -617,11 +619,11 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course name is too long' })
-      expect(log.error).toHaveBeenCalledWith('Edit course error:', expect.any(Error))
+      expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
     })
 
     test('should handle error when editing the course (edit course)', async () => {
-      mockReq.params = { id: 1 }
+      mockReq.params = { courseId: 1 }
       jest
         .spyOn(CourseService.prototype, 'editCourse')
         .mockRejectedValue(new Error('Error editing course'))
@@ -634,15 +636,28 @@ describe('Course Controller', () => {
     })
 
     test('should handle course name already exists (edit course)', async () => {
-      jest
-        .spyOn(CourseService.prototype, 'editCourse')
-        .mockRejectedValue({ name: 'SequelizeUniqueConstraintError' })
+      mockReq.params = { courseId: 1 }
+
+      const sequelizeError = {
+        name: 'SequelizeUniqueConstraintError',
+        errors: [
+          {
+            message: 'Course name must be unique',
+            path: 'name',
+          },
+        ],
+        parent: { code: 'ER_DUP_ENTRY' },
+      }
+
+      jest.spyOn(CourseService.prototype, 'editCourse').mockRejectedValue(sequelizeError)
 
       await editCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(409)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course name already exists' })
-      expect(log.error).toHaveBeenCalledWith('Edit course error:', expect.any(Object))
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { name: 'Name already exists.' },
+      })
+      expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Object))
     })
   })
 
@@ -742,13 +757,23 @@ describe('Course Controller', () => {
       mockReq.params = { id: '1' }
       mockReq.body = { name: 'Existing Course Name', description: 'Updated Description' }
 
-      const uniqueError = new Error('Course name already exists')
-      jest.spyOn(CourseService.prototype, 'updateCourse').mockRejectedValue(uniqueError)
+      const sequelizeError = {
+        name: 'SequelizeUniqueConstraintError',
+        errors: [
+          {
+            message: 'Course name must be unique',
+            path: 'name',
+          },
+        ],
+        parent: { code: 'ER_DUP_ENTRY' },
+      }
+
+      jest.spyOn(CourseService.prototype, 'updateCourse').mockRejectedValue(sequelizeError)
 
       await updateCourse(mockReq, mockRes)
       expect(mockRes.status).toHaveBeenCalledWith(409)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { name: 'Course name already exists' },
+        errors: { name: 'Name already exists.' },
       })
     })
 

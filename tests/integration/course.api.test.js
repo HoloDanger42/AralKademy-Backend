@@ -74,6 +74,9 @@ describe('Course Endpoints (Integration Tests)', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .send(courseData)
 
+      console.log('Response status:', res.status)
+      console.log('Response body:', JSON.stringify(res.body, null, 2))
+
       expect(res.status).toBe(201)
       expect(res.body.course).toEqual(
         expect.objectContaining({
