@@ -100,26 +100,6 @@ const createEnrollment = async (req, res) => {
 }
 
 /**
- * Retrieves an enrollment by ID.
- * @param {Object} req - The request object containing the enrollment ID in req.params.
- * @param {Object} res - The response object.
- */
-const getEnrollmentById = async (req, res) => {
-  try {
-    const enrollmentId = req.params.enrollmentId
-    const enrollment = await enrollmentService.getEnrollmentById(enrollmentId)
-    res.status(200).json(enrollment)
-    log.info(`Retrieved enrollment with ID: ${enrollmentId}`)
-  } catch (error) {
-    log.error('Get enrollment by ID error:', error)
-    if (error.message === 'Enrollment not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    return res.status(500).json({ message: 'Failed to retrieve enrollment' })
-  }
-}
-
-/**
  * Approves an enrollment.
  * @param {Object} req - The request object containing the enrollment ID in req.params.
  * @param {Object} res - The response object.
@@ -132,11 +112,12 @@ const approveEnrollment = async (req, res) => {
     res.status(200).json(enrollment)
     log.info(`Enrollment with ID: ${enrollmentId} was approved`)
   } catch (error) {
-    log.error('Approve enrollment error:', error)
-    if (error.message === 'Enrollment not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    return res.status(500).json({ message: 'Failed to approve enrollment' })
+    return handleControllerError(
+      error,
+      res,
+      `Approve enrollment ${req.params.enrollmentId}`,
+      'Failed to approve enrollment'
+    )
   }
 }
 
@@ -153,11 +134,33 @@ const rejectEnrollment = async (req, res) => {
     res.status(200).json(enrollment)
     log.info(`Enrollment with ID: ${enrollmentId} was rejected`)
   } catch (error) {
-    log.error('Reject enrollment error:', error)
-    if (error.message === 'Enrollment not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    return res.status(500).json({ message: 'Failed to reject enrollment' })
+    return handleControllerError(
+      error,
+      res,
+      `Reject enrollment ${req.params.enrollmentId}`,
+      'Failed to reject enrollment'
+    )
+  }
+}
+
+/**
+ * Retrieves an enrollment by ID.
+ * @param {Object} req - The request object containing the enrollment ID in req.params.
+ * @param {Object} res - The response object.
+ */
+const getEnrollmentById = async (req, res) => {
+  try {
+    const enrollmentId = req.params.enrollmentId
+    const enrollment = await enrollmentService.getEnrollmentById(enrollmentId)
+    res.status(200).json(enrollment)
+    log.info(`Retrieved enrollment with ID: ${enrollmentId}`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Get enrollment by ID ${req.params.enrollmentId}`,
+      'Failed to retrieve enrollment'
+    )
   }
 }
 
@@ -172,8 +175,12 @@ const getAllEnrollments = async (_req, res) => {
     res.status(200).json(enrollments)
     log.info('Retrieved all enrollments')
   } catch (error) {
-    log.error('Get all enrollments error:', error)
-    return res.status(500).json({ message: 'Failed to retrieve enrollments' })
+    return handleControllerError(
+      error,
+      res,
+      'Get all enrollments',
+      'Failed to retrieve enrollments'
+    )
   }
 }
 
@@ -189,11 +196,12 @@ const getEnrollmentsBySchool = async (req, res) => {
     res.status(200).json(enrollments)
     log.info(`Retrieved enrollments for school ID: ${schoolId}`)
   } catch (error) {
-    log.error('Get enrollments by school error:', error)
-    if (error.message === 'School not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    return res.status(500).json({ message: 'Failed to retrieve enrollments by school' })
+    return handleControllerError(
+      error,
+      res,
+      `Get enrollments by school ${req.params.schoolId}`,
+      'Failed to retrieve enrollments by schools'
+    )
   }
 }
 
@@ -218,8 +226,12 @@ const checkEnrollmentStatus = async (req, res) => {
 
     res.status(200).json({ status })
   } catch (error) {
-    log.error('Error checking enrollment status:', error)
-    return res.status(500).json({ message: 'Failed to check enrollment status' })
+    return handleControllerError(
+      error,
+      res,
+      `Check enrollment status for ${req.body.email || 'unknown email'}`,
+      'Failed to check enrollment status'
+    )
   }
 }
 
@@ -235,26 +247,15 @@ const updateEnrollment = async (req, res) => {
 
     const enrollment = await enrollmentService.updateEnrollment(enrollmentId, updatedData)
 
-    res.status(200).json(enrollment) //return the updated data
+    res.status(200).json(enrollment) // Return the updated data
     log.info(`Enrollment with ID: ${enrollmentId} updated successfully`)
   } catch (error) {
-    log.error('Error in updateEnrollment:', error)
-
-    if (error.message === 'Enrollment not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    if (error.name === 'SequelizeValidationError') {
-      const sequelizeErrors = {}
-      error.errors.forEach((err) => {
-        sequelizeErrors[err.path] = err.message
-      })
-      return res.status(400).json({ errors: sequelizeErrors })
-    }
-    // Handle unique constraint errors (e.g., duplicate email)
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(409).json({ errors: { email: 'Email already exists.' } }) // 409 Conflict
-    }
-    res.status(500).json({ message: 'Internal server error' })
+    return handleControllerError(
+      error,
+      res,
+      `Update enrollment ${req.params.enrollmentId}`,
+      'Failed to update enrollment'
+    )
   }
 }
 
@@ -272,11 +273,12 @@ const deleteEnrollment = async (req, res) => {
     res.status(204).end()
     log.info(`Enrollment with ID: ${enrollmentId} deleted successfully`)
   } catch (error) {
-    log.error('Error in deleteEnrollment:', error)
-    if (error.message === 'Enrollment not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    res.status(500).json({ message: 'Internal server error' })
+    return handleControllerError(
+      error,
+      res,
+      `Delete enrollment ${req.params.enrollmentId}`,
+      'Failed to delete enrollment'
+    )
   }
 }
 

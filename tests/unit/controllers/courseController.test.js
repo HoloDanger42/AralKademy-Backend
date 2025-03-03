@@ -498,7 +498,7 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(404)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
-      expect(log.error).toHaveBeenCalledWith('Error getting course by ID 123:', expect.any(Error))
+      expect(log.error).toHaveBeenCalledWith('Get course by ID 123 error:', expect.any(Error))
     })
 
     test('should handle error when fetching the course (get course by id)', async () => {
@@ -512,7 +512,7 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error fetching course' })
-      expect(log.error).toHaveBeenCalledWith('Error getting course by ID 1:', expect.any(Error))
+      expect(log.error).toHaveBeenCalledWith('Get course by ID 1 error:', expect.any(Error))
     })
   })
 

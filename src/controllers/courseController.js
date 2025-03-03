@@ -17,7 +17,7 @@ const getAllCourses = async (req, res) => {
     res.status(200).json(courses)
     log.info('Retrieved all courses')
   } catch (error) {
-    return handleControllerError(error, res, 'Get all courses error', 'Error fetching courses')
+    return handleControllerError(error, res, 'Get all courses', 'Error fetching courses')
   }
 }
 
@@ -36,7 +36,7 @@ const getCourseById = async (req, res) => {
     return handleControllerError(
       error,
       res,
-      `Error getting course by ID ${req.params.id}`,
+      `Get course by ID ${req.params.id}`,
       'Error fetching course'
     )
   }
@@ -103,7 +103,7 @@ const createCourse = async (req, res) => {
 
     log.info(`Course ${newCourse.name} was successfully created`)
   } catch (error) {
-    return handleControllerError(error, res, 'Create course error', 'Error creating course')
+    return handleControllerError(error, res, 'Create course', 'Error creating course')
   }
 }
 
@@ -158,7 +158,7 @@ const updateCourse = async (req, res) => {
     return handleControllerError(
       error,
       res,
-      `Update course ${req.params.id} error`,
+      `Update course ${req.params.id}`,
       'Error updating course'
     )
   }
@@ -187,7 +187,7 @@ const editCourse = async (req, res) => {
     return handleControllerError(
       error,
       res,
-      `Edit course ${req.params.courseId} error`,
+      `Edit course ${req.params.courseId}`,
       'Error editing course'
     )
   }
@@ -215,7 +215,7 @@ const softDeleteCourse = async (req, res) => {
     return handleControllerError(
       error,
       res,
-      `Soft delete course ${req.params.id} error`,
+      `Soft delete course ${req.params.id}`,
       'Error deleting course'
     )
   }
@@ -243,7 +243,7 @@ const deleteCourse = async (req, res) => {
     return handleControllerError(
       error,
       res,
-      `Delete course ${req.params.id} error`,
+      `Delete course ${req.params.id}`,
       'Error permanently deleting course'
     )
   }
@@ -274,7 +274,7 @@ const assignTeacherCourse = async (req, res) => {
     return handleControllerError(
       error,
       res,
-      `Assign teacher to course ${req.params.id} error`,
+      `Assign teacher to course ${req.params.id}`,
       'Error assigning teacher to course'
     )
   }
@@ -305,7 +305,7 @@ const assignLearnerGroupCourse = async (req, res) => {
     return handleControllerError(
       error,
       res,
-      `Assign learner group to course ${req.params.id} error`,
+      `Assign learner group to course ${req.params.id}`,
       'Error assigning learner group to course'
     )
   }
@@ -339,7 +339,7 @@ const assignStudentTeacherGroupCourse = async (req, res) => {
     return handleControllerError(
       error,
       res,
-      `Assign student teacher group to course ${req.params.id} error`,
+      `Assign student teacher group to course ${req.params.id}`,
       'Error assigning student teacher group to course'
     )
   }

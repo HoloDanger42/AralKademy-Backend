@@ -16,7 +16,7 @@ export const handleControllerError = (
   defaultMessage = 'An error occurred'
 ) => {
   // Log the error with context
-  log.error(`${context}:`, error)
+  log.error(`${context} error:`, error)
 
   if (error.name === 'ValidationError') {
     return res.status(400).json({
