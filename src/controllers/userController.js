@@ -1,5 +1,5 @@
 import { log } from '../utils/logger.js'
-import fetch from 'node-fetch'
+import { handleControllerError } from '../utils/errorHandler.js'
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -29,86 +29,6 @@ const userService = new UserService(
   School,
   Blacklist
 )
-
-// Create a separate function for reCAPTCHA verification that can be mocked in tests
-/**
- * Verifies the reCAPTCHA response.
- * @param {string} captchaResponse - The reCAPTCHA response token from the client.
- * @returns {Promise<Object>} - An object containing the verification result.
- */
-export const verifyCaptcha = async (captchaResponse) => {
-  // Skip verification in test environment
-  if (process.env.NODE_ENV === 'test' && captchaResponse === 'test-bypass-captcha') {
-    return { success: true }
-  }
-
-  const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaResponse}`
-  console.log('Constructed verifyUrl in controller:', verifyUrl)
-  const verifyResponse = await fetch(verifyUrl, {
-    method: 'POST',
-    headers: { Connection: 'close' },
-  })
-  console.log('Fetch call completed')
-  return verifyResponse.json()
-}
-
-// Login function
-/**
- * Handles user login.
- * @param {Object} req - The request object containing email, password, and captchaResponse.
- * @param {Object} res - The response object.
- */
-const login = async (req, res) => {
-  try {
-    const { email, password, captchaResponse } = req.body // Get captchaResponse
-
-    // --- reCAPTCHA Verification (BEFORE calling the service) ---
-    if (!captchaResponse) {
-      log.warn(`Login attempt failed: Missing CAPTCHA response for ${email || 'unknown user'}`)
-      return res.status(400).json({ message: 'CAPTCHA response is required' })
-    }
-
-    const verifyData = await verifyCaptcha(captchaResponse)
-    console.log('reCAPTCHA Verification Data:', verifyData)
-
-    if (!verifyData.success) {
-      log.warn(`Login attempt failed: CAPTCHA verification failed for ${email || 'unknown user'}`, {
-        error: verifyData['error-codes'] || 'No specific error codes provided',
-        score: verifyData.score,
-        requestUrl: `https://www.google.com/recaptcha/api/siteverify?secret=[REDACTED]&response=${captchaResponse?.substring(0, 20)}...`,
-        captchaLength: captchaResponse ? captchaResponse.length : 0,
-        errorDetails: JSON.stringify(verifyData),
-      })
-      console.error('reCAPTCHA verification failed:', verifyData)
-      return res.status(400).json({ message: 'CAPTCHA verification failed' })
-    }
-
-    const { user, token } = await userService.loginUser(email, password)
-
-    res.status(200).json({
-      message: 'Logged in successfully',
-      token,
-      user,
-    })
-    log.info(`User ${email} logged in successfully`)
-  } catch (error) {
-    log.error(`Login error for ${req.body.email || 'unknown user'}:`, {
-      errorMessage: error.message,
-      errorStack: error.stack,
-      errorType: error.name,
-    })
-
-    if (error.message === 'Invalid credentials') {
-      log.warn(
-        `Failed login attempt with invalid credentials for ${req.body.email || 'unknown user'}`
-      )
-      return res.status(401).json({ message: 'Invalid credentials' })
-    }
-
-    log.error(`Authentication failed with error: ${error.message}`)
-    return res.status(500).json({ message: 'Authentication failed' })
-  }
-}
 
 /**
  * Creates a new user.
@@ -148,16 +68,12 @@ const createUser = async (req, res) => {
     })
     log.info(`User ${email} created successfully`)
   } catch (error) {
-    log.error('Create user error:', error)
-    console.error(error)
-    if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({ errors: error.errors })
-    }
-    if (error.message === 'Email already exists') {
-      return res.status(400).json({ message: error.message })
-    }
-
-    return res.status(500).json({ message: 'Failed to create user' })
+    return handleControllerError(
+      error,
+      res,
+      `Create user for ${req.body.email || 'unknown user'}`,
+      'Failed to create user'
+    )
   }
 }
 
@@ -172,21 +88,17 @@ const getAllUsers = async (_req, res) => {
     const usersWithoutPassword = users.rows.map((user) => {
       const { password, ...userWithoutPassword } = user.get({
         plain: true,
-      }) // Convert to plain object
+      })
       return userWithoutPassword
     })
 
-    // Send the modified user data
     res.status(200).json({
       count: users.count,
       users: usersWithoutPassword,
     })
     log.info('Retrieved all users')
   } catch (error) {
-    log.error('Get all users error:', error)
-    return res.status(500).json({
-      message: 'Failed to retrieve users',
-    })
+    return handleControllerError(error, res, 'Get all users', 'Failed to retrieve users')
   }
 }
 
@@ -200,15 +112,27 @@ const getUserById = async (req, res) => {
     const { id } = req.params
     const user = await userService.getUserById(id)
     res.status(200).json(user)
+    log.info(`Retrieved user with ID ${id}`)
   } catch (error) {
-    log.error('Get user by ID error:', error)
-    if (error.message === 'User not found') {
-      return res.status(404).json({ message: 'User not found' })
-    }
-    return res.status(500).json({ message: 'Failed to retrieve user' })
+    return handleControllerError(
+      error,
+      res,
+      `Get user by ID ${req.params.id}`,
+      'Failed to retrieve user'
+    )
   }
 }
 
+/**
+ * Deletes a user from the system by their ID
+ * @async
+ * @param {Object} req - Express request object
+ * @param {Object} req.params - Request parameters
+ * @param {string} req.params.id - User ID to delete
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>} - Returns a promise that resolves when user is deleted
+ * @throws {Error} - Throws 404 if user not found or 500 for server errors
+ */
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params
@@ -221,34 +145,12 @@ const deleteUser = async (req, res) => {
       res.status(404).json({ message: 'User not found' })
     }
   } catch (error) {
-    log.error('Delete user error:', error)
-    if (error.message === 'User not found') {
-      return res.status(404).json({ message: 'User not found' })
-    }
-    res.status(500).json({ message: 'Failed to delete user' })
-  }
-}
-
-/**
- * Logs out a user.
- * @param {Object} req - The request object containing the authorization token in headers.
- * @param {Object} res - The response object.
- */
-const logoutUser = async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1]
-
-    if (!token) {
-      return res.status(401).json({ message: 'Unauthorized: No token provided' })
-    }
-
-    await userService.logoutUser(token)
-
-    res.status(200).json({ message: 'User logged out successfully' })
-    log.info('User logged out successfully')
-  } catch (error) {
-    log.error('Logout error:', error)
-    return res.status(500).json({ message: 'Logout failed' })
+    return handleControllerError(
+      error,
+      res,
+      `Delete user ${req.params.id}`,
+      'Failed to delete user'
+    )
   }
 }
 
@@ -264,11 +166,12 @@ const forgotPassword = async (req, res) => {
     res.status(200).json({ message: 'Password reset email sent successfully' })
     log.info(`Password reset email sent to ${email}`)
   } catch (error) {
-    log.error('Forgot password error:', error)
-    if (error.message === 'User not found') {
-      return res.status(404).json({ message: 'User not found' })
-    }
-    return res.status(500).json({ message: 'Failed to send password reset email' })
+    return handleControllerError(
+      error,
+      res,
+      `Forgot password for ${req.body.email || 'unknown email'}`,
+      'Failed to send password reset email'
+    )
   }
 }
 
@@ -284,14 +187,12 @@ const verifyResetCode = async (req, res) => {
     res.status(200).json({ message: 'Code confirmed successfully' })
     log.info(`Code confirmed for ${email}`)
   } catch (error) {
-    log.error('Confirm code error:', error)
-    if (error.message === 'User not found') {
-      return res.status(404).json({ message: 'User not found' })
-    }
-    if (error.message === 'Invalid code') {
-      return res.status(400).json({ message: 'Invalid code' })
-    }
-    return res.status(500).json({ message: 'Failed to confirm code' })
+    return handleControllerError(
+      error,
+      res,
+      `Verify reset code for ${req.body.email || 'unknown email'}`,
+      'Failed to confirm code'
+    )
   }
 }
 
@@ -307,20 +208,16 @@ const resetPassword = async (req, res) => {
     res.status(200).json({ message: 'Password reset successfully' })
     log.info(`Password reset for ${email}`)
   } catch (error) {
-    log.error('Reset password error:', error)
-    if (error.message === 'User not found') {
-      return res.status(404).json({ message: 'User not found' })
-    }
-    if (error.message === 'Password must be at least 8 characters') {
-      return res.status(400).json({ message: 'Password must be at least 8 characters' })
-    }
-    return res.status(500).json({ message: 'Failed to reset password' })
+    return handleControllerError(
+      error,
+      res,
+      `Reset password for ${req.body.email || 'unknown email'}`,
+      'Failed to reset password'
+    )
   }
 }
 
 export {
-  login,
-  logoutUser,
   createUser,
   getAllUsers,
   getUserById,

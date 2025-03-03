@@ -46,7 +46,7 @@ describe('Course Endpoints (Integration Tests)', () => {
     server = app.listen(0)
 
     // Login to get auth token
-    const loginRes = await request(app).post('/api/users/login').send({
+    const loginRes = await request(app).post('/api/auth/login').send({
       email: 'testadmin@example.com',
       password: 'testPassword',
       captchaResponse: 'test-bypass-captcha',
@@ -73,9 +73,6 @@ describe('Course Endpoints (Integration Tests)', () => {
         .post('/api/courses')
         .set('Authorization', `Bearer ${authToken}`)
         .send(courseData)
-
-      console.log('Response status:', res.status)
-      console.log('Response body:', JSON.stringify(res.body, null, 2))
 
       expect(res.status).toBe(201)
       expect(res.body.course).toEqual(

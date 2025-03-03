@@ -60,7 +60,8 @@ export const handleControllerError = (
     error.message.includes('required') ||
     error.message.includes('invalid') ||
     error.message.includes('must be') ||
-    error.message.includes('too long')
+    error.message.includes('too long') ||
+    error.message === 'Invalid code'
   ) {
     return res.status(400).json({ message: error.message })
   }

@@ -63,7 +63,7 @@ if (applyRateLimiter) {
     max: config.api.rateLimit.max,
     standardHeaders: true,
     legacyHeaders: false,
-    handler: (req, res) => {
+    handler: (_req, res) => {
       res.status(429).json({ message: 'Too many requests, please try again later' })
     },
   })
@@ -71,7 +71,7 @@ if (applyRateLimiter) {
   const authLimiter = rateLimit({
     windowMs: FIFTEEN_MINUTES,
     max: AUTH_MAX_REQUESTS,
-    handler: (req, res) => {
+    handler: (_req, res) => {
       res.status(429).json({
         message: 'Too many authentication requests',
       })
@@ -82,9 +82,11 @@ if (applyRateLimiter) {
 
   // Apply auth limiter to auth routes
   app.use('/api/auth/refresh', authLimiter)
+  app.use('/api/auth/login', authLimiter)
+  app.use('/api/auth/logout', authLimiter)
+  app.use('/api/auth/validate', authLimiter)
 
   // Apply auth limiter only to user authentication endpoints
-  app.use('/api/users/login', authLimiter)
   app.use('/api/users/register', authLimiter)
   app.use('/api/users/reset-password', authLimiter)
 
