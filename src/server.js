@@ -63,12 +63,15 @@ if (applyRateLimiter) {
     max: config.api.rateLimit.max,
     standardHeaders: true,
     legacyHeaders: false,
+    handler: (req, res) => {
+      res.status(429).json({ message: 'Too many requests, please try again later' })
+    },
   })
 
   const authLimiter = rateLimit({
     windowMs: FIFTEEN_MINUTES,
     max: AUTH_MAX_REQUESTS,
-    handler: (_req, res) => {
+    handler: (req, res) => {
       res.status(429).json({
         message: 'Too many authentication requests',
       })
@@ -78,15 +81,29 @@ if (applyRateLimiter) {
   })
 
   // Apply auth limiter to auth routes
-  app.use('/api/users', authLimiter)
-  app.use('/api/auth', authLimiter)
+  app.use('/api/auth/login', authLimiter)
+  app.use('/api/auth/register', authLimiter)
+  app.use('/api/auth/refresh', authLimiter)
+  app.use('/api/auth/forgot-password', authLimiter)
+  app.use('/api/auth/reset-password', authLimiter)
 
-  // Apply general limiter to all API routes EXCEPT those with their own limiters
+  // Apply auth limiter only to user authentication endpoints
+  app.use('/api/users/login', authLimiter)
+  app.use('/api/users/register', authLimiter)
+  app.use('/api/users/reset-password', authLimiter)
+
+  // Apply general limiter to all API routes EXCEPT specific auth routes
   app.use('/api', (req, res, next) => {
-    // Skip general limiter for routes that already have their own limiters
-    if (req.path.startsWith('/users') || req.path.startsWith('/auth')) {
+    // Skip if already processed by auth limiter
+    const authPaths = ['/login', '/register', '/refresh', '/forgot-password', '/reset-password']
+    const isAuthPath =
+      (req.path.startsWith('/auth') || req.path.startsWith('/users')) &&
+      authPaths.some((path) => req.path.includes(path))
+
+    if (isAuthPath) {
       return next()
     }
+
     // Apply general limiter to all other API routes
     generalLimiter(req, res, next)
   })

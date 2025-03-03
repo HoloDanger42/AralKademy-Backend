@@ -158,17 +158,26 @@ describe('Enrollment Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { middle_initial: 'Middle Initial is maximum of 3 characters only.' },
+        errors: { middle_initial: 'Middle Initial is maximum of 2 characters only.' },
       })
     })
 
     test('should handle duplicate email error', async () => {
-      // Updated test name
       // Arrange
       const enrollmentData = validEnrollments[0]
       mockReq.body = enrollmentData
+
       const error = new Error('Email already exists')
       error.name = 'SequelizeUniqueConstraintError' // Simulate Sequelize unique constraint error
+      error.errors = [
+        {
+          message: 'Email already exists',
+          path: 'email',
+          value: enrollmentData.email,
+          type: 'unique violation',
+        },
+      ]
+
       createEnrollmentSpy.mockRejectedValue(error)
 
       // Act
