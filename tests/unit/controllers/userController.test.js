@@ -260,4 +260,179 @@ describe('User Controller', () => {
       })
     })
   })
+
+  describe('deleteUser', () => {
+    test('should delete a user successfully', async () => {
+      // Arrange
+      const userId = '123'
+      mockReq.params = { id: userId }
+
+      jest.spyOn(UserServiceModule.default.prototype, 'deleteUser').mockResolvedValue(true)
+
+      // Act
+      await userControllerModule.deleteUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'User deleted successfully' })
+      expect(log.info).toHaveBeenCalledWith(`User with ID ${userId} deleted`)
+    })
+
+    test('should return 404 if user to delete is not found', async () => {
+      // Arrange
+      const userId = '999'
+      mockReq.params = { id: userId }
+
+      jest.spyOn(UserServiceModule.default.prototype, 'deleteUser').mockResolvedValue(false)
+
+      // Act
+      await userControllerModule.deleteUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'User not found' })
+    })
+
+    test('should return 500 if an error occurs during deletion', async () => {
+      // Arrange
+      const userId = '123'
+      mockReq.params = { id: userId }
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'deleteUser')
+        .mockRejectedValue(new Error('Database error'))
+
+      // Act
+      await userControllerModule.deleteUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to delete user' })
+      expect(log.error).toHaveBeenCalled()
+    })
+  })
+
+  describe('createUser', () => {
+    test('should create a user successfully', async () => {
+      // Arrange
+      const userData = {
+        email: 'newuser@example.com',
+        password: 'Password123!',
+        first_name: 'New',
+        last_name: 'User',
+        birth_date: '1990-01-01',
+        contact_no: '09876543210',
+        school_id: '12345',
+        role: 'learner',
+        middle_initial: 'X',
+      }
+
+      mockReq.body = userData
+
+      const createdUser = {
+        id: 999,
+        email: userData.email,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        role: userData.role,
+      }
+
+      jest.spyOn(UserServiceModule.default.prototype, 'createUser').mockResolvedValue(createdUser)
+
+      // Act
+      await userControllerModule.createUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(201)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'User created successfully',
+        user: createdUser,
+      })
+      expect(log.info).toHaveBeenCalledWith(`User ${userData.email} created successfully`)
+    })
+
+    test('should return 400 for validation errors during user creation', async () => {
+      // Arrange
+      const userData = {
+        email: 'invalid-email',
+        password: 'weak',
+        first_name: 'New',
+        last_name: 'User',
+      }
+
+      mockReq.body = userData
+
+      const validationError = new Error('Email format is invalid')
+      validationError.name = 'ValidationError'
+      validationError.path = 'email'
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'createUser')
+        .mockRejectedValue(validationError)
+
+      // Act
+      await userControllerModule.createUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { email: 'Email format is invalid' },
+      })
+      expect(log.error).toHaveBeenCalled()
+    })
+
+    test('should return 409 for duplicate email during user creation', async () => {
+      // Arrange
+      const userData = {
+        email: 'existing@example.com',
+        password: 'Password123!',
+        first_name: 'Existing',
+        last_name: 'User',
+      }
+
+      mockReq.body = userData
+
+      const duplicateError = new Error('Email already exists')
+      duplicateError.name = 'SequelizeUniqueConstraintError'
+      duplicateError.errors = [{ path: 'email', message: 'Email already exists' }]
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'createUser')
+        .mockRejectedValue(duplicateError)
+
+      // Act
+      await userControllerModule.createUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(409)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { email: 'Email already exists.' },
+      })
+      expect(log.error).toHaveBeenCalled()
+    })
+
+    test('should return 500 if an unexpected error occurs during user creation', async () => {
+      // Arrange
+      const userData = {
+        email: 'newuser@example.com',
+        password: 'Password123!',
+        first_name: 'New',
+        last_name: 'User',
+      }
+
+      mockReq.body = userData
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'createUser')
+        .mockRejectedValue(new Error('Database connection error'))
+
+      // Act
+      await userControllerModule.createUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to create user' })
+      expect(log.error).toHaveBeenCalled()
+    })
+  })
 })

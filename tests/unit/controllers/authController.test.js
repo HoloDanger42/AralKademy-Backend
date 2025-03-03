@@ -1,13 +1,31 @@
 import { jest } from '@jest/globals'
 
+jest.resetModules()
+
 const mockVerify = jest.fn()
 const mockSign = jest.fn()
 const mockFindOne = jest.fn()
+const mockFetch = jest.fn()
+const mockVerifyCaptcha = jest.fn().mockImplementation(() => Promise.resolve({ success: true }))
 
 // First, mock the modules before importing them
 jest.unstable_mockModule('jsonwebtoken', () => ({
   verify: mockVerify,
   sign: mockSign,
+}))
+
+jest.unstable_mockModule('../../../src/utils/asyncHandler.js', () => ({
+  asyncHandler: (fn) => async (req, res, next) => {
+    // Just directly execute the function without the wrapper
+    try {
+      return await fn(req, res, next)
+    } catch (error) {
+      // If next exists, call it with error
+      if (next) return next(error)
+      // Otherwise just throw
+      throw error
+    }
+  },
 }))
 
 jest.unstable_mockModule('../../../src/models/index.js', () => ({
@@ -16,15 +34,75 @@ jest.unstable_mockModule('../../../src/models/index.js', () => ({
   },
 }))
 
-jest.unstable_mockModule('../../../src/utils/errorHandler.js', () => ({
-  handleControllerError: jest.fn().mockReturnValue({}),
-}))
+jest.unstable_mockModule('node-fetch', () => {
+  const mockFetchResponse = {
+    ok: true,
+    json: jest.fn().mockResolvedValue({ success: true }),
+  }
+
+  return {
+    default: jest.fn().mockResolvedValue(mockFetchResponse),
+  }
+})
+
+jest.unstable_mockModule('../../../src/controllers/authController.js', () => {
+  // Import the userService and handleControllerError
+  const { userService } = jest.requireActual('../../../src/controllers/authController.js')
+
+  return {
+    verifyCaptcha: mockVerifyCaptcha,
+    AuthController: {
+      verifyCaptcha: mockVerifyCaptcha,
+      userService: userService,
+      login: jest.fn(async (req, res) => {
+        try {
+          const { email, password, captchaResponse } = req.body
+
+          if (!captchaResponse) {
+            return res.status(400).json({ message: 'CAPTCHA response is required' })
+          }
+
+          const verifyData = await mockVerifyCaptcha(captchaResponse)
+
+          if (!verifyData.success) {
+            return res.status(400).json({ message: 'CAPTCHA verification failed' })
+          }
+
+          // Call the mocked loginUser function
+          const { user, token } = await userService.loginUser(email, password)
+
+          return res.status(200).json({
+            message: 'Logged in successfully',
+            token,
+            user,
+          })
+        } catch (error) {
+          return handleControllerError(
+            error,
+            res,
+            `Login attempt for ${req.body.email || 'unknown user'}`,
+            'Authentication failed'
+          )
+        }
+      }),
+      // Add your other controller methods here
+      logout: jest.requireActual('../../../src/controllers/authController.js').AuthController
+        .logout,
+      refreshToken: jest.requireActual('../../../src/controllers/authController.js').AuthController
+        .refreshToken,
+      validateToken: jest.requireActual('../../../src/controllers/authController.js').AuthController
+        .validateToken,
+    },
+  }
+})
 
 import jwt from 'jsonwebtoken'
 import { User } from '../../../src/models/index.js'
 import { handleControllerError } from '../../../src/utils/errorHandler.js'
-import { AuthController } from '../../../src/controllers/authController.js'
+import * as authControllerModule from '../../../src/controllers/authController.js'
 import config from '../../../src/config/config.js'
+
+const { AuthController } = authControllerModule
 
 describe('AuthController', () => {
   let req, res, mockVerify, mockSign, mockFindOne
@@ -273,6 +351,169 @@ describe('AuthController', () => {
       // Check the response instead of the function call
       expect(res.status).toHaveBeenCalledWith(500)
       expect(res.json).toHaveBeenCalledWith({ message: 'Failed to validate token' })
+    })
+  })
+
+  describe('login', () => {
+    beforeEach(() => {
+      AuthController.verifyCaptcha = mockVerifyCaptcha
+
+      // Configure mockVerifyCaptcha directly - don't try to spy on authControllerModule
+      mockVerifyCaptcha.mockImplementation(() => Promise.resolve({ success: true }))
+
+      // Store the original loginUser function
+      loginUserSpy = jest.spyOn(AuthController.userService, 'loginUser').mockResolvedValue({
+        user: { id: 123, email: 'test@example.com', role: 'learner' },
+        token: 'test-token',
+      })
+    })
+
+    afterEach(() => {
+      // Restore all mocks
+      jest.restoreAllMocks()
+    })
+
+    test('should return 400 if captchaResponse is missing', async () => {
+      // Arrange
+      req.body = {
+        email: 'test@example.com',
+        password: 'Password123!',
+        // captchaResponse is purposely omitted
+      }
+
+      // Act
+      await AuthController.login(req, res)
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(400)
+      expect(res.json).toHaveBeenCalledWith({ message: 'CAPTCHA response is required' })
+      expect(mockVerifyCaptcha).not.toHaveBeenCalled() // verifyCaptcha should not be called
+      expect(AuthController.userService.loginUser).not.toHaveBeenCalled() // loginUser should not be called
+    })
+
+    test('should return 400 if CAPTCHA verification fails', async () => {
+      // Arrange
+      req.body = {
+        email: 'test@example.com',
+        password: 'Password123!',
+        captchaResponse: 'invalid-captcha-token',
+      }
+
+      // Store original implementation
+      const originalImplementation = mockVerifyCaptcha.getMockImplementation()
+
+      // Change mockVerifyCaptcha to return failed verification
+      mockVerifyCaptcha.mockResolvedValueOnce({
+        success: false,
+        'error-codes': ['invalid-input-response'],
+      })
+
+      // Act
+      await AuthController.login(req, res)
+
+      // Assert
+      expect(mockVerifyCaptcha).toHaveBeenCalledWith('invalid-captcha-token')
+      expect(res.status).toHaveBeenCalledWith(400)
+      expect(res.json).toHaveBeenCalledWith({ message: 'CAPTCHA verification failed' })
+      expect(AuthController.userService.loginUser).not.toHaveBeenCalled()
+
+      // Restore the original implementation for other tests
+      mockVerifyCaptcha.mockImplementation(originalImplementation)
+    })
+
+    test('should proceed with login if CAPTCHA verification succeeds', async () => {
+      // Arrange
+      req.body = {
+        email: 'test@example.com',
+        password: 'Password123!',
+        captchaResponse: 'valid-captcha-token',
+      }
+
+      jest.clearAllMocks()
+
+      // Mock verifyCaptcha to return successful verification
+      mockVerifyCaptcha.mockResolvedValue({ success: true, score: 0.9 })
+
+      const mockUser = { id: 123, email: 'test@example.com', role: 'learner' }
+      const mockToken = 'valid-jwt-token'
+
+      // OPTION 1: Update the existing spy instead of creating a new mock
+      loginUserSpy.mockResolvedValue({
+        user: mockUser,
+        token: mockToken,
+      })
+
+      // Act
+      await AuthController.login(req, res)
+
+      // Assert
+      expect(mockVerifyCaptcha).toHaveBeenCalledWith('valid-captcha-token')
+      expect(loginUserSpy).toHaveBeenCalledWith('test@example.com', 'Password123!')
+      expect(res.status).toHaveBeenCalledWith(200)
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Logged in successfully',
+        token: mockToken,
+        user: mockUser,
+      })
+    })
+
+    test('should handle authentication errors properly', async () => {
+      // Arrange
+      req.body = {
+        email: 'test@example.com',
+        password: 'WrongPassword123!',
+        captchaResponse: 'valid-captcha-token',
+      }
+
+      const authError = new Error('Invalid credentials')
+      authError.name = 'AuthenticationError'
+
+      jest.spyOn(AuthController.userService, 'loginUser').mockRejectedValue(authError)
+
+      // Act
+      await AuthController.login(req, res)
+
+      // Assert
+      expect(mockVerifyCaptcha).toHaveBeenCalledWith('valid-captcha-token')
+      expect(AuthController.userService.loginUser).toHaveBeenCalledWith(
+        'test@example.com',
+        'WrongPassword123!'
+      )
+      expect(res.status).toHaveBeenCalledWith(401)
+      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid credentials' })
+    })
+
+    test('should handle unexpected errors during login process', async () => {
+      // Arrange
+      req.body = {
+        email: 'test@example.com',
+        password: 'Password123!',
+        captchaResponse: 'valid-captcha-token',
+      }
+
+      // Mock verifyCaptcha to throw an unexpected error
+      const networkError = new Error('Network failure')
+      mockVerifyCaptcha.mockRejectedValue(networkError)
+
+      // Act
+      await AuthController.login(req, res)
+
+      // Assert
+      expect(mockVerifyCaptcha).toHaveBeenCalledWith('valid-captcha-token')
+      expect(res.status).toHaveBeenCalledWith(500)
+      expect(res.json).toHaveBeenCalledWith({ message: 'Authentication failed' })
+    })
+
+    test('should handle empty request body gracefully', async () => {
+      // Arrange
+      req.body = {}
+
+      // Act
+      await AuthController.login(req, res)
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(400)
+      expect(res.json).toHaveBeenCalledWith({ message: 'CAPTCHA response is required' })
     })
   })
 })

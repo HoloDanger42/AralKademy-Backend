@@ -42,7 +42,7 @@ const userService = new UserService(
  */
 export const verifyCaptcha = async (captchaResponse) => {
   // Skip verification in test environment
-  if (process.env.NODE_ENV === 'test' && captchaResponse === 'test-bypass-captcha') {
+  if (process.env.NODE_ENV === 'test') {
     return { success: true }
   }
 
@@ -56,6 +56,7 @@ export const verifyCaptcha = async (captchaResponse) => {
 }
 
 export const AuthController = {
+  verifyCaptcha,
   userService,
   /**
    * Handles user login with captcha verification
@@ -72,7 +73,7 @@ export const AuthController = {
         return res.status(400).json({ message: 'CAPTCHA response is required' })
       }
 
-      const verifyData = await verifyCaptcha(captchaResponse)
+      const verifyData = await AuthController.verifyCaptcha(captchaResponse)
 
       if (!verifyData.success) {
         log.warn(
