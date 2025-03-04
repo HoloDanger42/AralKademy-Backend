@@ -105,7 +105,7 @@ describe('Server Setup', () => {
     it('should return API is running message', async () => {
       const res = await request.get('/')
       expect(res.status).toBe(200)
-      expect(res.text).toBe('API is running')
+      expect(res.text).toBe('API is running. View documentation at /api-docs')
     })
   })
 

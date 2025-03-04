@@ -4,6 +4,8 @@ import rateLimit from 'express-rate-limit'
 import cache from 'memory-cache'
 import paginate from 'express-paginate'
 import config from './config/config.js'
+import swaggerUi from 'swagger-ui-express'
+import swaggerSpec from './config/swagger.js'
 
 // CORS
 import cors from 'cors'
@@ -150,8 +152,18 @@ if (config.cache.enabled) {
 app.use(logMiddleware)
 securityMiddleware.forEach((middleware) => app.use(middleware))
 
+// API Documentation
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customSiteTitle: 'Aralkademy API Documentation',
+  })
+)
+
 app.get('/', (_req, res) => {
-  res.send('API is running')
+  res.send('API is running. View documentation at /api-docs')
 })
 
 app.use('/api/users', usersRouter)
