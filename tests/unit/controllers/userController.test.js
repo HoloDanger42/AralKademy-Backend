@@ -19,17 +19,13 @@ beforeAll(async () => {
 })
 
 describe('User Controller', () => {
-  let login, getAllUsers, logoutUser
+  let getAllUsers
   let mockReq
   let mockRes
-  let loginUserSpy
   let getAllUsersSpy
-  let logoutUserSpy
 
   beforeEach(() => {
-    login = userControllerModule.login
     getAllUsers = userControllerModule.getAllUsers
-    logoutUser = userControllerModule.logoutUser
 
     // Mock fetch for each test
     fetchMock.mockReset()
@@ -53,9 +49,7 @@ describe('User Controller', () => {
     }
 
     // Setup spies
-    loginUserSpy = jest.spyOn(UserServiceModule.default.prototype, 'loginUser')
     getAllUsersSpy = jest.spyOn(UserServiceModule.default.prototype, 'getAllUsers')
-    logoutUserSpy = jest.spyOn(UserServiceModule.default.prototype, 'logoutUser')
 
     jest.spyOn(log, 'info')
     jest.spyOn(log, 'error')
@@ -65,210 +59,6 @@ describe('User Controller', () => {
   afterEach(() => {
     // Clear all mocks
     jest.clearAllMocks()
-  })
-
-  describe('login', () => {
-    test('should login user successfully', async () => {
-      // Arrange
-      const loginData = {
-        email: validUsers[0].email,
-        password: validUsers[0].password,
-        captchaResponse: 'mock-captcha-response',
-      }
-      mockReq.body = loginData
-
-      // Mock successful captcha verification
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({
-          success: true,
-          challenge_ts: '2025-02-27T04:37:34Z',
-          hostname: 'localhost',
-        }),
-      })
-
-      const mockResponse = {
-        user: { id: 1, email: loginData.email, role: validUsers[0].role },
-        token: 'mockedToken',
-      }
-      loginUserSpy.mockResolvedValue(mockResponse)
-
-      // Act
-      await login(mockReq, mockRes)
-
-      // Assert
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringContaining('recaptcha/api/siteverify'),
-        expect.objectContaining({
-          method: 'POST',
-          headers: { Connection: 'close' },
-        })
-      )
-      expect(loginUserSpy).toHaveBeenCalledWith(loginData.email, loginData.password)
-      expect(mockRes.status).toHaveBeenCalledWith(200)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Logged in successfully',
-        token: mockResponse.token,
-        user: mockResponse.user,
-      })
-    })
-
-    test('should handle missing CAPTCHA response', async () => {
-      // Arrange
-      const loginData = {
-        email: validUsers[0].email,
-        password: validUsers[0].password,
-        // captchaResponse is missing
-      }
-      mockReq.body = loginData
-
-      // Act
-      await login(mockReq, mockRes)
-
-      // Assert
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'CAPTCHA response is required',
-      })
-      expect(loginUserSpy).not.toHaveBeenCalled()
-    })
-
-    test('should handle CAPTCHA verification failure', async () => {
-      // Arrange
-      const loginData = {
-        email: validUsers[0].email,
-        password: validUsers[0].password,
-        captchaResponse: 'invalid-captcha',
-      }
-      mockReq.body = loginData
-
-      // Mock failed captcha verification
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({
-          success: false,
-          'error-codes': ['invalid-input-response'],
-        }),
-      })
-
-      // Act
-      await login(mockReq, mockRes)
-
-      // Assert
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'CAPTCHA verification failed',
-      })
-      expect(loginUserSpy).not.toHaveBeenCalled()
-    })
-
-    test('should handle invalid credentials', async () => {
-      // Arrange
-      const loginData = {
-        email: 'nonexistent@example.com',
-        password: 'wrongpassword',
-        captchaResponse: 'mock-captcha-response',
-      }
-      mockReq.body = loginData
-
-      // Mock successful reCAPTCHA verification
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({
-          success: true,
-          challenge_ts: '2023-04-01T12:00:00Z',
-          'error-codes': ['invalid-input-response'],
-        }),
-      })
-
-      // Use the exact error message that's checked in the controller
-      const error = new Error('Invalid credentials')
-      loginUserSpy.mockRejectedValue(error)
-
-      // Act
-      await login(mockReq, mockRes)
-
-      // Assert
-      expect(loginUserSpy).toHaveBeenCalledWith(loginData.email, loginData.password)
-      expect(mockRes.status).toHaveBeenCalledWith(401)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Invalid credentials' })
-      expect(log.error).toHaveBeenCalled()
-    })
-
-    test('should handle general server errors during login', async () => {
-      // Arrange
-      const loginData = {
-        email: validUsers[0].email,
-        password: validUsers[0].password,
-        captchaResponse: 'mock-captcha-response',
-      }
-      mockReq.body = loginData
-
-      fetchMock.mockResolvedValueOnce({
-        ok: true,
-        json: jest.fn().mockResolvedValue({
-          success: true,
-          challenge_ts: '2025-02-27T04:37:34Z',
-          hostname: 'localhost',
-        }),
-      })
-
-      // Then mock service error
-      const error = new Error('Server is down')
-      loginUserSpy.mockRejectedValue(error)
-
-      // Act
-      await login(mockReq, mockRes)
-
-      // Assert
-      expect(loginUserSpy).toHaveBeenCalledWith(loginData.email, loginData.password)
-      expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Authentication failed' })
-      expect(log.error).toHaveBeenCalled()
-    })
-  })
-
-  describe('logoutUser', () => {
-    test('should logout user successfully', async () => {
-      // Arrange
-      mockReq.headers.authorization = 'Bearer mockedToken'
-      logoutUserSpy.mockResolvedValue()
-
-      // Act
-      await logoutUser(mockReq, mockRes)
-
-      // Assert
-      expect(mockRes.status).toHaveBeenCalledWith(200)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'User logged out successfully' })
-      expect(log.info).toHaveBeenCalledWith('User logged out successfully')
-    })
-
-    test('should return 401 if no token is provided', async () => {
-      // Arrange
-      mockReq.headers.authorization = undefined
-
-      // Act
-      await logoutUser(mockReq, mockRes)
-
-      // Assert
-      expect(mockRes.status).toHaveBeenCalledWith(401)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Unauthorized: No token provided' })
-    })
-
-    test('should handle errors during logout', async () => {
-      // Arrange
-      mockReq.headers.authorization = 'Bearer mockedToken'
-      const error = new Error('Logout failed')
-      logoutUserSpy.mockRejectedValue(error)
-
-      // Act
-      await logoutUser(mockReq, mockRes)
-
-      // Assert
-      expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Logout failed' })
-      expect(log.error).toHaveBeenCalledWith('Logout error:', error)
-    })
   })
 
   describe('getAllUsers', () => {
@@ -468,6 +258,181 @@ describe('User Controller', () => {
       expect(mockRes.json).toHaveBeenCalledWith({
         message: 'Password must be at least 8 characters',
       })
+    })
+  })
+
+  describe('deleteUser', () => {
+    test('should delete a user successfully', async () => {
+      // Arrange
+      const userId = '123'
+      mockReq.params = { id: userId }
+
+      jest.spyOn(UserServiceModule.default.prototype, 'deleteUser').mockResolvedValue(true)
+
+      // Act
+      await userControllerModule.deleteUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'User deleted successfully' })
+      expect(log.info).toHaveBeenCalledWith(`User with ID ${userId} deleted`)
+    })
+
+    test('should return 404 if user to delete is not found', async () => {
+      // Arrange
+      const userId = '999'
+      mockReq.params = { id: userId }
+
+      jest.spyOn(UserServiceModule.default.prototype, 'deleteUser').mockResolvedValue(false)
+
+      // Act
+      await userControllerModule.deleteUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'User not found' })
+    })
+
+    test('should return 500 if an error occurs during deletion', async () => {
+      // Arrange
+      const userId = '123'
+      mockReq.params = { id: userId }
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'deleteUser')
+        .mockRejectedValue(new Error('Database error'))
+
+      // Act
+      await userControllerModule.deleteUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to delete user' })
+      expect(log.error).toHaveBeenCalled()
+    })
+  })
+
+  describe('createUser', () => {
+    test('should create a user successfully', async () => {
+      // Arrange
+      const userData = {
+        email: 'newuser@example.com',
+        password: 'Password123!',
+        first_name: 'New',
+        last_name: 'User',
+        birth_date: '1990-01-01',
+        contact_no: '09876543210',
+        school_id: '12345',
+        role: 'learner',
+        middle_initial: 'X',
+      }
+
+      mockReq.body = userData
+
+      const createdUser = {
+        id: 999,
+        email: userData.email,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        role: userData.role,
+      }
+
+      jest.spyOn(UserServiceModule.default.prototype, 'createUser').mockResolvedValue(createdUser)
+
+      // Act
+      await userControllerModule.createUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(201)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'User created successfully',
+        user: createdUser,
+      })
+      expect(log.info).toHaveBeenCalledWith(`User ${userData.email} created successfully`)
+    })
+
+    test('should return 400 for validation errors during user creation', async () => {
+      // Arrange
+      const userData = {
+        email: 'invalid-email',
+        password: 'weak',
+        first_name: 'New',
+        last_name: 'User',
+      }
+
+      mockReq.body = userData
+
+      const validationError = new Error('Email format is invalid')
+      validationError.name = 'ValidationError'
+      validationError.path = 'email'
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'createUser')
+        .mockRejectedValue(validationError)
+
+      // Act
+      await userControllerModule.createUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { email: 'Email format is invalid' },
+      })
+      expect(log.error).toHaveBeenCalled()
+    })
+
+    test('should return 409 for duplicate email during user creation', async () => {
+      // Arrange
+      const userData = {
+        email: 'existing@example.com',
+        password: 'Password123!',
+        first_name: 'Existing',
+        last_name: 'User',
+      }
+
+      mockReq.body = userData
+
+      const duplicateError = new Error('Email already exists')
+      duplicateError.name = 'SequelizeUniqueConstraintError'
+      duplicateError.errors = [{ path: 'email', message: 'Email already exists' }]
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'createUser')
+        .mockRejectedValue(duplicateError)
+
+      // Act
+      await userControllerModule.createUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(409)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { email: 'Email already exists.' },
+      })
+      expect(log.error).toHaveBeenCalled()
+    })
+
+    test('should return 500 if an unexpected error occurs during user creation', async () => {
+      // Arrange
+      const userData = {
+        email: 'newuser@example.com',
+        password: 'Password123!',
+        first_name: 'New',
+        last_name: 'User',
+      }
+
+      mockReq.body = userData
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'createUser')
+        .mockRejectedValue(new Error('Database connection error'))
+
+      // Act
+      await userControllerModule.createUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to create user' })
+      expect(log.error).toHaveBeenCalled()
     })
   })
 })

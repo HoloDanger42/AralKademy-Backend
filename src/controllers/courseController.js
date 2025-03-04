@@ -1,7 +1,9 @@
 import CourseService from '../services/courseService.js'
 import { Course, User, Group } from '../models/index.js'
 import { log } from '../utils/logger.js'
+import { handleControllerError } from '../utils/errorHandler.js'
 
+// Instantiate course service
 const courseService = new CourseService(Course, User, Group)
 
 /**
@@ -15,8 +17,7 @@ const getAllCourses = async (req, res) => {
     res.status(200).json(courses)
     log.info('Retrieved all courses')
   } catch (error) {
-    log.error('Get all courses error:', error)
-    res.status(500).json({ message: 'Error retrieving courses' })
+    return handleControllerError(error, res, 'Get all courses', 'Error fetching courses')
   }
 }
 
@@ -29,16 +30,15 @@ const getCourseById = async (req, res) => {
   try {
     const { id } = req.params
     const course = await courseService.getCourseById(id)
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' })
-    }
     res.status(200).json(course)
+    log.info(`Course ${id} retrieved successfully`)
   } catch (error) {
-    log.error(`Error getting course by ID ${req.params.id}:`, error)
-    if (error.message === 'Course not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    res.status(500).json({ message: 'Error fetching course' })
+    return handleControllerError(
+      error,
+      res,
+      `Get course by ID ${req.params.id}`,
+      'Error fetching course'
+    )
   }
 }
 
@@ -49,14 +49,17 @@ const getCourseById = async (req, res) => {
  */
 const createCourse = async (req, res) => {
   try {
-    // --- ROLE CHECK (Admin Only) ---
+    // Authorization check
     if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Forbidden: Only admins can create courses.' })
     }
 
     const courseData = req.body
 
+    // Controller-side validation
     const errors = {}
+
+    // Validate course name
     if (!courseData.name) {
       errors.name = 'Course name is required.'
     } else if (courseData.name.length > 255) {
@@ -70,6 +73,7 @@ const createCourse = async (req, res) => {
         errors.user_id = 'Invalid teacher ID.'
       }
     }
+
     // Validate learner_group_id if provided
     if (courseData.learner_group_id) {
       const learnerGroup = await Group.findByPk(courseData.learner_group_id)
@@ -96,24 +100,10 @@ const createCourse = async (req, res) => {
       message: 'Course created successfully',
       course: newCourse,
     })
+
     log.info(`Course ${newCourse.name} was successfully created`)
   } catch (error) {
-    log.error('Create course error:', error)
-    // Handle errors (validation, unique constraints, etc.)
-    if (error.name === 'SequelizeValidationError' || error.name === 'ValidationError') {
-      if (error.errors && Array.isArray(error.errors)) {
-        const sequelizeErrors = {}
-        error.errors.forEach((err) => {
-          sequelizeErrors[err.path] = err.message
-        })
-        return res.status(400).json({ errors: sequelizeErrors })
-      }
-      return res.status(400).json({ errors: { name: error.message } })
-    }
-    if (error.message === 'Course name already exists') {
-      return res.status(409).json({ errors: { name: error.message } })
-    }
-    return res.status(500).json({ message: 'Error creating course' })
+    return handleControllerError(error, res, 'Create course', 'Error creating course')
   }
 }
 
@@ -165,48 +155,12 @@ const updateCourse = async (req, res) => {
     res.status(200).json(updatedCourse)
     log.info(`Course with id ${id} updated successfully`)
   } catch (error) {
-    log.error(`Error updating course with ID ${req.params.id}:`, error)
-    if (error.message === 'Course not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    if (error.name === 'SequelizeValidationError') {
-      const sequelizeErrors = {}
-      error.errors.forEach((err) => {
-        sequelizeErrors[err.path] = err.message
-      })
-      return res.status(400).json({ errors: sequelizeErrors })
-    }
-    if (error.message === 'Course name already exists') {
-      return res.status(409).json({ errors: { name: error.message } }) // 409 Conflict
-    }
-    return res.status(500).json({ message: error.message || 'Error updating course' })
-  }
-}
-
-/**
- * Soft deletes a course.
- * @param {Object} req - The request object containing the course ID in req.params.
- * @param {Object} res - The response object.
- */
-const softDeleteCourse = async (req, res) => {
-  try {
-    // --- ROLE CHECK (Admin Only) ---
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Forbidden: Only admins can soft-delete courses.' })
-    }
-    const { id } = req.params
-    const deletedCourse = await courseService.softDeleteCourse(id)
-    res.status(200).json({
-      message: 'Course deleted successfully',
-      course: deletedCourse,
-    })
-    log.info(`Course ${id} was successfully deleted`)
-  } catch (error) {
-    log.error(`Error soft-deleting course with ID ${req.params.id}:`, error)
-    if (error.message === 'Course not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    return res.status(500).json({ message: 'Error deleting course' })
+    return handleControllerError(
+      error,
+      res,
+      `Update course ${req.params.id}`,
+      'Error updating course'
+    )
   }
 }
 
@@ -230,25 +184,40 @@ const editCourse = async (req, res) => {
 
     log.info(`Course ${courseId} was successfully edited`)
   } catch (error) {
-    log.error('Edit course error:', error)
+    return handleControllerError(
+      error,
+      res,
+      `Edit course ${req.params.courseId}`,
+      'Error editing course'
+    )
+  }
+}
 
-    if (error.message === 'Course not found') {
-      return res.status(404).json({ message: error.message })
+/**
+ * Soft deletes a course.
+ * @param {Object} req - The request object containing the course ID in req.params.
+ * @param {Object} res - The response object.
+ */
+const softDeleteCourse = async (req, res) => {
+  try {
+    // --- ROLE CHECK (Admin Only) ---
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden: Only admins can soft-delete courses.' })
     }
-
-    if (error.message === 'Course name is required') {
-      return res.status(400).json({ message: error.message })
-    }
-
-    if (error.message === 'Course name is too long') {
-      return res.status(400).json({ message: error.message })
-    }
-
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(409).json({ message: 'Course name already exists' })
-    }
-
-    res.status(500).json({ message: 'Error editing course' })
+    const { id } = req.params
+    const deletedCourse = await courseService.softDeleteCourse(id)
+    res.status(200).json({
+      message: 'Course deleted successfully',
+      course: deletedCourse,
+    })
+    log.info(`Course ${id} was successfully deleted`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Soft delete course ${req.params.id}`,
+      'Error deleting course'
+    )
   }
 }
 
@@ -271,11 +240,12 @@ const deleteCourse = async (req, res) => {
     res.status(204).end()
     log.info(`Course with ID ${id} permanently deleted successfully`)
   } catch (error) {
-    log.error(`Error deleting course with ID ${req.params.id}:`, error)
-    if (error.message === 'Course not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    return res.status(500).json({ message: 'Error deleting course' })
+    return handleControllerError(
+      error,
+      res,
+      `Delete course ${req.params.id}`,
+      'Error permanently deleting course'
+    )
   }
 }
 
@@ -301,17 +271,12 @@ const assignTeacherCourse = async (req, res) => {
       .json({ message: 'Teacher assigned to course successfully', course: updatedCourse })
     log.info(`Teacher ${userId} assigned to course ${id}`)
   } catch (error) {
-    log.error('Error assigning teacher to course:', error)
-    if (error.message === 'Course not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    if (error.message === 'Teacher not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    if (error.message === 'Provided user ID is not a teacher.') {
-      return res.status(400).json({ message: error.message }) // Bad request
-    }
-    return res.status(500).json({ message: error.message || 'Error assigning teacher' })
+    return handleControllerError(
+      error,
+      res,
+      `Assign teacher to course ${req.params.id}`,
+      'Error assigning teacher to course'
+    )
   }
 }
 
@@ -337,17 +302,12 @@ const assignLearnerGroupCourse = async (req, res) => {
     })
     log.info(`Learner group ${learnerGroupId} assigned to course ${id}`)
   } catch (error) {
-    log.error('Error assigning learner group to course:', error)
-    if (error.message === 'Course not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    if (error.message === 'Learner Group not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    if (error.message === 'Invalid group type. Expected type is learner') {
-      return res.status(400).json({ message: error.message })
-    }
-    return res.status(500).json({ message: error.message || 'Error assigning learner group' })
+    return handleControllerError(
+      error,
+      res,
+      `Assign learner group to course ${req.params.id}`,
+      'Error assigning learner group to course'
+    )
   }
 }
 
@@ -376,19 +336,12 @@ const assignStudentTeacherGroupCourse = async (req, res) => {
     })
     log.info(`Student teacher group ${studentTeacherGroupId} assigned to course ${id}`)
   } catch (error) {
-    log.error('Error assigning student teacher group to course:', error)
-    if (error.message === 'Course not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    if (error.message === 'Student Teacher Group not found') {
-      return res.status(404).json({ message: error.message })
-    }
-    if (error.message === 'Invalid group type. Expected type is student_teacher') {
-      return res.status(400).json({ message: error.message })
-    }
-    return res
-      .status(500)
-      .json({ message: error.message || 'Error assigning student teacher group' })
+    return handleControllerError(
+      error,
+      res,
+      `Assign student teacher group to course ${req.params.id}`,
+      'Error assigning student teacher group to course'
+    )
   }
 }
 

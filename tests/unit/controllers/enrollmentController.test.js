@@ -158,17 +158,26 @@ describe('Enrollment Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { middle_initial: 'Middle Initial is maximum of 3 characters only.' },
+        errors: { middle_initial: 'Middle Initial is maximum of 2 characters only.' },
       })
     })
 
     test('should handle duplicate email error', async () => {
-      // Updated test name
       // Arrange
       const enrollmentData = validEnrollments[0]
       mockReq.body = enrollmentData
+
       const error = new Error('Email already exists')
       error.name = 'SequelizeUniqueConstraintError' // Simulate Sequelize unique constraint error
+      error.errors = [
+        {
+          message: 'Email already exists',
+          path: 'email',
+          value: enrollmentData.email,
+          type: 'unique violation',
+        },
+      ]
+
       createEnrollmentSpy.mockRejectedValue(error)
 
       // Act
@@ -457,7 +466,7 @@ describe('Enrollment Controller', () => {
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Failed to retrieve enrollments by school',
+        message: 'Failed to retrieve enrollments by schools',
       })
       expect(log.error).toHaveBeenCalled()
     })
@@ -511,7 +520,10 @@ describe('Enrollment Controller', () => {
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to check enrollment status' })
-      expect(log.error).toHaveBeenCalledWith('Error checking enrollment status:', error)
+      expect(log.error).toHaveBeenCalledWith(
+        'Check enrollment status for test@example.com error:',
+        error
+      )
     })
 
     test('should handle missing email', async () => {
@@ -586,7 +598,8 @@ describe('Enrollment Controller', () => {
       mockReq.params.enrollmentId = '1'
       mockReq.body = { email: 'duplicate@example.com' }
       const error = new Error('Email already exists')
-      error.name = 'SequelizeUniqueConstraintError' // Correct error name
+      error.name = 'SequelizeUniqueConstraintError'
+      error.errors = [{ path: 'email', message: 'Email already exists' }]
       updateEnrollmentSpy.mockRejectedValue(error)
 
       // Act
@@ -610,7 +623,7 @@ describe('Enrollment Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Internal server error' }) // Generic message from controller
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to update enrollment' }) // Generic message from controller
       expect(log.error).toHaveBeenCalled()
     })
   })
@@ -658,7 +671,7 @@ describe('Enrollment Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Internal server error' }) // Generic message from controller
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to delete enrollment' }) // Generic message from controller
       expect(log.error).toHaveBeenCalled()
     })
   })

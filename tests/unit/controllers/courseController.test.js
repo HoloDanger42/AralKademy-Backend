@@ -53,7 +53,7 @@ describe('Course Controller', () => {
       await getAllCourses(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error retrieving courses' })
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error fetching courses' })
       expect(log.error).toHaveBeenCalledWith('Get all courses error:', expect.any(Error))
     })
   })
@@ -106,7 +106,16 @@ describe('Course Controller', () => {
 
       // Create a standard error with the exact message the controller checks for
       const uniqueConstraintError = new Error('Course name already exists')
-      // Don't set the name property to ValidationError
+      uniqueConstraintError.name = 'SequelizeUniqueConstraintError'
+      uniqueConstraintError.errors = [
+        {
+          message: 'Course name already exists',
+          type: 'unique violation',
+          path: 'name',
+          value: 'New Course',
+        },
+      ]
+
       jest.spyOn(CourseService.prototype, 'createCourse').mockRejectedValue(uniqueConstraintError)
 
       await createCourse(mockReq, mockRes)
@@ -114,7 +123,7 @@ describe('Course Controller', () => {
       expect(log.error).toHaveBeenCalledWith('Create course error:', expect.any(Object))
       expect(mockRes.status).toHaveBeenCalledWith(409)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { name: 'Course name already exists' },
+        errors: { name: 'Name already exists.' },
       })
     })
 
@@ -124,6 +133,8 @@ describe('Course Controller', () => {
 
       const validationError = new Error('Course name is too long.')
       validationError.name = 'ValidationError'
+      validationError.path = 'name'
+
       jest.spyOn(CourseService.prototype, 'createCourse').mockRejectedValue(validationError)
 
       await createCourse(mockReq, mockRes)
@@ -317,6 +328,7 @@ describe('Course Controller', () => {
 
     test('should handle when course not found (assign student teacher group course)', async () => {
       mockReq.user = { role: 'admin' }
+      mockReq.params = { id: 1 }
 
       jest
         .spyOn(CourseService.prototype, 'assignStudentTeacherGroupCourse')
@@ -327,13 +339,14 @@ describe('Course Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(404)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
       expect(log.error).toHaveBeenCalledWith(
-        'Error assigning student teacher group to course:',
+        'Assign student teacher group to course 1 error:',
         expect.any(Error)
       )
     })
 
     test('should handle error when assigning the student-teacher group (assign student teacher group course)', async () => {
       mockReq.user = { role: 'admin' }
+      mockReq.params = { id: 1 }
 
       jest
         .spyOn(CourseService.prototype, 'assignStudentTeacherGroupCourse')
@@ -346,7 +359,7 @@ describe('Course Controller', () => {
         message: 'Error assigning student teacher group to course',
       })
       expect(log.error).toHaveBeenCalledWith(
-        'Error assigning student teacher group to course:',
+        'Assign student teacher group to course 1 error:',
         expect.any(Error)
       )
     })
@@ -375,6 +388,7 @@ describe('Course Controller', () => {
 
     test('should handle when course not found (assign learner group course)', async () => {
       mockReq.user = { role: 'admin' }
+      mockReq.params = { id: 1 }
 
       jest
         .spyOn(CourseService.prototype, 'assignLearnerGroupCourse')
@@ -385,13 +399,14 @@ describe('Course Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(404)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
       expect(log.error).toHaveBeenCalledWith(
-        'Error assigning learner group to course:',
+        'Assign learner group to course 1 error:',
         expect.any(Error)
       )
     })
 
     test('should handle error when assigning the learner group (assign learner group course)', async () => {
       mockReq.user = { role: 'admin' }
+      mockReq.params = { id: 1 }
 
       jest
         .spyOn(CourseService.prototype, 'assignLearnerGroupCourse')
@@ -404,7 +419,7 @@ describe('Course Controller', () => {
         message: 'Error assigning learner group to course',
       })
       expect(log.error).toHaveBeenCalledWith(
-        'Error assigning learner group to course:',
+        'Assign learner group to course 1 error:',
         expect.any(Error)
       )
     })
@@ -431,6 +446,7 @@ describe('Course Controller', () => {
 
     test('should handle when course not found (assign teacher course)', async () => {
       mockReq.user = { role: 'admin' }
+      mockReq.params = { id: 1 }
 
       jest
         .spyOn(CourseService.prototype, 'assignTeacherCourse')
@@ -440,14 +456,12 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(404)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
-      expect(log.error).toHaveBeenCalledWith(
-        'Error assigning teacher to course:',
-        expect.any(Error)
-      )
+      expect(log.error).toHaveBeenCalledWith('Assign teacher to course 1 error:', expect.any(Error))
     })
 
     test('should handle error when assigning the teacher (assign teacher course)', async () => {
       mockReq.user = { role: 'admin' }
+      mockReq.params = { id: 1 }
 
       jest
         .spyOn(CourseService.prototype, 'assignTeacherCourse')
@@ -457,16 +471,13 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error assigning teacher to course' })
-      expect(log.error).toHaveBeenCalledWith(
-        'Error assigning teacher to course:',
-        expect.any(Error)
-      )
+      expect(log.error).toHaveBeenCalledWith('Assign teacher to course 1 error:', expect.any(Error))
     })
   })
 
   describe('getCourseById', () => {
     test('should return a course by ID successfully (get course by id)', async () => {
-      mockReq.params = { courseId: 1 }
+      mockReq.params = { id: 1 }
       const course = { id: 1, name: 'Test Course' }
       jest.spyOn(CourseService.prototype, 'getCourseById').mockResolvedValue(course)
 
@@ -487,7 +498,7 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(404)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
-      expect(log.error).toHaveBeenCalledWith('Error getting course by ID 123:', expect.any(Error))
+      expect(log.error).toHaveBeenCalledWith('Get course by ID 123 error:', expect.any(Error))
     })
 
     test('should handle error when fetching the course (get course by id)', async () => {
@@ -501,7 +512,7 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error fetching course' })
-      expect(log.error).toHaveBeenCalledWith('Error getting course by ID 1:', expect.any(Error))
+      expect(log.error).toHaveBeenCalledWith('Get course by ID 1 error:', expect.any(Error))
     })
   })
 
@@ -535,10 +546,7 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(404)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
-      expect(log.error).toHaveBeenCalledWith(
-        'Error soft-deleting course with ID 1:',
-        expect.any(Error)
-      )
+      expect(log.error).toHaveBeenCalledWith('Soft delete course 1 error:', expect.any(Error))
     })
 
     test('should handle error when deleting the course (soft delete course)', async () => {
@@ -552,10 +560,7 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error deleting course' })
-      expect(log.error).toHaveBeenCalledWith(
-        'Error soft-deleting course with ID 1:',
-        expect.any(Error)
-      )
+      expect(log.error).toHaveBeenCalledWith('Soft delete course 1 error:', expect.any(Error))
     })
   })
 
@@ -577,6 +582,7 @@ describe('Course Controller', () => {
     })
 
     test('should handle when course not found (edit course)', async () => {
+      mockReq.params = { courseId: 1 }
       jest
         .spyOn(CourseService.prototype, 'editCourse')
         .mockRejectedValue(new Error('Course not found'))
@@ -585,10 +591,12 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(404)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
-      expect(log.error).toHaveBeenCalledWith('Edit course error:', expect.any(Error))
+      expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
     })
 
     test('should handle course name is required (edit course)', async () => {
+      mockReq.params = { courseId: 1 }
+
       jest
         .spyOn(CourseService.prototype, 'editCourse')
         .mockRejectedValue(new Error('Course name is required'))
@@ -597,10 +605,12 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course name is required' })
-      expect(log.error).toHaveBeenCalledWith('Edit course error:', expect.any(Error))
+      expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
     })
 
     test('should handle course name is too long (edit course)', async () => {
+      mockReq.params = { courseId: 1 }
+
       jest
         .spyOn(CourseService.prototype, 'editCourse')
         .mockRejectedValue(new Error('Course name is too long'))
@@ -609,10 +619,11 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course name is too long' })
-      expect(log.error).toHaveBeenCalledWith('Edit course error:', expect.any(Error))
+      expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
     })
 
     test('should handle error when editing the course (edit course)', async () => {
+      mockReq.params = { courseId: 1 }
       jest
         .spyOn(CourseService.prototype, 'editCourse')
         .mockRejectedValue(new Error('Error editing course'))
@@ -621,19 +632,32 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error editing course' })
-      expect(log.error).toHaveBeenCalledWith('Edit course error:', expect.any(Error))
+      expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
     })
 
     test('should handle course name already exists (edit course)', async () => {
-      jest
-        .spyOn(CourseService.prototype, 'editCourse')
-        .mockRejectedValue({ name: 'SequelizeUniqueConstraintError' })
+      mockReq.params = { courseId: 1 }
+
+      const sequelizeError = {
+        name: 'SequelizeUniqueConstraintError',
+        errors: [
+          {
+            message: 'Course name must be unique',
+            path: 'name',
+          },
+        ],
+        parent: { code: 'ER_DUP_ENTRY' },
+      }
+
+      jest.spyOn(CourseService.prototype, 'editCourse').mockRejectedValue(sequelizeError)
 
       await editCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(409)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course name already exists' })
-      expect(log.error).toHaveBeenCalledWith('Edit course error:', expect.any(Object))
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: { name: 'Name already exists.' },
+      })
+      expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Object))
     })
   })
 
@@ -733,13 +757,23 @@ describe('Course Controller', () => {
       mockReq.params = { id: '1' }
       mockReq.body = { name: 'Existing Course Name', description: 'Updated Description' }
 
-      const uniqueError = new Error('Course name already exists')
-      jest.spyOn(CourseService.prototype, 'updateCourse').mockRejectedValue(uniqueError)
+      const sequelizeError = {
+        name: 'SequelizeUniqueConstraintError',
+        errors: [
+          {
+            message: 'Course name must be unique',
+            path: 'name',
+          },
+        ],
+        parent: { code: 'ER_DUP_ENTRY' },
+      }
+
+      jest.spyOn(CourseService.prototype, 'updateCourse').mockRejectedValue(sequelizeError)
 
       await updateCourse(mockReq, mockRes)
       expect(mockRes.status).toHaveBeenCalledWith(409)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { name: 'Course name already exists' },
+        errors: { name: 'Name already exists.' },
       })
     })
 
@@ -754,7 +788,7 @@ describe('Course Controller', () => {
       await updateCourse(mockReq, mockRes)
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Unexpected error',
+        message: 'Error updating course',
       })
     })
   })
@@ -819,10 +853,7 @@ describe('Course Controller', () => {
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
-      expect(log.error).toHaveBeenCalledWith(
-        'Error deleting course with ID 999:',
-        expect.any(Error)
-      )
+      expect(log.error).toHaveBeenCalledWith('Delete course 999 error:', expect.any(Error))
     })
 
     test('should return 500 for any other error', async () => {
@@ -838,8 +869,8 @@ describe('Course Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error deleting course' })
-      expect(log.error).toHaveBeenCalledWith('Error deleting course with ID 1:', expect.any(Error))
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error permanently deleting course' })
+      expect(log.error).toHaveBeenCalledWith('Delete course 1 error:', expect.any(Error))
     })
   })
 })

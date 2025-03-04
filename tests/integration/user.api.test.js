@@ -30,7 +30,7 @@ describe('Users API Integration Tests', () => {
       birth_date: new Date('1990-01-01'),
       contact_no: '09123456789',
       school_id: school.school_id,
-      role: 'teacher',
+      role: 'admin',
     })
     testUserId = user.id
 
@@ -38,6 +38,15 @@ describe('Users API Integration Tests', () => {
     await Teacher.create({
       user_id: user.id,
     })
+
+    // Login to get token
+    const loginResponse = await request(app).post('/api/auth/login').send({
+      email: 'testUser@example.com',
+      password: 'testPassword',
+      captchaResponse: 'test-bypass-captcha',
+    })
+
+    authToken = loginResponse.body.token // Save the token
 
     server = app.listen(0)
   })
@@ -48,20 +57,6 @@ describe('Users API Integration Tests', () => {
     } else {
       done()
     }
-  })
-
-  describe('POST /users/login', () => {
-    it('should log in a user and return a valid token', async () => {
-      const loginData = {
-        email: 'testUser@example.com',
-        password: 'testPassword',
-        captchaResponse: 'test-bypass-captcha',
-      }
-      const res = await request(app).post('/api/users/login').send(loginData).expect(200)
-
-      expect(res.body).toHaveProperty('token')
-      authToken = res.body.token
-    })
   })
 
   describe('GET /users', () => {
@@ -94,14 +89,9 @@ describe('Users API Integration Tests', () => {
 
   describe('GET /users/:id', () => {
     it('should retrieve a specific user when authorized', async () => {
-      console.log('Making request with test user ID:', testUserId)
-
       const res = await request(app)
         .get(`/api/users/${testUserId}`)
         .set('Authorization', `Bearer ${authToken}`)
-
-      console.log('Response status:', res.status)
-      console.log('Response body:', res.body)
 
       expect(res.status).toBe(200)
       expect(res.body).toEqual(

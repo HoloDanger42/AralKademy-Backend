@@ -46,7 +46,7 @@ describe('Course Endpoints (Integration Tests)', () => {
     server = app.listen(0)
 
     // Login to get auth token
-    const loginRes = await request(app).post('/api/users/login').send({
+    const loginRes = await request(app).post('/api/auth/login').send({
       email: 'testadmin@example.com',
       password: 'testPassword',
       captchaResponse: 'test-bypass-captcha',
