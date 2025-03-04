@@ -56,7 +56,7 @@ const FIFTEEN_MINUTES = config.api.rateLimit.window
 const AUTH_MAX_REQUESTS = config.api.rateLimit.auth.max
 
 // Apply rate limiting based on environment variables
-const applyRateLimiter = config.env !== 'test'
+const applyRateLimiter = config.env !== 'test' && config.env !== 'development'
 
 // Rate limiting
 if (applyRateLimiter) {

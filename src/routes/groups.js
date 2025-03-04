@@ -34,21 +34,7 @@ const groupsRouter = express.Router()
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   group_id:
- *                     type: integer
- *                     example: 1
- *                   name:
- *                     type: string
- *                     example: "Grade 7 Math"
- *                   group_type:
- *                     type: string
- *                     enum: [student_teacher, learner]
- *                     example: "learner"
- *                   createdAt:
- *                     type: string
- *                     format: date-time
+ *                 $ref: '#/components/schemas/Group'
  *       400:
  *         description: Invalid group type
  *         content:
@@ -111,17 +97,7 @@ groupsRouter.get('/', authMiddleware, getAllGroups)
  *                   type: string
  *                   example: "Group created successfully"
  *                 group:
- *                   type: object
- *                   properties:
- *                     group_id:
- *                       type: integer
- *                       example: 1
- *                     name:
- *                       type: string
- *                       example: "Grade 8 Science"
- *                     group_type:
- *                       type: string
- *                       example: "learner"
+ *                   $ref: '#/components/schemas/Group'
  *       400:
  *         description: Missing required fields
  *         content:
@@ -295,21 +271,7 @@ groupsRouter.post('/assign-learners', authMiddleware, assignLearnerMembers)
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 group_id:
- *                   type: integer
- *                   example: 1
- *                 name:
- *                   type: string
- *                   example: "Grade 7 Math"
- *                 group_type:
- *                   type: string
- *                   enum: [student_teacher, learner]
- *                   example: "learner"
- *                 createdAt:
- *                   type: string
- *                   format: date-time
+ *               $ref: '#/components/schemas/Group'
  *       401:
  *         description: Unauthorized
  *         content:

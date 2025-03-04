@@ -49,20 +49,7 @@ const router = express.Router()
  *                   type: string
  *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *                 user:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                       example: 1
- *                     email:
- *                       type: string
- *                       example: user@example.com
- *                     name:
- *                       type: string
- *                       example: John Doe
- *                     role:
- *                       type: string
- *                       example: student
+ *                   $ref: '#/components/schemas/User'
  *       400:
  *         description: Missing required fields or invalid captcha
  *         content:

@@ -41,8 +41,8 @@ const userService = new UserService(
  * @returns {Promise<Object>} - An object containing the verification result.
  */
 export const verifyCaptcha = async (captchaResponse) => {
-  // Skip verification in test environment
-  if (process.env.NODE_ENV === 'test') {
+  // Skip verification in test and development environment
+  if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development') {
     return { success: true }
   }
 

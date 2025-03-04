@@ -237,7 +237,7 @@ const deleteCourse = async (req, res) => {
 
     const { id } = req.params
     await courseService.deleteCourse(id)
-    res.status(204).end()
+    res.status(200).json({ message: 'Course permanently deleted successfully' })
     log.info(`Course with ID ${id} permanently deleted successfully`)
   } catch (error) {
     return handleControllerError(

@@ -43,27 +43,7 @@ const enrollmentRouter = express.Router()
  *                 enrollments:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       enrollment_id:
- *                         type: integer
- *                         example: 1
- *                       email:
- *                         type: string
- *                         example: student@example.com
- *                       first_name:
- *                         type: string
- *                         example: John
- *                       last_name:
- *                         type: string
- *                         example: Doe
- *                       status:
- *                         type: string
- *                         enum: [pending, approved, rejected]
- *                         example: pending
- *                       createdAt:
- *                         type: string
- *                         format: date-time
+ *                     $ref: '#/components/schemas/Enrollment'
  *                 totalItems:
  *                   type: integer
  *                   example: 45
@@ -156,7 +136,7 @@ enrollmentRouter.get('/', authMiddleware, enrollmentController.getAllEnrollments
  *                   type: string
  *                   example: "Enrollment submitted successfully"
  *                 enrollment:
- *                   type: object
+ *                   $ref: '#/components/schemas/Enrollment'
  *       400:
  *         description: Invalid input data
  *         content:
@@ -215,7 +195,7 @@ enrollmentRouter.post('/', enrollmentController.createEnrollment)
  *                   enum: [pending, approved, rejected]
  *                   example: pending
  *                 enrollment:
- *                   type: object
+ *                   $ref: '#/components/schemas/Enrollment'
  *       404:
  *         description: Enrollment not found
  *         content:
@@ -270,7 +250,7 @@ enrollmentRouter.post('/check-status', enrollmentController.checkEnrollmentStatu
  *                 enrollments:
  *                   type: array
  *                   items:
- *                     type: object
+ *                     $ref: '#/components/schemas/Enrollment'
  *                 totalItems:
  *                   type: integer
  *                 totalPages:
@@ -318,43 +298,7 @@ enrollmentRouter.get(
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 enrollment_id:
- *                   type: integer
- *                   example: 1
- *                 email:
- *                   type: string
- *                   example: student@example.com
- *                 first_name:
- *                   type: string
- *                   example: John
- *                 last_name:
- *                   type: string
- *                   example: Doe
- *                 middle_initial:
- *                   type: string
- *                   example: A
- *                 contact_no:
- *                   type: string
- *                   example: "09123456789"
- *                 birth_date:
- *                   type: string
- *                   format: date
- *                   example: "2010-01-15"
- *                 year_level:
- *                   type: integer
- *                   example: 3
- *                 school_id:
- *                   type: integer
- *                   example: 1
- *                 status:
- *                   type: string
- *                   enum: [pending, approved, rejected]
- *                   example: pending
- *                 createdAt:
- *                   type: string
- *                   format: date-time
+ *               $ref: '#/components/schemas/Enrollment'
  *       401:
  *         description: Unauthorized
  *         content:
@@ -398,7 +342,7 @@ enrollmentRouter.get('/:enrollmentId', authMiddleware, enrollmentController.getE
  *                   type: string
  *                   example: "Enrollment approved successfully"
  *                 enrollment:
- *                   type: object
+ *                   $ref: '#/components/schemas/Enrollment'
  *       401:
  *         description: Unauthorized
  *         content:
@@ -452,7 +396,7 @@ enrollmentRouter.patch(
  *                   type: string
  *                   example: "Enrollment rejected successfully"
  *                 enrollment:
- *                   type: object
+ *                   $ref: '#/components/schemas/Enrollment'
  *       401:
  *         description: Unauthorized
  *         content:
@@ -535,7 +479,7 @@ enrollmentRouter.patch(
  *                   type: string
  *                   example: "Enrollment updated successfully"
  *                 enrollment:
- *                   type: object
+ *                   $ref: '#/components/schemas/Enrollment'
  *       400:
  *         description: Invalid input data
  *         content:

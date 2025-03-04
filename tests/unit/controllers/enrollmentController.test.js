@@ -639,8 +639,8 @@ describe('Enrollment Controller', () => {
       await deleteEnrollment(mockReq, mockRes)
 
       // Assert
-      expect(mockRes.status).toHaveBeenCalledWith(204)
-      expect(mockRes.end).toHaveBeenCalled() // Check for .end() for 204 No Content
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Enrollment deleted successfully' })
       expect(deleteEnrollmentSpy).toHaveBeenCalledWith('1')
       expect(log.info).toHaveBeenCalled()
     })

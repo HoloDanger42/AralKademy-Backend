@@ -834,8 +834,10 @@ describe('Course Controller', () => {
 
       // Assert
       expect(CourseService.prototype.deleteCourse).toHaveBeenCalledWith('1')
-      expect(mockRes.status).toHaveBeenCalledWith(204)
-      expect(mockRes.end).toHaveBeenCalled()
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Course permanently deleted successfully',
+      })
       expect(log.info).toHaveBeenCalledWith('Course with ID 1 permanently deleted successfully')
     })
 
