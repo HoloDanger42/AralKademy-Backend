@@ -1,45 +1,101 @@
 import { log } from '../utils/logger.js'
+import { AppError } from '../utils/errors.js'
 
+/**
+ * Centralized error handling middleware
+ */
 const errorMiddleware = (err, req, res, _next) => {
+  // Log the error with request context
   log.error(`Error: ${err.message}`, {
-    stack: err.stack,
-    headers: req.headers,
+    errorName: err.name,
+    statusCode: err.statusCode || err.status || 500,
+    path: req.path,
+    method: req.method,
+    ip: req.ip,
     body: req.body,
+    headers: req.headers,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   })
 
-  if (err.status === 404) {
-    return res.status(404).json({ message: err.message || 'Not Found' })
+  // If it's a custom AppError, use its properties
+  if (err instanceof AppError) {
+    const response = {
+      error: {
+        message: err.message,
+        code: err.errorCode,
+      },
+    }
+
+    // Add validation errors if present
+    if (err.errors) {
+      response.error.details = err.errors
+    }
+
+    return res.status(err.statusCode).json(response)
   }
 
-  if (err.status || err.statusCode) {
-    return res.status(err.status || err.statusCode).json({ message: err.message })
-  }
+  // Handle Sequelize errors
+  if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
+    const errors = {}
+    err.errors.forEach((error) => {
+      errors[error.path] = error.message
+    })
 
-  if (err instanceof SpecificError) {
-    return res.status(err.statusCode || 500).json({ message: err.message })
-  }
-  if (err.name === 'SequelizeUniqueConstraintError') {
-    return res.status(409).json({
-      message: 'That already exists in our system, please try something else',
+    return res.status(400).json({
+      error: {
+        message: 'Validation failed',
+        code: 'VALIDATION_ERROR',
+        details: errors,
+      },
     })
   }
-  if (err.name === 'SequelizeValidationError') {
-    return res.status(400).json({ message: err.message })
-  }
+
+  // Handle JWT errors
   if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({ message: 'Unauthorized: Invalid Token' })
-  }
-  if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({ message: 'Unauthorized: Token Expired' })
+    return res.status(401).json({
+      error: {
+        message: 'Invalid authentication token',
+        code: 'INVALID_TOKEN',
+      },
+    })
   }
 
-  return res.status(500).json({ message: err.message })
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({
+      error: {
+        message: 'Authentication token has expired',
+        code: 'TOKEN_EXPIRED',
+      },
+    })
+  }
+
+  // Handle 404 errors
+  if (err.status === 404) {
+    return res.status(404).json({
+      error: {
+        message: err.message || 'Resource not found',
+        code: 'NOT_FOUND',
+      },
+    })
+  }
+
+  // Any other error should be treated as a 500 server error
+  const statusCode = err.status || err.statusCode || 500
+  return res.status(statusCode).json({
+    error: {
+      message:
+        process.env.NODE_ENV === 'production'
+          ? 'An unexpected error occurred'
+          : err.message || 'Internal server error',
+      code: 'INTERNAL_SERVER_ERROR',
+    },
+  })
 }
 
-class SpecificError extends Error {
+// Export error middleware and legacy SpecificError for backward compatibility
+class SpecificError extends AppError {
   constructor(message, statusCode) {
-    super(message)
-    this.statusCode = statusCode
+    super(message, statusCode)
     this.name = 'SpecificError'
   }
 }

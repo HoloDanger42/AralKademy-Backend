@@ -100,7 +100,7 @@ describe('Enrollment Controller', () => {
       }
 
       // Act
-      await createEnrollment(mockReq, mockRes) // Updated function call
+      await createEnrollment(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(400)
@@ -181,11 +181,19 @@ describe('Enrollment Controller', () => {
       createEnrollmentSpy.mockRejectedValue(error)
 
       // Act
-      await createEnrollment(mockReq, mockRes) // Updated function call
+      await createEnrollment(mockReq, mockRes)
 
       // Assert
-      expect(mockRes.status).toHaveBeenCalledWith(409) // Updated status code to 409
-      expect(mockRes.json).toHaveBeenCalledWith({ errors: { email: 'Email already exists.' } }) // Updated message format
+      expect(mockRes.status).toHaveBeenCalledWith(409)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'CONFLICT',
+          details: {
+            email: 'Email already exists.',
+          },
+          message: 'Resource already exists',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
 
@@ -202,38 +210,48 @@ describe('Enrollment Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({ errors: { email: 'Email is invalid' } })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'VALIDATION_ERROR',
+          details: {
+            email: 'Email is invalid',
+          },
+          message: 'Validation failed',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
 
     test('should handle unexpected server errors during enrollment', async () => {
-      // Updated test name
       // Arrange
       mockReq.body = validEnrollments[0]
       const error = new Error('Unexpected error')
       createEnrollmentSpy.mockRejectedValue(error)
 
       // Act
-      await createEnrollment(mockReq, mockRes) // Updated function call
+      await createEnrollment(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to create enrollment' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to create enrollment',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
   })
 
   describe('getEnrollmentById', () => {
-    // Updated describe name
     test('should retrieve enrollment by ID successfully', async () => {
-      // Updated test name
       // Arrange
-      mockReq.params.enrollmentId = '1' // Updated param name
+      mockReq.params.enrollmentId = '1'
       const mockEnrollment = { id: 1, ...validEnrollments[0] }
       getEnrollmentByIdSpy.mockResolvedValue(mockEnrollment)
 
       // Act
-      await getEnrollmentById(mockReq, mockRes) // Updated function call
+      await getEnrollmentById(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(200)
@@ -242,49 +260,55 @@ describe('Enrollment Controller', () => {
     })
 
     test('should handle enrollment not found', async () => {
-      // Updated test name
       // Arrange
-      mockReq.params.enrollmentId = '99' // Updated param name
+      mockReq.params.enrollmentId = '99'
       const error = new Error('Enrollment not found')
       getEnrollmentByIdSpy.mockRejectedValue(error)
 
       // Act
-      await getEnrollmentById(mockReq, mockRes) // Updated function call
+      await getEnrollmentById(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Enrollment not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Enrollment not found',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
 
     test('should handle unexpected server errors during retrieval', async () => {
-      // Updated test name
       // Arrange
-      mockReq.params.enrollmentId = '1' // Updated param name
+      mockReq.params.enrollmentId = '1'
       const error = new Error('Unexpected error')
       getEnrollmentByIdSpy.mockRejectedValue(error)
 
       // Act
-      await getEnrollmentById(mockReq, mockRes) // Updated function call
+      await getEnrollmentById(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to retrieve enrollment' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to retrieve enrollment',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
   })
 
   describe('approveEnrollment', () => {
-    // Updated describe name
     test('should approve enrollment successfully', async () => {
-      // Updated test name
       // Arrange
-      mockReq.params.enrollmentId = '1' // Updated param name
+      mockReq.params.enrollmentId = '1'
       const mockEnrollment = { id: 1, status: 'approved' }
       approveEnrollmentSpy.mockResolvedValue(mockEnrollment)
 
       // Act
-      await approveEnrollment(mockReq, mockRes) // Updated function call
+      await approveEnrollment(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(200)
@@ -293,49 +317,55 @@ describe('Enrollment Controller', () => {
     })
 
     test('should handle enrollment not found', async () => {
-      // Updated test name
       // Arrange
-      mockReq.params.enrollmentId = '99' // Updated param name
+      mockReq.params.enrollmentId = '99'
       const error = new Error('Enrollment not found')
       approveEnrollmentSpy.mockRejectedValue(error)
 
       // Act
-      await approveEnrollment(mockReq, mockRes) // Updated function call
+      await approveEnrollment(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Enrollment not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Enrollment not found',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
 
     test('should handle unexpected server errors during approval', async () => {
-      // Updated test name
       // Arrange
-      mockReq.params.enrollmentId = '1' // Updated param name
+      mockReq.params.enrollmentId = '1'
       const error = new TypeError('Unexpected error')
       approveEnrollmentSpy.mockRejectedValue(error)
 
       // Act
-      await approveEnrollment(mockReq, mockRes) // Updated function call
+      await approveEnrollment(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to approve enrollment' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to approve enrollment',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
   })
 
   describe('rejectEnrollment', () => {
-    // Updated describe name
     test('should reject enrollment successfully', async () => {
-      // Updated test name
       // Arrange
-      mockReq.params.enrollmentId = '1' // Updated param name
+      mockReq.params.enrollmentId = '1'
       const mockEnrollment = { id: 1, status: 'rejected' }
       rejectEnrollmentSpy.mockResolvedValue(mockEnrollment)
 
       // Act
-      await rejectEnrollment(mockReq, mockRes) // Updated function call
+      await rejectEnrollment(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(200)
@@ -344,42 +374,48 @@ describe('Enrollment Controller', () => {
     })
 
     test('should handle enrollment not found during rejection', async () => {
-      // Updated test name
       // Arrange
-      mockReq.params.enrollmentId = '99' // Updated param name
+      mockReq.params.enrollmentId = '99'
       const error = new Error('Enrollment not found')
       rejectEnrollmentSpy.mockRejectedValue(error)
 
       // Act
-      await rejectEnrollment(mockReq, mockRes) // Updated function call
+      await rejectEnrollment(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Enrollment not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Enrollment not found',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
 
     test('should handle unexpected server errors during rejection', async () => {
-      // Updated test name
       // Arrange
-      mockReq.params.enrollmentId = '1' // Updated param name
+      mockReq.params.enrollmentId = '1'
       const error = new TypeError('Unexpected error')
       rejectEnrollmentSpy.mockRejectedValue(error)
 
       // Act
-      await rejectEnrollment(mockReq, mockRes) // Updated function call
+      await rejectEnrollment(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to reject enrollment' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to reject enrollment',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
   })
 
   describe('getAllEnrollments', () => {
-    // Updated describe name
     test('should retrieve all enrollments successfully', async () => {
-      // Updated test name
       // Arrange
       const mockEnrollments = validEnrollments.map((enrollment, index) => ({
         id: index + 1,
@@ -388,7 +424,7 @@ describe('Enrollment Controller', () => {
       getAllEnrollmentsSpy.mockResolvedValue(mockEnrollments)
 
       // Act
-      await getAllEnrollments(mockReq, mockRes) // Updated function call
+      await getAllEnrollments(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(200)
@@ -397,25 +433,27 @@ describe('Enrollment Controller', () => {
     })
 
     test('should handle unexpected server errors during retrieving all enrollments', async () => {
-      // Updated test name
       // Arrange
       const error = new Error('Unexpected error')
       getAllEnrollmentsSpy.mockRejectedValue(error)
 
       // Act
-      await getAllEnrollments(mockReq, mockRes) // Updated function call
+      await getAllEnrollments(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to retrieve enrollments' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to retrieve enrollments',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
   })
 
   describe('getEnrollmentsBySchool', () => {
-    // Updated describe name
     test('should retrieve enrollments by school ID successfully', async () => {
-      // Updated test name
       // Arrange
       const schoolId = '1'
       mockReq.params.schoolId = schoolId
@@ -426,7 +464,7 @@ describe('Enrollment Controller', () => {
       getEnrollmentsBySchoolSpy.mockResolvedValue(mockEnrollments)
 
       // Act
-      await getEnrollmentsBySchool(mockReq, mockRes) // Updated function call
+      await getEnrollmentsBySchool(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(200)
@@ -436,7 +474,6 @@ describe('Enrollment Controller', () => {
     })
 
     test('should handle school not found', async () => {
-      // Updated test name
       // Arrange
       const schoolId = '99'
       mockReq.params.schoolId = schoolId
@@ -444,16 +481,20 @@ describe('Enrollment Controller', () => {
       getEnrollmentsBySchoolSpy.mockRejectedValue(error)
 
       // Act
-      await getEnrollmentsBySchool(mockReq, mockRes) // Updated function call
+      await getEnrollmentsBySchool(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'School not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'School not found',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
 
     test('should handle errors when retrieving enrollments by school', async () => {
-      // Updated test name
       // Arrange
       const schoolId = '1'
       mockReq.params.schoolId = schoolId
@@ -461,21 +502,22 @@ describe('Enrollment Controller', () => {
       getEnrollmentsBySchoolSpy.mockRejectedValue(error)
 
       // Act
-      await getEnrollmentsBySchool(mockReq, mockRes) // Updated function call
+      await getEnrollmentsBySchool(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Failed to retrieve enrollments by schools',
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to retrieve enrollments by schools',
+        },
       })
       expect(log.error).toHaveBeenCalled()
     })
   })
 
   describe('checkEnrollmentStatus', () => {
-    // Updated describe name
     test('should check enrollment status by email successfully', async () => {
-      // Updated test name
       // Arrange
       const email = 'test@example.com'
       mockReq.body.email = email
@@ -483,7 +525,7 @@ describe('Enrollment Controller', () => {
       checkEnrollmentStatusSpy.mockResolvedValue(mockEnrollment)
 
       // Act
-      await checkEnrollmentStatus(mockReq, mockRes) // Updated function call
+      await checkEnrollmentStatus(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(200)
@@ -492,14 +534,13 @@ describe('Enrollment Controller', () => {
     })
 
     test('should handle enrollment not found', async () => {
-      // Updated test name
       // Arrange
       const email = 'test@example.com'
       mockReq.body.email = email
       checkEnrollmentStatusSpy.mockResolvedValue(null)
 
       // Act
-      await checkEnrollmentStatus(mockReq, mockRes) // Updated function call
+      await checkEnrollmentStatus(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
@@ -507,7 +548,6 @@ describe('Enrollment Controller', () => {
     })
 
     test('should handle errors when checking enrollment status', async () => {
-      // Updated test name
       // Arrange
       const email = 'test@example.com'
       mockReq.body.email = email
@@ -515,11 +555,16 @@ describe('Enrollment Controller', () => {
       checkEnrollmentStatusSpy.mockRejectedValue(error)
 
       // Act
-      await checkEnrollmentStatus(mockReq, mockRes) // Updated function call
+      await checkEnrollmentStatus(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to check enrollment status' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to check enrollment status',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith(
         'Check enrollment status for test@example.com error:',
         error
@@ -527,11 +572,10 @@ describe('Enrollment Controller', () => {
     })
 
     test('should handle missing email', async () => {
-      // Updated test name
       // Arrange
       // No email in mockReq.body
       // Act
-      await checkEnrollmentStatus(mockReq, mockRes) // Updated function call
+      await checkEnrollmentStatus(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(400)
@@ -571,7 +615,12 @@ describe('Enrollment Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Enrollment not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Enrollment not found',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
 
@@ -589,7 +638,15 @@ describe('Enrollment Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({ errors: { email: 'Invalid email format' } })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'VALIDATION_ERROR',
+          details: {
+            email: 'Invalid email format',
+          },
+          message: 'Validation failed',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
 
@@ -607,7 +664,15 @@ describe('Enrollment Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(409) // Expect 409 Conflict
-      expect(mockRes.json).toHaveBeenCalledWith({ errors: { email: 'Email already exists.' } })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'CONFLICT',
+          details: {
+            email: 'Email already exists.',
+          },
+          message: 'Resource already exists',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
 
@@ -623,7 +688,12 @@ describe('Enrollment Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to update enrollment' }) // Generic message from controller
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to update enrollment',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
   })
@@ -656,7 +726,12 @@ describe('Enrollment Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Enrollment not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Enrollment not found',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
 
@@ -671,7 +746,12 @@ describe('Enrollment Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to delete enrollment' }) // Generic message from controller
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to delete enrollment',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
   })

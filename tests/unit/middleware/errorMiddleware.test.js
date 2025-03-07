@@ -32,31 +32,58 @@ describe('Error Middleware', () => {
     expect(log.error).toHaveBeenCalled()
     expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'Custom error',
+      error: {
+        message: 'Custom error',
+        code: 'INTERNAL_ERROR',
+      },
     })
   })
 
   test('should handle SequelizeUniqueConstraintError', () => {
     const error = new Error('Duplicate entry')
     error.name = 'SequelizeUniqueConstraintError'
+    error.errors = [
+      {
+        path: 'email',
+        message: 'email must be unique',
+      },
+    ]
 
     errorMiddleware(error, mockReq, mockRes, nextFunction)
 
-    expect(mockRes.status).toHaveBeenCalledWith(409)
+    expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'That already exists in our system, please try something else',
+      error: {
+        message: 'Validation failed',
+        code: 'VALIDATION_ERROR',
+        details: {
+          email: 'email must be unique',
+        },
+      },
     })
   })
 
   test('should handle SequelizeValidationError', () => {
     const error = new Error('Validation failed')
     error.name = 'SequelizeValidationError'
+    error.errors = [
+      {
+        path: 'email',
+        message: 'Email is invalid',
+      },
+    ]
 
     errorMiddleware(error, mockReq, mockRes, nextFunction)
 
     expect(mockRes.status).toHaveBeenCalledWith(400)
     expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'Validation failed',
+      error: {
+        message: 'Validation failed',
+        code: 'VALIDATION_ERROR',
+        details: {
+          email: 'Email is invalid',
+        },
+      },
     })
   })
 
@@ -68,7 +95,10 @@ describe('Error Middleware', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(401)
     expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'Unauthorized: Invalid Token',
+      error: {
+        message: 'Invalid authentication token',
+        code: 'INVALID_TOKEN',
+      },
     })
   })
 
@@ -80,7 +110,10 @@ describe('Error Middleware', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(401)
     expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'Unauthorized: Token Expired',
+      error: {
+        message: 'Authentication token has expired',
+        code: 'TOKEN_EXPIRED',
+      },
     })
   })
 
@@ -91,7 +124,10 @@ describe('Error Middleware', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(500)
     expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'Unknown error',
+      error: {
+        message: 'Unknown error',
+        code: 'INTERNAL_SERVER_ERROR',
+      },
     })
   })
 
@@ -99,12 +135,23 @@ describe('Error Middleware', () => {
     const error = new Error('Test error')
     error.stack = 'Error stack trace'
 
+    const originalNodeEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
+
     errorMiddleware(error, mockReq, mockRes, nextFunction)
 
     expect(log.error).toHaveBeenCalledWith(`Error: ${error.message}`, {
-      stack: error.stack,
-      headers: mockReq.headers,
+      errorName: error.name,
+      statusCode: 500,
+      path: mockReq.path,
+      method: mockReq.method,
+      ip: mockReq.ip,
       body: mockReq.body,
+      headers: mockReq.headers,
+      stack: error.stack,
     })
+
+    // Restore original environment
+    process.env.NODE_ENV = originalNodeEnv
   })
 })
