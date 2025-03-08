@@ -1,6 +1,6 @@
 import express from 'express'
 import * as enrollmentController from '../controllers/enrollmentController.js'
-import { authMiddleware } from '../middleware/authMiddleware.js'
+import { rbac } from '../middleware/rbacMiddleware.js'
 
 const enrollmentRouter = express.Router()
 
@@ -66,7 +66,7 @@ const enrollmentRouter = express.Router()
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-enrollmentRouter.get('/', authMiddleware, enrollmentController.getAllEnrollments)
+enrollmentRouter.get('/', rbac.adminOnly, enrollmentController.getAllEnrollments)
 
 /**
  * @swagger
@@ -272,7 +272,7 @@ enrollmentRouter.post('/check-status', enrollmentController.checkEnrollmentStatu
  */
 enrollmentRouter.get(
   '/school/:schoolId',
-  authMiddleware,
+  rbac.adminOnly,
   enrollmentController.getEnrollmentsBySchool
 )
 
@@ -312,7 +312,7 @@ enrollmentRouter.get(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-enrollmentRouter.get('/:enrollmentId', authMiddleware, enrollmentController.getEnrollmentById)
+enrollmentRouter.get('/:enrollmentId', rbac.adminOnly, enrollmentController.getEnrollmentById)
 
 /**
  * @swagger
@@ -364,7 +364,7 @@ enrollmentRouter.get('/:enrollmentId', authMiddleware, enrollmentController.getE
  */
 enrollmentRouter.patch(
   '/:enrollmentId/approve',
-  authMiddleware,
+  rbac.adminOnly,
   enrollmentController.approveEnrollment
 )
 
@@ -418,7 +418,7 @@ enrollmentRouter.patch(
  */
 enrollmentRouter.patch(
   '/:enrollmentId/reject',
-  authMiddleware,
+  rbac.adminOnly,
   enrollmentController.rejectEnrollment
 )
 
@@ -511,7 +511,7 @@ enrollmentRouter.patch(
  *                 errors:
  *                   type: object
  */
-enrollmentRouter.put('/:enrollmentId', authMiddleware, enrollmentController.updateEnrollment)
+enrollmentRouter.put('/:enrollmentId', rbac.adminOnly, enrollmentController.updateEnrollment)
 
 /**
  * @swagger
@@ -559,6 +559,6 @@ enrollmentRouter.put('/:enrollmentId', authMiddleware, enrollmentController.upda
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-enrollmentRouter.delete('/:enrollmentId', authMiddleware, enrollmentController.deleteEnrollment)
+enrollmentRouter.delete('/:enrollmentId', rbac.adminOnly, enrollmentController.deleteEnrollment)
 
 export { enrollmentRouter }

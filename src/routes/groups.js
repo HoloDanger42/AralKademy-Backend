@@ -9,6 +9,7 @@ import {
   deleteGroup,
 } from '../controllers/groupController.js'
 import { authMiddleware } from '../middleware/authMiddleware.js'
+import { rbac } from '../middleware/rbacMiddleware.js'
 
 const groupsRouter = express.Router()
 
@@ -56,7 +57,7 @@ const groupsRouter = express.Router()
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-groupsRouter.get('/', authMiddleware, getAllGroups)
+groupsRouter.get('/', rbac.adminOnly, getAllGroups)
 
 /**
  * @swagger
@@ -119,7 +120,7 @@ groupsRouter.get('/', authMiddleware, getAllGroups)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-groupsRouter.post('/', authMiddleware, createGroup)
+groupsRouter.post('/', rbac.adminOnly, createGroup)
 
 /**
  * @swagger
@@ -184,7 +185,7 @@ groupsRouter.post('/', authMiddleware, createGroup)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-groupsRouter.post('/assign-student-teachers', authMiddleware, assignStudentTeacherMembers)
+groupsRouter.post('/assign-student-teachers', rbac.adminOnly, assignStudentTeacherMembers)
 
 /**
  * @swagger
@@ -249,7 +250,7 @@ groupsRouter.post('/assign-student-teachers', authMiddleware, assignStudentTeach
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-groupsRouter.post('/assign-learners', authMiddleware, assignLearnerMembers)
+groupsRouter.post('/assign-learners', rbac.adminOnly, assignLearnerMembers)
 
 /**
  * @swagger
@@ -293,9 +294,7 @@ groupsRouter.post('/assign-learners', authMiddleware, assignLearnerMembers)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-groupsRouter.get('/:groupId', authMiddleware, getGroupById)
-
-// ...existing code...
+groupsRouter.get('/:groupId', rbac.studentTeacherAndAbove, getGroupById)
 
 /**
  * @swagger
@@ -371,7 +370,7 @@ groupsRouter.get('/:groupId', authMiddleware, getGroupById)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-groupsRouter.put('/:groupId', authMiddleware, updateGroup)
+groupsRouter.put('/:groupId', rbac.adminOnly, updateGroup)
 
 /**
  * @swagger
@@ -419,6 +418,6 @@ groupsRouter.put('/:groupId', authMiddleware, updateGroup)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-groupsRouter.delete('/:groupId', authMiddleware, deleteGroup)
+groupsRouter.delete('/:groupId', rbac.adminOnly, deleteGroup)
 
 export { groupsRouter }

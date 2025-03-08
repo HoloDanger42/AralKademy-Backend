@@ -7,9 +7,9 @@ import {
   resetPassword,
   deleteUser,
   createUser,
+  updateUser,
 } from '../controllers/userController.js'
-import { checkRole } from '../middleware/roleMiddleware.js'
-import { authMiddleware } from '../middleware/authMiddleware.js'
+import { rbac } from '../middleware/rbacMiddleware.js'
 
 const router = express.Router()
 
@@ -99,7 +99,7 @@ const router = express.Router()
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', authMiddleware, checkRole(['admin']), createUser)
+router.post('/', rbac.adminOnly, createUser)
 
 /**
  * @swagger
@@ -142,7 +142,7 @@ router.post('/', authMiddleware, checkRole(['admin']), createUser)
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get('/', authMiddleware, checkRole(['admin']), getAllUsers)
+router.get('/', rbac.adminOnly, getAllUsers)
 
 /**
  * @swagger
@@ -173,7 +173,7 @@ router.get('/', authMiddleware, checkRole(['admin']), getAllUsers)
  *       404:
  *         description: User not found
  */
-router.get('/:id', authMiddleware, checkRole(['admin']), getUserById)
+router.get('/:id', rbac.adminOnly, getUserById)
 
 /**
  * @swagger
@@ -208,7 +208,7 @@ router.get('/:id', authMiddleware, checkRole(['admin']), getUserById)
  *       404:
  *         description: User not found
  */
-router.delete('/:id', authMiddleware, checkRole(['admin']), deleteUser)
+router.delete('/:id', rbac.adminOnly, deleteUser)
 
 /**
  * @swagger
@@ -329,5 +329,103 @@ router.post('/verify-reset-code', verifyResetCode)
  *         description: User not found
  */
 router.post('/reset-password', resetPassword)
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   put:
+ *     summary: Update a user
+ *     description: Update user information. Only admin can perform this action. Admin role cannot be set through this endpoint.
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               first_name:
+ *                 type: string
+ *                 example: John
+ *               last_name:
+ *                 type: string
+ *                 example: Smith
+ *               middle_initial:
+ *                 type: string
+ *                 maxLength: 2
+ *                 example: A
+ *               birth_date:
+ *                 type: string
+ *                 format: date
+ *                 example: 1990-01-01
+ *               contact_no:
+ *                 type: string
+ *                 example: "09123456789"
+ *               school_id:
+ *                 type: integer
+ *                 example: 1
+ *               role:
+ *                 type: string
+ *                 enum: [teacher, student_teacher, learner]
+ *                 description: User role (admin role cannot be set)
+ *                 example: teacher
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User updated successfully
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Invalid input data or attempt to set admin role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Email already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.put('/:id', rbac.adminOnly, updateUser)
 
 export { router as usersRouter }
