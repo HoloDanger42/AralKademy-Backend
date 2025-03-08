@@ -6,6 +6,9 @@ import paginate from 'express-paginate'
 import config from './config/config.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './config/swagger.js'
+import fs from 'fs'
+import https from 'https'
+import path from 'path'
 
 // CORS
 import cors from 'cors'
@@ -16,7 +19,7 @@ import { logMiddleware } from './middleware/logMiddleware.js'
 import { securityMiddleware } from './middleware/securityMiddleware.js'
 
 // Configuration
-import { databaseConnection, initializeDatabase } from './config/database.js'
+import { sequelize, databaseConnection, initializeDatabase } from './config/database.js'
 
 // Routes
 import { authRouter } from './routes/auth.js'
@@ -172,6 +175,29 @@ app.use('/api/auth', authRouter)
 app.use('/api/enrollments', enrollmentRouter)
 app.use('/api/groups', groupsRouter)
 
+/**
+ * Health check endpoint for monitoring and kubernetes/load balancer readiness probes
+ * Returns 200 if the server is up and the database connection is active
+ */
+app.get('/api/health', async (_req, res) => {
+  try {
+    // Check database connection by running a simple query
+    await databaseConnection.authenticate()
+    res.status(200).json({
+      status: 'UP',
+      timestamp: new Date().toISOString(),
+      version: config.version,
+      environment: config.env,
+    })
+  } catch (error) {
+    res.status(503).json({
+      status: 'DOWN',
+      error: 'Database connection failed',
+      timestamp: new Date().toISOString(),
+    })
+  }
+})
+
 app.get('/api/error', (_req, _res, next) => {
   next(new Error('Intentional error for testing'))
 })
@@ -202,14 +228,77 @@ export const initializeApp = async () => {
     await initializeDatabase()
   }
 
-  const server = app.listen(config.port, () => {
-    if (config.env !== 'test') {
-      console.log(`Server v${config.version} running on port ${config.port} in ${config.env} mode`)
+  let server
 
-      // Schedule token cleanup to run every hour
-      TokenCleanup.scheduleTokenCleanup(config.tokenBlacklist.cleanupIntervalMinutes)
+  // Use HTTPS in production
+  if (config.env === 'production' && config.ssl?.enabled) {
+    try {
+      // Read SSL certificate and key
+      const options = {
+        key: fs.readFileSync(config.ssl.keyPath),
+        cert: fs.readFileSync(config.ssl.certPath),
+      }
+
+      // Create HTTPS server
+      server = https.createServer(options, app).listen(config.port, () => {
+        console.log(
+          `Secure server v${config.version} running on port ${config.port} in ${config.env} mode`
+        )
+      })
+    } catch (error) {
+      console.error('Failed to start secure server:', error)
+      console.warn('Falling back to HTTP server')
+      server = app.listen(config.port, () => {
+        console.log(
+          `Server v${config.version} running on port ${config.port} in ${config.env} mode (non-secure)`
+        )
+      })
     }
-  })
+  } else {
+    // HTTP server for non-production environments
+    server = app.listen(config.port, () => {
+      if (config.env !== 'test') {
+        console.log(
+          `Server v${config.version} running on port ${config.port} in ${config.env} mode`
+        )
+      }
+    })
+  }
+
+  if (config.env !== 'test') {
+    // Schedule token cleanup to run every hour
+    TokenCleanup.scheduleTokenCleanup(config.tokenBlacklist.cleanupIntervalMinutes)
+  }
+
+  // Graceful shutdown handler
+  const gracefulShutdown = (signal) => {
+    console.log(`${signal} signal received. Shutting down gracefully.`)
+    server.close(() => {
+      console.log('HTTP server closed.')
+      // Close database connections
+      sequelize
+        .close()
+        .then(() => {
+          console.log('Database connections closed.')
+          process.exit(0)
+        })
+        .catch((err) => {
+          console.error('Error closing database connections:', err)
+          process.exit(1)
+        })
+    })
+
+    // Force shutdown after 30 seconds if graceful shutdown fails
+    setTimeout(() => {
+      console.error('Forcing shutdown after timeout')
+      process.exit(1)
+    }, 30000)
+  }
+
+  // Listen for termination signals
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+
   return server
 }
 

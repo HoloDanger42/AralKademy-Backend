@@ -270,7 +270,7 @@ const deleteEnrollment = async (req, res) => {
 
     await enrollmentService.deleteEnrollment(enrollmentId)
 
-    res.status(204).end()
+    res.status(200).json({ message: 'Enrollment deleted successfully' })
     log.info(`Enrollment with ID: ${enrollmentId} deleted successfully`)
   } catch (error) {
     return handleControllerError(

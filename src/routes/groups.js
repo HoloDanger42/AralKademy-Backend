@@ -5,6 +5,8 @@ import {
   assignStudentTeacherMembers,
   assignLearnerMembers,
   getGroupById,
+  updateGroup,
+  deleteGroup,
 } from '../controllers/groupController.js'
 import { authMiddleware } from '../middleware/authMiddleware.js'
 
@@ -34,21 +36,7 @@ const groupsRouter = express.Router()
  *             schema:
  *               type: array
  *               items:
- *                 type: object
- *                 properties:
- *                   group_id:
- *                     type: integer
- *                     example: 1
- *                   name:
- *                     type: string
- *                     example: "Grade 7 Math"
- *                   group_type:
- *                     type: string
- *                     enum: [student_teacher, learner]
- *                     example: "learner"
- *                   createdAt:
- *                     type: string
- *                     format: date-time
+ *                 $ref: '#/components/schemas/Group'
  *       400:
  *         description: Invalid group type
  *         content:
@@ -111,17 +99,7 @@ groupsRouter.get('/', authMiddleware, getAllGroups)
  *                   type: string
  *                   example: "Group created successfully"
  *                 group:
- *                   type: object
- *                   properties:
- *                     group_id:
- *                       type: integer
- *                       example: 1
- *                     name:
- *                       type: string
- *                       example: "Grade 8 Science"
- *                     group_type:
- *                       type: string
- *                       example: "learner"
+ *                   $ref: '#/components/schemas/Group'
  *       400:
  *         description: Missing required fields
  *         content:
@@ -295,21 +273,7 @@ groupsRouter.post('/assign-learners', authMiddleware, assignLearnerMembers)
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 group_id:
- *                   type: integer
- *                   example: 1
- *                 name:
- *                   type: string
- *                   example: "Grade 7 Math"
- *                 group_type:
- *                   type: string
- *                   enum: [student_teacher, learner]
- *                   example: "learner"
- *                 createdAt:
- *                   type: string
- *                   format: date-time
+ *               $ref: '#/components/schemas/Group'
  *       401:
  *         description: Unauthorized
  *         content:
@@ -330,5 +294,131 @@ groupsRouter.post('/assign-learners', authMiddleware, assignLearnerMembers)
  *               $ref: '#/components/schemas/Error'
  */
 groupsRouter.get('/:groupId', authMiddleware, getGroupById)
+
+// ...existing code...
+
+/**
+ * @swagger
+ * /groups/{groupId}:
+ *   put:
+ *     summary: Update a group
+ *     description: Update a group's information including name and members
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Group ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Updated Group Name"
+ *               groupType:
+ *                 type: string
+ *                 enum: [student_teacher, learner]
+ *                 example: "student_teacher"
+ *               addUserIds:
+ *                 type: array
+ *                 description: User IDs to add to the group
+ *                 items:
+ *                   type: integer
+ *                 example: [5, 6]
+ *               removeUserIds:
+ *                 type: array
+ *                 description: User IDs to remove from the group
+ *                 items:
+ *                   type: integer
+ *                 example: [3, 4]
+ *     responses:
+ *       200:
+ *         description: Group updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Group updated successfully"
+ *                 group:
+ *                   $ref: '#/components/schemas/Group'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Group not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Failed to update group
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+groupsRouter.put('/:groupId', authMiddleware, updateGroup)
+
+/**
+ * @swagger
+ * /groups/{groupId}:
+ *   delete:
+ *     summary: Delete a group
+ *     description: Permanently delete a group
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Group ID to delete
+ *     responses:
+ *       200:
+ *         description: Group deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Group deleted successfully"
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Group not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Failed to delete group
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+groupsRouter.delete('/:groupId', authMiddleware, deleteGroup)
 
 export { groupsRouter }

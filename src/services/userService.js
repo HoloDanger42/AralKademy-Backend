@@ -199,9 +199,7 @@ class UserService {
         throw new Error('Invalid credentials')
       }
 
-      //--
       const token = this.generateToken(user)
-
       return { user, token }
     } catch (error) {
       console.error('Error in loginUser:', error)

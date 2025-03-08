@@ -215,4 +215,97 @@ describe('Group Service', () => {
       )
     })
   })
+
+  describe('updateGroup', () => {
+    test('should update a group successfully', async () => {
+      // Arrange
+      const groupId = '1'
+      const updatedData = { name: 'Updated Group Name' }
+
+      const mockGroup = {
+        ...validGroupData,
+        update: jest.fn().mockImplementation(function (data) {
+          Object.assign(this, data)
+          return this
+        }),
+      }
+
+      mockGroupModel.findByPk.mockResolvedValue(mockGroup)
+
+      // Act
+      const result = await groupService.updateGroup(groupId, updatedData)
+
+      // Assert
+      expect(result).toEqual(
+        expect.objectContaining({
+          group_id: '1',
+          name: 'Updated Group Name',
+          group_type: 'Student Teacher',
+        })
+      )
+      expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
+      expect(mockGroup.update).toHaveBeenCalledWith(updatedData)
+    })
+
+    test('should throw error if group is not found (update group)', async () => {
+      // Arrange
+      mockGroupModel.findByPk.mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(groupService.updateGroup('invalidId', { name: 'New Name' })).rejects.toThrow(
+        'Group not found'
+      )
+    })
+
+    test('should throw error if update fails', async () => {
+      // Arrange
+      mockGroupModel.findByPk.mockResolvedValue({
+        ...validGroupData,
+        update: jest.fn().mockRejectedValue(new Error('Update error')),
+      })
+
+      // Act & Assert
+      await expect(groupService.updateGroup('1', { name: 'New Name' })).rejects.toThrow(
+        'Failed to update group'
+      )
+    })
+  })
+
+  describe('deleteGroup', () => {
+    test('should delete a group successfully', async () => {
+      // Arrange
+      const groupId = '1'
+      const mockGroup = {
+        ...validGroupData,
+        destroy: jest.fn().mockResolvedValue(true),
+      }
+      mockGroupModel.findByPk.mockResolvedValue(mockGroup)
+
+      // Act
+      await groupService.deleteGroup(groupId)
+
+      // Assert
+      expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
+      expect(mockGroup.destroy).toHaveBeenCalled()
+    })
+
+    test('should throw error if group is not found (delete group)', async () => {
+      // Arrange
+      mockGroupModel.findByPk.mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(groupService.deleteGroup('invalidId')).rejects.toThrow('Group not found')
+    })
+
+    test('should throw error if deletion fails', async () => {
+      // Arrange
+      mockGroupModel.findByPk.mockResolvedValue({
+        ...validGroupData,
+        destroy: jest.fn().mockRejectedValue(new Error('Deletion error')),
+      })
+
+      // Act & Assert
+      await expect(groupService.deleteGroup('1')).rejects.toThrow('Failed to delete group')
+    })
+  })
 })

@@ -5,6 +5,8 @@ import {
   assignLearnerMembers,
   assignStudentTeacherMembers,
   getGroupById,
+  updateGroup,
+  deleteGroup,
 } from '../../../src/controllers/groupController.js'
 import GroupService from '../../../src/services/groupService.js'
 import { log } from '../../../src/utils/logger.js'
@@ -19,6 +21,7 @@ describe('Group Controller', () => {
       body: {},
       params: {},
       query: {},
+      user: { userId: 1, role: 'admin' },
     }
     mockRes = {
       status: jest.fn().mockReturnThis(),
@@ -57,8 +60,13 @@ describe('Group Controller', () => {
       await getAllGroups(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to retrieve groups' })
-      expect(log.error).toHaveBeenCalledWith('Error getting groups:', expect.any(Error))
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Failed to retrieve groups',
+          code: 'INTERNAL_ERROR',
+        },
+      })
+      expect(log.error).toHaveBeenCalledWith('Get all groups error:', expect.any(Error))
     })
   })
 
@@ -86,7 +94,12 @@ describe('Group Controller', () => {
       await createGroup(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'All fields are required' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'All fields are required',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Create group error:', expect.any(Error))
     })
 
@@ -98,7 +111,12 @@ describe('Group Controller', () => {
       await createGroup(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to create group' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to create group',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Create group error:', expect.any(Error))
     })
   })
@@ -125,6 +143,8 @@ describe('Group Controller', () => {
     })
 
     test('should handle errors when retrieving a group by ID (get group by id)', async () => {
+      mockReq.params = { groupId: 1 }
+
       jest
         .spyOn(GroupService.prototype, 'getGroupById')
         .mockRejectedValue(new Error('Error fetching group'))
@@ -132,8 +152,13 @@ describe('Group Controller', () => {
       await getGroupById(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to retrieve group' })
-      expect(log.error).toHaveBeenCalledWith('Get group by id error:', expect.any(Error))
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Failed to retrieve group',
+          code: 'INTERNAL_ERROR',
+        },
+      })
+      expect(log.error).toHaveBeenCalledWith('Get group 1 error:', expect.any(Error))
     })
   })
 
@@ -161,7 +186,12 @@ describe('Group Controller', () => {
       await assignLearnerMembers(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to assign learner members' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Failed to assign learner members',
+          code: 'INTERNAL_ERROR',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Assign learner members error:', expect.any(Error))
     })
 
@@ -173,7 +203,12 @@ describe('Group Controller', () => {
       await assignLearnerMembers(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'All fields are required' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'All fields are required',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Assign learner members error:', expect.any(Error))
     })
   })
@@ -205,7 +240,10 @@ describe('Group Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Failed to assign student teacher members',
+        error: {
+          message: 'Failed to assign student teacher members',
+          code: 'INTERNAL_ERROR',
+        },
       })
       expect(log.error).toHaveBeenCalledWith(
         'Assign student teacher members error:',
@@ -221,11 +259,110 @@ describe('Group Controller', () => {
       await assignStudentTeacherMembers(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'All fields are required' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'All fields are required',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith(
         'Assign student teacher members error:',
         expect.any(Error)
       )
+    })
+  })
+
+  describe('updateGroup', () => {
+    test('should update a group successfully', async () => {
+      // Arrange
+      mockReq.params.groupId = '1'
+      mockReq.body = {
+        name: 'Updated Group Name',
+        groupType: 'student_teacher',
+        addUserIds: [5, 6],
+        removeUserIds: [3, 4],
+      }
+
+      const mockUpdatedGroup = {
+        groupId: 1,
+        name: 'Updated Group Name',
+        groupType: 'student_teacher',
+      }
+
+      GroupService.prototype.updateGroup = jest.fn().mockResolvedValue(mockUpdatedGroup)
+
+      // Act
+      await updateGroup(mockReq, mockRes)
+
+      // Assert
+      expect(GroupService.prototype.updateGroup).toHaveBeenCalledWith('1', mockReq.body)
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Group updated successfully',
+        group: mockUpdatedGroup,
+      })
+    })
+
+    test('should handle group not found error', async () => {
+      // Arrange
+      mockReq.params.groupId = '999'
+      mockReq.body = { name: 'Updated Group Name' }
+
+      const error = new Error('Group not found')
+      GroupService.prototype.updateGroup = jest.fn().mockRejectedValue(error)
+
+      // Act
+      await updateGroup(mockReq, mockRes)
+
+      // Assert
+      expect(GroupService.prototype.updateGroup).toHaveBeenCalledWith('999', mockReq.body)
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Group not found',
+          code: 'NOT_FOUND',
+        },
+      })
+    })
+  })
+
+  describe('deleteGroup', () => {
+    test('should delete a group successfully', async () => {
+      // Arrange
+      mockReq.params.groupId = '1'
+
+      GroupService.prototype.deleteGroup = jest.fn().mockResolvedValue(true)
+
+      // Act
+      await deleteGroup(mockReq, mockRes)
+
+      // Assert
+      expect(GroupService.prototype.deleteGroup).toHaveBeenCalledWith('1')
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Group deleted successfully',
+      })
+    })
+
+    test('should handle group not found error during deletion', async () => {
+      // Arrange
+      mockReq.params.groupId = '999'
+
+      const error = new Error('Group not found')
+      GroupService.prototype.deleteGroup = jest.fn().mockRejectedValue(error)
+
+      // Act
+      await deleteGroup(mockReq, mockRes)
+
+      // Assert
+      expect(GroupService.prototype.deleteGroup).toHaveBeenCalledWith('999')
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Group not found',
+          code: 'NOT_FOUND',
+        },
+      })
     })
   })
 })

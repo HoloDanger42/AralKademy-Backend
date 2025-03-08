@@ -306,7 +306,12 @@ describe('AuthController', () => {
 
       // Assertions
       expect(res.status).toHaveBeenCalledWith(500)
-      expect(res.json).toHaveBeenCalledWith({ message: 'Logout failed' })
+      expect(res.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Logout failed',
+          code: 'INTERNAL_ERROR',
+        },
+      })
 
       // Clean up
       logoutUserSpy.mockRestore()
@@ -350,7 +355,12 @@ describe('AuthController', () => {
 
       // Check the response instead of the function call
       expect(res.status).toHaveBeenCalledWith(500)
-      expect(res.json).toHaveBeenCalledWith({ message: 'Failed to validate token' })
+      expect(res.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to validate token',
+        },
+      })
     })
   })
 
@@ -480,7 +490,12 @@ describe('AuthController', () => {
         'WrongPassword123!'
       )
       expect(res.status).toHaveBeenCalledWith(401)
-      expect(res.json).toHaveBeenCalledWith({ message: 'Invalid credentials' })
+      expect(res.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Invalid credentials',
+          code: 'UNAUTHORIZED',
+        },
+      })
     })
 
     test('should handle unexpected errors during login process', async () => {
@@ -501,7 +516,12 @@ describe('AuthController', () => {
       // Assert
       expect(mockVerifyCaptcha).toHaveBeenCalledWith('valid-captcha-token')
       expect(res.status).toHaveBeenCalledWith(500)
-      expect(res.json).toHaveBeenCalledWith({ message: 'Authentication failed' })
+      expect(res.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Authentication failed',
+          code: 'INTERNAL_ERROR',
+        },
+      })
     })
 
     test('should handle empty request body gracefully', async () => {

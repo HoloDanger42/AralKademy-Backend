@@ -79,7 +79,7 @@ const router = express.Router()
  *                   type: string
  *                   example: User created successfully
  *                 user:
- *                   type: object
+ *                   $ref: '#/components/schemas/User'
  *       400:
  *         description: Invalid input data
  *         content:
@@ -136,23 +136,7 @@ router.post('/', authMiddleware, checkRole(['admin']), createUser)
  *                 users:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                         example: 1
- *                       email:
- *                         type: string
- *                         example: user@example.com
- *                       first_name:
- *                         type: string
- *                         example: John
- *                       last_name:
- *                         type: string
- *                         example: Smith
- *                       role:
- *                         type: string
- *                         example: teacher
+ *                     $ref: '#/components/schemas/User'
  *       401:
  *         description: Unauthorized
  *       403:
@@ -181,35 +165,7 @@ router.get('/', authMiddleware, checkRole(['admin']), getAllUsers)
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                   example: 1
- *                 email:
- *                   type: string
- *                   example: user@example.com
- *                 first_name:
- *                   type: string
- *                   example: John
- *                 last_name:
- *                   type: string
- *                   example: Smith
- *                 role:
- *                   type: string
- *                   example: teacher
- *                 teacher:
- *                   type: object
- *                   description: Teacher-specific details (if role is teacher)
- *                 admin:
- *                   type: object
- *                   description: Admin-specific details (if role is admin)
- *                 learner:
- *                   type: object
- *                   description: Learner-specific details (if role is learner)
- *                 studentTeacher:
- *                   type: object
- *                   description: Student teacher details (if role is student_teacher)
+ *               $ref: '#/components/schemas/User'
  *       401:
  *         description: Unauthorized
  *       403:

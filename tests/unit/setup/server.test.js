@@ -184,7 +184,12 @@ describe('Server Setup', () => {
       expect(res.status).toBe(404)
 
       const body = JSON.parse(res.text)
-      expect(body).toEqual({ message: 'Not Found' })
+      expect(body).toEqual({
+        error: {
+          message: 'Not Found',
+          code: 'NOT_FOUND',
+        },
+      })
     })
 
     it('should handle server errors gracefully', async () => {
@@ -204,7 +209,12 @@ describe('Server Setup', () => {
       errorRoute.handle = originalErrorHandler
 
       expect(res.status).toBe(500)
-      expect(res.body).toEqual({ message: 'Intentional error for testing' })
+      expect(res.body).toEqual({
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Intentional error for testing',
+        },
+      })
     })
   })
 

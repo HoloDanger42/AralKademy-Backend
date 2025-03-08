@@ -118,7 +118,12 @@ describe('User Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'User not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        },
+      })
     })
 
     test('should return 500 if an error occurs', async () => {
@@ -133,7 +138,12 @@ describe('User Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to send password reset email' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to send password reset email',
+        },
+      })
     })
   })
 
@@ -164,7 +174,12 @@ describe('User Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'User not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        },
+      })
     })
 
     test('should return 400 if code is invalid', async () => {
@@ -179,7 +194,12 @@ describe('User Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Invalid code' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid code',
+        },
+      })
     })
 
     test('should return 500 if an error occurs', async () => {
@@ -194,7 +214,12 @@ describe('User Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to confirm code' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to confirm code',
+        },
+      })
     })
   })
 
@@ -225,7 +250,12 @@ describe('User Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'User not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        },
+      })
     })
 
     test('should return 500 if an error occurs', async () => {
@@ -240,7 +270,12 @@ describe('User Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to reset password' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to reset password',
+        },
+      })
     })
 
     test('should return 400 if password is invalid', async () => {
@@ -256,7 +291,10 @@ describe('User Controller', () => {
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Password must be at least 8 characters',
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Password must be at least 8 characters',
+        },
       })
     })
   })
@@ -307,7 +345,12 @@ describe('User Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to delete user' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to delete user',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
   })
@@ -376,7 +419,10 @@ describe('User Controller', () => {
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { email: 'Email format is invalid' },
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Email format is invalid',
+        },
       })
       expect(log.error).toHaveBeenCalled()
     })
@@ -406,7 +452,13 @@ describe('User Controller', () => {
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(409)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { email: 'Email already exists.' },
+        error: {
+          code: 'CONFLICT',
+          details: {
+            email: 'Email already exists.',
+          },
+          message: 'Resource already exists',
+        },
       })
       expect(log.error).toHaveBeenCalled()
     })
@@ -431,7 +483,12 @@ describe('User Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Failed to create user' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to create user',
+        },
+      })
       expect(log.error).toHaveBeenCalled()
     })
   })

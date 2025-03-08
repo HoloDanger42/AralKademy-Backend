@@ -51,10 +51,13 @@ describe('Auth Middleware', () => {
   test('should return 401 when no token provided', async () => {
     await authMiddleware(mockReq, mockRes, nextFunction)
 
-    expect(mockRes.status).toHaveBeenCalledWith(401)
-    expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'Unauthorized: No token provided or incorrect format',
-    })
+    expect(nextFunction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 401,
+        message: 'No token provided or incorrect format',
+        errorCode: 'NO_TOKEN_PROVIDED',
+      })
+    )
   })
 
   test('should return 401 for invalid token format', async () => {
@@ -62,10 +65,13 @@ describe('Auth Middleware', () => {
 
     await authMiddleware(mockReq, mockRes, nextFunction)
 
-    expect(mockRes.status).toHaveBeenCalledWith(401)
-    expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'Unauthorized: No token provided or incorrect format',
-    })
+    expect(nextFunction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 401,
+        message: 'No token provided or incorrect format',
+        errorCode: 'NO_TOKEN_PROVIDED',
+      })
+    )
   })
 
   test('should return 401 for expired token', async () => {
@@ -78,10 +84,13 @@ describe('Auth Middleware', () => {
 
     await authMiddleware(mockReq, mockRes, nextFunction)
 
-    expect(mockRes.status).toHaveBeenCalledWith(401)
-    expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'Unauthorized: Token Expired',
-    })
+    expect(nextFunction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 401,
+        message: 'Token has expired',
+        errorCode: 'TOKEN_EXPIRED',
+      })
+    )
   })
 
   test('should return 401 for invalid JWT', async () => {
@@ -94,10 +103,13 @@ describe('Auth Middleware', () => {
 
     await authMiddleware(mockReq, mockRes, nextFunction)
 
-    expect(mockRes.status).toHaveBeenCalledWith(401)
-    expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'Unauthorized: Invalid Token',
-    })
+    expect(nextFunction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 401,
+        message: 'Invalid token',
+        errorCode: 'INVALID_TOKEN',
+      })
+    )
   })
 
   test('should return 401 for user not found', async () => {
@@ -107,10 +119,13 @@ describe('Auth Middleware', () => {
 
     await authMiddleware(mockReq, mockRes, nextFunction)
 
-    expect(mockRes.status).toHaveBeenCalledWith(401)
-    expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'Unauthorized: Invalid Token',
-    })
+    expect(nextFunction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 401,
+        message: 'User associated with token not found',
+        errorCode: 'USER_NOT_FOUND',
+      })
+    )
   })
 
   test('should return 500 for database errors', async () => {
@@ -120,9 +135,10 @@ describe('Auth Middleware', () => {
 
     await authMiddleware(mockReq, mockRes, nextFunction)
 
-    expect(mockRes.status).toHaveBeenCalledWith(500)
-    expect(mockRes.json).toHaveBeenCalledWith({
-      message: 'Something went wrong during authentication',
-    })
+    expect(nextFunction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Database error',
+      })
+    )
   })
 })

@@ -164,6 +164,65 @@ class GroupService {
       throw new Error('Failed to fetch group')
     }
   }
+
+  /**
+   * Updates a group's information
+   *
+   * @async
+   * @param {number|string} groupId - The ID of the group to update
+   * @param {Object} updateData - The data to update
+   * @returns {Promise<Object>} The updated group
+   * @throws {Error} If group is not found or update fail
+   */
+  async updateGroup(groupId, updateData) {
+    try {
+      const group = await this.GroupModel.findByPk(groupId)
+      if (!group) {
+        throw new Error('Group not found')
+      }
+
+      await group.update(updateData)
+      return group
+    } catch (error) {
+      log.error('Error updating group:', error)
+
+      // Re-throw specific errors
+      if (error.message === 'Group not found') {
+        throw error
+      }
+
+      throw new Error('Failed to update group')
+    }
+  }
+
+  /**
+   * Deletes a group
+   *
+   * @async
+   * @param {number|string} groupId - The ID of the group to delete
+   * @returns {Promise<boolean>} True if deletion was successful
+   * @throws {Error} If group is not found or deletion fails
+   */
+  async deleteGroup(groupId) {
+    try {
+      const group = await this.GroupModel.findByPk(groupId)
+      if (!group) {
+        throw new Error('Group not found')
+      }
+
+      await group.destroy({ force: true })
+      return true
+    } catch (error) {
+      log.error('Error deleting group:', error)
+
+      // Re-throw specific errors
+      if (error.message === 'Group not found') {
+        throw error
+      }
+
+      throw new Error('Failed to delete group')
+    }
+  }
 }
 
 export default GroupService

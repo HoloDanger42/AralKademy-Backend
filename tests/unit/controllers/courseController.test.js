@@ -53,7 +53,12 @@ describe('Course Controller', () => {
       await getAllCourses(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error fetching courses' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Error fetching courses',
+          code: 'INTERNAL_ERROR',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Get all courses error:', expect.any(Error))
     })
   })
@@ -96,7 +101,13 @@ describe('Course Controller', () => {
       expect(log.error).toHaveBeenCalledWith('Create course error:', expect.any(Error))
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { name: 'Course name is required.' },
+        error: {
+          code: 'VALIDATION_ERROR',
+          details: {
+            name: 'Course name is required.',
+          },
+          message: 'Validation failed',
+        },
       })
     })
 
@@ -123,7 +134,13 @@ describe('Course Controller', () => {
       expect(log.error).toHaveBeenCalledWith('Create course error:', expect.any(Object))
       expect(mockRes.status).toHaveBeenCalledWith(409)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { name: 'Name already exists.' },
+        error: {
+          code: 'CONFLICT',
+          details: {
+            name: 'Name already exists.',
+          },
+          message: 'Resource already exists',
+        },
       })
     })
 
@@ -141,7 +158,10 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { name: 'Course name is too long.' },
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Course name is too long.',
+        },
       })
       expect(log.error).toHaveBeenCalledWith('Create course error:', expect.any(Error))
     })
@@ -157,7 +177,12 @@ describe('Course Controller', () => {
       await createCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error creating course' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Error creating course',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Create course error:', expect.any(Error))
     })
 
@@ -337,7 +362,12 @@ describe('Course Controller', () => {
       await assignStudentTeacherGroupCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Course not found',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith(
         'Assign student teacher group to course 1 error:',
         expect.any(Error)
@@ -356,7 +386,10 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Error assigning student teacher group to course',
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Error assigning student teacher group to course',
+        },
       })
       expect(log.error).toHaveBeenCalledWith(
         'Assign student teacher group to course 1 error:',
@@ -397,7 +430,12 @@ describe('Course Controller', () => {
       await assignLearnerGroupCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Course not found',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith(
         'Assign learner group to course 1 error:',
         expect.any(Error)
@@ -416,7 +454,10 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Error assigning learner group to course',
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Error assigning learner group to course',
+        },
       })
       expect(log.error).toHaveBeenCalledWith(
         'Assign learner group to course 1 error:',
@@ -455,7 +496,12 @@ describe('Course Controller', () => {
       await assignTeacherCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Course not found',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Assign teacher to course 1 error:', expect.any(Error))
     })
 
@@ -470,7 +516,12 @@ describe('Course Controller', () => {
       await assignTeacherCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error assigning teacher to course' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Error assigning teacher to course',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Assign teacher to course 1 error:', expect.any(Error))
     })
   })
@@ -497,7 +548,12 @@ describe('Course Controller', () => {
       await getCourseById(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Course not found',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Get course by ID 123 error:', expect.any(Error))
     })
 
@@ -511,7 +567,12 @@ describe('Course Controller', () => {
       await getCourseById(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error fetching course' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Error fetching course',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Get course by ID 1 error:', expect.any(Error))
     })
   })
@@ -545,7 +606,12 @@ describe('Course Controller', () => {
       await softDeleteCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Course not found',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Soft delete course 1 error:', expect.any(Error))
     })
 
@@ -559,7 +625,12 @@ describe('Course Controller', () => {
       await softDeleteCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error deleting course' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Error deleting course',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Soft delete course 1 error:', expect.any(Error))
     })
   })
@@ -590,7 +661,12 @@ describe('Course Controller', () => {
       await editCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Course not found',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
     })
 
@@ -604,7 +680,12 @@ describe('Course Controller', () => {
       await editCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course name is required' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Course name is required',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
     })
 
@@ -618,7 +699,12 @@ describe('Course Controller', () => {
       await editCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course name is too long' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Course name is too long',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
     })
 
@@ -631,7 +717,12 @@ describe('Course Controller', () => {
       await editCourse(mockReq, mockRes)
 
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error editing course' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Error editing course',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
     })
 
@@ -655,7 +746,13 @@ describe('Course Controller', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(409)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { name: 'Name already exists.' },
+        error: {
+          code: 'CONFLICT',
+          details: {
+            name: 'Name already exists.',
+          },
+          message: 'Resource already exists',
+        },
       })
       expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Object))
     })
@@ -731,7 +828,12 @@ describe('Course Controller', () => {
 
       await updateCourse(mockReq, mockRes)
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Course not found',
+        },
+      })
     })
 
     test('should return 400 for SequelizeValidationError', async () => {
@@ -748,7 +850,13 @@ describe('Course Controller', () => {
       await updateCourse(mockReq, mockRes)
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { name: 'Course name is invalid.' },
+        error: {
+          code: 'VALIDATION_ERROR',
+          details: {
+            name: 'Course name is invalid.',
+          },
+          message: 'Validation failed',
+        },
       })
     })
 
@@ -773,7 +881,13 @@ describe('Course Controller', () => {
       await updateCourse(mockReq, mockRes)
       expect(mockRes.status).toHaveBeenCalledWith(409)
       expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { name: 'Name already exists.' },
+        error: {
+          code: 'CONFLICT',
+          details: {
+            name: 'Name already exists.',
+          },
+          message: 'Resource already exists',
+        },
       })
     })
 
@@ -788,7 +902,10 @@ describe('Course Controller', () => {
       await updateCourse(mockReq, mockRes)
       expect(mockRes.status).toHaveBeenCalledWith(500)
       expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Error updating course',
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Error updating course',
+        },
       })
     })
   })
@@ -834,8 +951,10 @@ describe('Course Controller', () => {
 
       // Assert
       expect(CourseService.prototype.deleteCourse).toHaveBeenCalledWith('1')
-      expect(mockRes.status).toHaveBeenCalledWith(204)
-      expect(mockRes.end).toHaveBeenCalled()
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Course permanently deleted successfully',
+      })
       expect(log.info).toHaveBeenCalledWith('Course with ID 1 permanently deleted successfully')
     })
 
@@ -852,7 +971,12 @@ describe('Course Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Course not found' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Course not found',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Delete course 999 error:', expect.any(Error))
     })
 
@@ -869,7 +993,12 @@ describe('Course Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Error permanently deleting course' })
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Error permanently deleting course',
+        },
+      })
       expect(log.error).toHaveBeenCalledWith('Delete course 1 error:', expect.any(Error))
     })
   })

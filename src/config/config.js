@@ -65,7 +65,7 @@ const config = {
   cors: {
     origins: process.env.CORS_ORIGINS
       ? process.env.CORS_ORIGINS.split(',')
-      : ['http://localhost:3000'],
+      : ['http://localhost:3000', 'http://localhost:4000'],
     credentials: true,
     optionsSuccessStatus: 200,
   },
@@ -76,7 +76,7 @@ const config = {
       window: parseInt(process.env.RATE_LIMIT_WINDOW, 10) || 900000, // 15 minutes
       max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
       auth: {
-        max: parseInt(process.env.AUTH_RATE_LIMIT_MAX, 10) || 5,
+        max: parseInt(process.env.AUTH_RATE_LIMIT_MAX, 10) || 15,
       },
     },
   },

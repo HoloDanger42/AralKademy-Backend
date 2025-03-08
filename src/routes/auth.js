@@ -1,6 +1,8 @@
 import express from 'express'
 import { AuthController } from '../controllers/authController.js'
 import { authMiddleware } from '../middleware/authMiddleware.js'
+import { validate } from '../middleware/validationMiddleware.js'
+import { authSchemas } from '../schemas/authSchemas.js'
 
 const router = express.Router()
 
@@ -49,20 +51,7 @@ const router = express.Router()
  *                   type: string
  *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *                 user:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                       example: 1
- *                     email:
- *                       type: string
- *                       example: user@example.com
- *                     name:
- *                       type: string
- *                       example: John Doe
- *                     role:
- *                       type: string
- *                       example: student
+ *                   $ref: '#/components/schemas/User'
  *       400:
  *         description: Missing required fields or invalid captcha
  *         content:
@@ -82,7 +71,7 @@ const router = express.Router()
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/login', AuthController.login)
+router.post('/login', validate(authSchemas.login), AuthController.login)
 
 /**
  * @swagger
@@ -160,7 +149,7 @@ router.post('/logout', authMiddleware, AuthController.logout)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/refresh', AuthController.refreshToken)
+router.post('/refresh', validate(authSchemas.refreshToken), AuthController.refreshToken)
 
 /**
  * @swagger

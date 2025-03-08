@@ -49,20 +49,7 @@ const courseRouter = express.Router()
  *                 courses:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                         example: 1
- *                       name:
- *                         type: string
- *                         example: "Introduction to Programming"
- *                       description:
- *                         type: string
- *                         example: "Learn the basics of programming with Python"
- *                       createdAt:
- *                         type: string
- *                         format: date-time
+ *                     $ref: '#/components/schemas/Course'
  *                 totalItems:
  *                   type: integer
  *                   example: 25
@@ -102,32 +89,7 @@ courseRouter.get('/', authMiddleware, getAllCourses)
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                   example: 1
- *                 name:
- *                   type: string
- *                   example: "Introduction to Programming"
- *                 description:
- *                   type: string
- *                   example: "Learn the basics of programming with Python"
- *                 teacher:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                       example: 5
- *                     name:
- *                       type: string
- *                       example: "John Doe"
- *                     email:
- *                       type: string
- *                       example: "john.doe@example.com"
- *                 createdAt:
- *                   type: string
- *                   format: date-time
+ *               $ref: '#/components/schemas/Course'
  *       401:
  *         description: Unauthorized
  *         content:
@@ -191,17 +153,7 @@ courseRouter.get('/:id', authMiddleware, getCourseById)
  *                   type: string
  *                   example: "Course created successfully"
  *                 course:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                       example: 10
- *                     name:
- *                       type: string
- *                       example: "Advanced Web Development"
- *                     description:
- *                       type: string
- *                       example: "Learn advanced web development techniques"
+ *                   $ref: '#/components/schemas/Course'
  *       400:
  *         description: Invalid input data
  *         content:
@@ -267,7 +219,7 @@ courseRouter.post('/', authMiddleware, createCourse)
  *                   type: string
  *                   example: "Course updated successfully"
  *                 course:
- *                   type: object
+ *                   $ref: '#/components/schemas/Course'
  *       401:
  *         description: Unauthorized
  *         content:
@@ -423,7 +375,7 @@ courseRouter.delete('/:id', authMiddleware, deleteCourse)
  *                   type: string
  *                   example: "Teacher assigned successfully"
  *                 course:
- *                   type: object
+ *                   $ref: '#/components/schemas/Course'
  *       400:
  *         description: Invalid input data
  *         content:
