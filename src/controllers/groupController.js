@@ -1,6 +1,7 @@
 import GroupService from '../services/groupService.js'
 import { Group } from '../models/Group.js'
 import { log } from '../utils/logger.js'
+import { handleControllerError } from '../utils/errorHandler.js'
 
 const groupService = new GroupService(Group)
 
@@ -25,8 +26,7 @@ const getAllGroups = async (req, res) => {
     res.status(200).json(groups)
     log.info('Retrieved all groups')
   } catch (error) {
-    log.error('Error getting groups:', error)
-    res.status(500).json({ message: 'Failed to retrieve groups' })
+    return handleControllerError(error, res, 'Get all groups', 'Failed to retrieve groups')
   }
 }
 
@@ -46,11 +46,7 @@ const createGroup = async (req, res) => {
     })
     log.info(`Group ${name} was successfully created`)
   } catch (error) {
-    log.error('Create group error:', error)
-    if (error.message === 'All fields are required') {
-      return res.status(400).json({ message: 'All fields are required' })
-    }
-    return res.status(500).json({ message: 'Failed to create group' })
+    return handleControllerError(error, res, 'Create group', 'Failed to create group')
   }
 }
 
@@ -71,8 +67,12 @@ const getGroupById = async (req, res) => {
     res.status(200).json(group)
     log.info(`Retrieved group with id ${groupId}`)
   } catch (error) {
-    log.error('Get group by id error:', error)
-    return res.status(500).json({ message: 'Failed to retrieve group' })
+    return handleControllerError(
+      error,
+      res,
+      `Get group ${req.params.groupId}`,
+      'Failed to retrieve group'
+    )
   }
 }
 
@@ -92,11 +92,12 @@ const assignLearnerMembers = async (req, res) => {
     })
     log.info('Learners assigned successfully')
   } catch (error) {
-    log.error('Assign learner members error:', error)
-    if (error.message === 'All fields are required') {
-      return res.status(400).json({ message: 'All fields are required' })
-    }
-    return res.status(500).json({ message: 'Failed to assign learner members' })
+    return handleControllerError(
+      error,
+      res,
+      'Assign learner members',
+      'Failed to assign learner members'
+    )
   }
 }
 
@@ -116,11 +117,62 @@ const assignStudentTeacherMembers = async (req, res) => {
     })
     log.info('Student teachers assigned successfully')
   } catch (error) {
-    log.error('Assign student teacher members error:', error)
-    if (error.message === 'All fields are required') {
-      return res.status(400).json({ message: 'All fields are required' })
-    }
-    return res.status(500).json({ message: 'Failed to assign student teacher members' })
+    return handleControllerError(
+      error,
+      res,
+      'Assign student teacher members',
+      'Failed to assign student teacher members'
+    )
+  }
+}
+
+/**
+ * Updates a group's information.
+ * @param {Object} req - The request object containing the group ID in req.params and update data in req.body.
+ * @param {Object} res - The response object.
+ */
+const updateGroup = async (req, res) => {
+  try {
+    const { groupId } = req.params
+    const updateData = req.body
+
+    const updatedGroup = await groupService.updateGroup(groupId, updateData)
+
+    res.status(200).json({
+      message: 'Group updated successfully',
+      group: updatedGroup,
+    })
+    log.info(`Group with id ${groupId} updated successfully`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Update group ${req.params.groupId}`,
+      'Failed to update group'
+    )
+  }
+}
+
+/**
+ * Deletes a group.
+ * @param {Object} req - The request object containing the group ID in req.params.
+ * @param {Object} res - The response object.
+ */
+const deleteGroup = async (req, res) => {
+  try {
+    const { groupId } = req.params
+
+    await groupService.deleteGroup(groupId)
+
+    res.status(200).json({ message: 'Group deleted successfully' })
+    log.info(`Group with id ${groupId} deleted successfully`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Delete group ${req.params.groupId}`,
+      'Failed to delete group'
+    )
   }
 }
 
@@ -130,4 +182,6 @@ export {
   assignLearnerMembers,
   assignStudentTeacherMembers,
   getGroupById,
+  updateGroup,
+  deleteGroup,
 }
