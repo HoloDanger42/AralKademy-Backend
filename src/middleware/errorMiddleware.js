@@ -94,9 +94,10 @@ const errorMiddleware = (err, req, res, _next) => {
 
 // Export error middleware and legacy SpecificError for backward compatibility
 class SpecificError extends AppError {
-  constructor(message, statusCode) {
+  constructor(message, statusCode, details) {
     super(message, statusCode)
     this.name = 'SpecificError'
+    this.details = details
   }
 }
 

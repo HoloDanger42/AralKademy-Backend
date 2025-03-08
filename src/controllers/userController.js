@@ -217,6 +217,54 @@ const resetPassword = async (req, res) => {
   }
 }
 
+/**
+ * Updates a user.
+ * @param {Object} req - The request object containing user ID and updated details.
+ * @param {Object} res - The response object.
+ */
+const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params
+    const userData = req.body
+
+    // Prevent setting admin role through this endpoint
+    if (userData.role === 'admin') {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Cannot set admin role through this endpoint',
+        },
+      })
+    }
+
+    // Validate role if provided
+    if (userData.role && !['teacher', 'learner', 'student_teacher'].includes(userData.role)) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid role. Allowed roles are: teacher, student teacher, learner',
+        },
+      })
+    }
+
+    const updatedUser = await userService.updateUser(id, userData)
+
+    res.status(200).json({
+      message: 'User updated successfully',
+      user: updatedUser,
+    })
+
+    log.info(`User with ID ${id} updated successfully`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Update user ${req.params.id}`,
+      'Failed to update user'
+    )
+  }
+}
+
 export {
   createUser,
   getAllUsers,
@@ -225,4 +273,5 @@ export {
   verifyResetCode,
   resetPassword,
   deleteUser,
+  updateUser,
 }
