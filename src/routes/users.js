@@ -9,8 +9,7 @@ import {
   createUser,
   updateUser,
 } from '../controllers/userController.js'
-import { checkRole } from '../middleware/roleMiddleware.js'
-import { authMiddleware } from '../middleware/authMiddleware.js'
+import { rbac } from '../middleware/rbacMiddleware.js'
 
 const router = express.Router()
 
@@ -100,7 +99,7 @@ const router = express.Router()
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', authMiddleware, checkRole(['admin']), createUser)
+router.post('/', rbac.adminOnly, createUser)
 
 /**
  * @swagger
@@ -143,7 +142,7 @@ router.post('/', authMiddleware, checkRole(['admin']), createUser)
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get('/', authMiddleware, checkRole(['admin']), getAllUsers)
+router.get('/', rbac.adminOnly, getAllUsers)
 
 /**
  * @swagger
@@ -174,7 +173,7 @@ router.get('/', authMiddleware, checkRole(['admin']), getAllUsers)
  *       404:
  *         description: User not found
  */
-router.get('/:id', authMiddleware, checkRole(['admin']), getUserById)
+router.get('/:id', rbac.adminOnly, getUserById)
 
 /**
  * @swagger
@@ -209,7 +208,7 @@ router.get('/:id', authMiddleware, checkRole(['admin']), getUserById)
  *       404:
  *         description: User not found
  */
-router.delete('/:id', authMiddleware, checkRole(['admin']), deleteUser)
+router.delete('/:id', rbac.adminOnly, deleteUser)
 
 /**
  * @swagger
@@ -427,6 +426,6 @@ router.post('/reset-password', resetPassword)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', authMiddleware, checkRole(['admin']), updateUser)
+router.put('/:id', rbac.adminOnly, updateUser)
 
 export { router as usersRouter }

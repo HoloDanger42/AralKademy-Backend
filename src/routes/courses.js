@@ -1,14 +1,17 @@
 import express from 'express'
 import {
   getAllCourses,
-  createCourse,
-  assignTeacherCourse,
   getCourseById,
-  softDeleteCourse,
+  createCourse,
   updateCourse,
   deleteCourse,
+  editCourse,
+  softDeleteCourse,
+  assignTeacherCourse,
+  assignLearnerGroupCourse,
+  assignStudentTeacherGroupCourse,
 } from '../controllers/courseController.js'
-import { authMiddleware } from '../middleware/authMiddleware.js'
+import { rbac } from '../middleware/rbacMiddleware.js'
 
 const courseRouter = express.Router()
 
@@ -66,7 +69,7 @@ const courseRouter = express.Router()
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-courseRouter.get('/', authMiddleware, getAllCourses)
+courseRouter.get('/', rbac.allAuthenticated, getAllCourses)
 
 /**
  * @swagger
@@ -103,7 +106,7 @@ courseRouter.get('/', authMiddleware, getAllCourses)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-courseRouter.get('/:id', authMiddleware, getCourseById)
+courseRouter.get('/:id', rbac.allAuthenticated, getCourseById)
 
 /**
  * @swagger
@@ -173,7 +176,7 @@ courseRouter.get('/:id', authMiddleware, getCourseById)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-courseRouter.post('/', authMiddleware, createCourse)
+courseRouter.post('/', rbac.adminOnly, createCourse)
 
 /**
  * @swagger
@@ -239,7 +242,7 @@ courseRouter.post('/', authMiddleware, createCourse)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-courseRouter.put('/:id', authMiddleware, updateCourse)
+courseRouter.put('/:id', rbac.adminOnly, updateCourse)
 
 /**
  * @swagger
@@ -286,7 +289,7 @@ courseRouter.put('/:id', authMiddleware, updateCourse)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-courseRouter.patch('/:id/soft-delete', authMiddleware, softDeleteCourse)
+courseRouter.patch('/:id/soft-delete', rbac.adminOnly, softDeleteCourse)
 
 /**
  * @swagger
@@ -333,7 +336,7 @@ courseRouter.patch('/:id/soft-delete', authMiddleware, softDeleteCourse)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-courseRouter.delete('/:id', authMiddleware, deleteCourse)
+courseRouter.delete('/:id', rbac.adminOnly, deleteCourse)
 
 /**
  * @swagger
@@ -401,6 +404,213 @@ courseRouter.delete('/:id', authMiddleware, deleteCourse)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-courseRouter.post('/:id/assign-teacher', authMiddleware, assignTeacherCourse)
+courseRouter.post('/:id/assign-teacher', rbac.adminOnly, assignTeacherCourse)
+
+/**
+ * @swagger
+ * /courses/{id}/edit:
+ *   post:
+ *     summary: Edit course content
+ *     description: Allow student teachers, teachers and admins to edit course content like materials and modules
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Course ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               content:
+ *                 type: object
+ *                 description: Course content structure
+ *               modules:
+ *                 type: array
+ *                 description: Course modules
+ *                 items:
+ *                   type: object
+ *     responses:
+ *       200:
+ *         description: Course content updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Course content updated successfully"
+ *                 course:
+ *                   $ref: '#/components/schemas/Course'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - Teacher or admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Course not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+courseRouter.post('/:id/edit', rbac.studentTeacherAndAbove, editCourse)
+
+/**
+ * @swagger
+ * /courses/{id}/assign-learner-group:
+ *   post:
+ *     summary: Assign a learner group to a course
+ *     description: Allow teachers and admins to assign a learner group to a specific course
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Course ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - learner_group_id
+ *             properties:
+ *               learner_group_id:
+ *                 type: integer
+ *                 example: 3
+ *                 description: ID of the learner group to assign
+ *     responses:
+ *       200:
+ *         description: Learner group assigned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Learner group assigned successfully"
+ *                 course:
+ *                   $ref: '#/components/schemas/Course'
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - Teacher or admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Course or group not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+courseRouter.post('/:id/assign-learner-group', rbac.adminOnly, assignLearnerGroupCourse)
+
+/**
+ * @swagger
+ * /courses/{id}/assign-student-teacher-group:
+ *   post:
+ *     summary: Assign a student teacher group to a course
+ *     description: Allow teachers and admins to assign a student teacher group to a specific course
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Course ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - student_teacher_group_id
+ *             properties:
+ *               student_teacher_group_id:
+ *                 type: integer
+ *                 example: 2
+ *                 description: ID of the student teacher group to assign
+ *     responses:
+ *       200:
+ *         description: Student teacher group assigned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Student teacher group assigned successfully"
+ *                 course:
+ *                   $ref: '#/components/schemas/Course'
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - Teacher or admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Course or group not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+courseRouter.post(
+  '/:id/assign-student-teacher-group',
+  rbac.adminOnly,
+  assignStudentTeacherGroupCourse
+)
 
 export { courseRouter }
