@@ -74,8 +74,8 @@ describe('Token Refresh API', () => {
     await request(app).post('/api/auth/refresh').send({ refreshToken: 'invalid-token' }).expect(401)
   })
 
-  test('should reject with 401 when refresh token is not provided', async () => {
-    await request(app).post('/api/auth/refresh').send({}).expect(401)
+  test('should reject with 400 when refresh token is not provided', async () => {
+    await request(app).post('/api/auth/refresh').send({}).expect(400)
   })
 
   test('should reject with 401 when user has no stored refresh token', async () => {
