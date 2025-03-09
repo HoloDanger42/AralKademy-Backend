@@ -50,17 +50,22 @@ class GroupService {
    * @returns {Promise<object>} The created group object
    * @throws {Error} If any required fields are missing or if group creation fails
    */
-  async createGroup(groupId, name, groupType) {
-    if (!groupId || !name || !groupType) {
+  async createGroup(name, groupType, groupId = null) {
+    if (!name || !groupType) {
       throw new Error('All fields are required')
     }
 
     try {
-      return await this.GroupModel.create({
-        group_id: groupId,
+      const createData = {
         name,
         group_type: groupType,
-      })
+      }
+
+      if (groupId) {
+        createData.group_id = groupId
+      }
+
+      return await this.GroupModel.create(createData)
     } catch (error) {
       throw new Error('Failed to create group')
     }

@@ -38,9 +38,9 @@ describe('Group Service', () => {
 
       // Act
       const group = await groupService.createGroup(
-        validGroupData.group_id,
         validGroupData.name,
-        validGroupData.group_type
+        validGroupData.group_type,
+        validGroupData.group_id
       )
 
       // Assert
