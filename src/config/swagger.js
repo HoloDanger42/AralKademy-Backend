@@ -60,6 +60,8 @@ const options = {
             name: { type: 'string' },
             description: { type: 'string' },
             user_id: { type: 'integer' },
+            student_teacher_group_id: { type: 'integer' },
+            learner_group_id: { type: 'integer' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
           },
