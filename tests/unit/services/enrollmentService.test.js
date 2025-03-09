@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, jest, test } from '@jest/globals'
+import { jest } from '@jest/globals'
 import EnrollmentService from '../../../src/services/enrollmentService'
 import { validEnrollments, invalidEnrollments } from '../../fixtures/enrollmentData'
 import bcrypt from 'bcryptjs'
@@ -130,13 +130,26 @@ describe('Enrollment Service', () => {
       // Arrange
       const enrollmentId = 1
       const adminId = 2
+
+      const mockTransaction = {
+        commit: jest.fn().mockResolvedValue(true),
+        rollback: jest.fn().mockResolvedValue(true),
+      }
+
+      mockEnrollmentModel.sequelize = {
+        transaction: jest.fn().mockResolvedValue(mockTransaction),
+      }
+
       const enrollment = {
         id: enrollmentId,
         status: 'pending',
-        save: jest.fn().mockResolvedValue(true)
+        save: jest.fn().mockResolvedValue(true),
       }
 
       mockEnrollmentModel.findByPk.mockResolvedValue(enrollment)
+
+      mockUserModel.create = jest.fn().mockResolvedValue({ id: 123 })
+      mockLearnerModel.create = jest.fn().mockResolvedValue({ id: 456 })
 
       // Act
       const result = await enrollmentService.approveEnrollment(enrollmentId, adminId)
@@ -146,16 +159,33 @@ describe('Enrollment Service', () => {
         id: enrollmentId,
         status: 'approved',
         handled_by_id: adminId,
-        save: expect.any(Function)
+        save: expect.any(Function),
       })
       expect(enrollment.save).toHaveBeenCalled()
+      expect(mockTransaction.commit).toHaveBeenCalled()
       expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId)
+      expect(mockUserModel.create).toHaveBeenCalledWith(expect.any(Object), {
+        transaction: mockTransaction,
+      })
+      expect(mockLearnerModel.create).toHaveBeenCalledWith(expect.any(Object), {
+        transaction: mockTransaction,
+      })
     })
 
     test('should throw an error if enrollment is not found (approve enrollment)', async () => {
       // Arrange
       const enrollmentId = 1
       const adminId = 99
+
+      const mockTransaction = {
+        commit: jest.fn().mockResolvedValue(true),
+        rollback: jest.fn().mockResolvedValue(true),
+      }
+
+      mockEnrollmentModel.sequelize = {
+        transaction: jest.fn().mockResolvedValue(mockTransaction),
+      }
+
       mockEnrollmentModel.findByPk.mockResolvedValue(null)
 
       // Act & Assert
@@ -163,42 +193,40 @@ describe('Enrollment Service', () => {
         'Enrollment not found'
       )
       expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId)
+      expect(mockTransaction.rollback).toHaveBeenCalled()
     })
 
     test('should throw an error if updating enrollment fails (approve enrollment)', async () => {
       // Arrange
       const enrollmentId = 1
-      const adminId = 99
-      const enrollment = {
-        id: enrollmentId,
-        enrollment_id: enrollmentId,
-        first_name: 'John',
-        last_name: 'Doe',
-        email: 'john@example.com',
-        password: 'hashedpassword',
-        birth_date: '2000-01-01',
-        contact_no: '123456789',
-        school_id: 5,
-        year_level: '3rd Year',
-        status: 'pending',
-        save: jest.fn().mockRejectedValue(new Error('Failed to approve enrollment')),
+      const adminId = 2
+
+      // Add mock transaction
+      const mockTransaction = {
+        commit: jest.fn().mockResolvedValue(true),
+        rollback: jest.fn().mockResolvedValue(true),
       }
 
-      const user = { user_id: 101, email: 'john@example.com' }
-      const learner = { user_id: 101, enrollment_id: enrollmentId }
+      mockEnrollmentModel.sequelize = {
+        transaction: jest.fn().mockResolvedValue(mockTransaction),
+      }
+
+      const enrollment = {
+        id: enrollmentId,
+        status: 'pending',
+        handled_by_id: null,
+        save: jest.fn().mockRejectedValue(new Error('Database error')),
+      }
 
       mockEnrollmentModel.findByPk.mockResolvedValue(enrollment)
-      mockUserModel.findOne.mockResolvedValue(user)
-      mockLearnerModel.findOne.mockResolvedValue(learner)
 
       // Act & Assert
       await expect(enrollmentService.approveEnrollment(enrollmentId, adminId)).rejects.toThrow(
         'Failed to approve enrollment'
       )
 
-      console.log('Enrollment save method should be called before this')
-
       expect(enrollment.save).toHaveBeenCalled()
+      expect(mockTransaction.rollback).toHaveBeenCalled()
     })
   })
 

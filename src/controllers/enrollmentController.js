@@ -1,10 +1,9 @@
 import EnrollmentService from '../services/enrollmentService.js'
-import { Enrollment } from '../models/Enrollment.js'
-import { School } from '../models/School.js'
+import { Enrollment, School, Learner, User } from '../models/index.js'
 import { log } from '../utils/logger.js'
 import { handleControllerError } from '../utils/errorHandler.js'
 
-const enrollmentService = new EnrollmentService(Enrollment, School)
+const enrollmentService = new EnrollmentService(Enrollment, School, User, Learner)
 
 /**
  * Creates a new enrollment.
@@ -109,9 +108,9 @@ const approveEnrollment = async (req, res) => {
     const enrollmentId = req.params.enrollmentId
     const adminId = req.user.id
     const enrollment = await enrollmentService.approveEnrollment(enrollmentId, adminId)
-    res.status(200).json({ 
+    res.status(200).json({
       message: 'Enrollment approved successfully',
-      status: enrollment.status 
+      status: enrollment.status,
     })
     log.info(`Enrollment with ID: ${enrollmentId} was approved`)
   } catch (error) {
