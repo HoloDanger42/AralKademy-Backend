@@ -9,7 +9,7 @@ dotenv.config()
 
 // Configure nodemailer
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // You can use any email service provider
+  service: 'gmail', 
   auth: {
     user: 'goblin2204@gmail.com', // email account to test forgot password feature
     pass: 'ihbx prwm vcvl lnra'
