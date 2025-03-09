@@ -108,7 +108,8 @@ export const handleControllerError = (
     error.message.toLowerCase().includes('required') ||
     error.message.toLowerCase().includes('invalid') ||
     error.message.toLowerCase().includes('must be') ||
-    error.message.toLowerCase().includes('too long')
+    error.message.toLowerCase().includes('too long') ||
+    error.message.toLowerCase().includes('expired')
   ) {
     return res.status(400).json({
       error: {

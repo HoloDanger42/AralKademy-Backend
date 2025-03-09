@@ -7,6 +7,8 @@ import {
   resetPassword,
   deleteUser,
   createUser,
+  getAvailableLearners,
+  getAvailableStudentTeachers,
 } from '../controllers/userController.js'
 import { checkRole } from '../middleware/roleMiddleware.js'
 import { authMiddleware } from '../middleware/authMiddleware.js'
@@ -329,5 +331,53 @@ router.post('/verify-reset-code', verifyResetCode)
  *         description: User not found
  */
 router.post('/reset-password', resetPassword)
+
+/**
+ * @swagger
+ * /users/available-learners:
+ *   get:
+ *     summary: Get all learners who are not currently assigned to any group
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of available learners
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+router.get('/available-learners', authMiddleware, checkRole(['admin']), getAvailableLearners)
+
+/**
+ * @swagger
+ * /users/available-student-teachers:
+ *   get:
+ *     summary: Get all student teachers who are not currently assigned to any group
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of available student teachers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
+ */
+router.get('/available-student-teachers', authMiddleware, checkRole(['admin']), getAvailableStudentTeachers)
 
 export { router as usersRouter }

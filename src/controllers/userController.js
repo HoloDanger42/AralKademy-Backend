@@ -217,6 +217,41 @@ const resetPassword = async (req, res) => {
   }
 }
 
+/**
+ * Retrieves all learners who are not currently assigned to any group.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+const getAvailableLearners = async (req, res) => {
+  try {
+    const learners = await userService.getAvailableLearners()
+    res.status(200).json(learners)
+    log.info('Retrieved available learners')
+  } catch (error) {
+    return handleControllerError(error, res, 'Get available learners', 'Failed to retrieve learners')
+  }
+}
+
+/**
+ * Retrieves all student teachers who are not currently assigned to any group.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+const getAvailableStudentTeachers = async (req, res) => {
+  try {
+    const studentTeachers = await userService.getAvailableStudentTeachers()
+    res.status(200).json(studentTeachers)
+    log.info('Retrieved available student teachers')
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      'Get available student teachers',
+      'Failed to retrieve student teachers'
+    )
+  }
+}
+
 export {
   createUser,
   getAllUsers,
@@ -225,4 +260,6 @@ export {
   verifyResetCode,
   resetPassword,
   deleteUser,
+  getAvailableLearners,
+  getAvailableStudentTeachers,
 }
