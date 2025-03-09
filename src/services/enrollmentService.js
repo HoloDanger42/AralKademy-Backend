@@ -95,43 +95,19 @@ class EnrollmentService {
   async approveEnrollment(enrollmentId, adminId) {
     try {
       const enrollment = await this.EnrollmentModel.findByPk(enrollmentId)
-
+      
       if (!enrollment) {
         throw new Error('Enrollment not found')
       }
 
-      const user = await this.UserModel.findOne({ where: { email: enrollment.email } })
-
-      // IMPORTANT:  If the user does NOT exist at this point, it indicates a
-      // serious data integrity problem.
-      if (!user) {
-        throw new Error(`User with email ${enrollment.email} not found.  Data integrity issue.`)
-      }
-      // Check if learner exists using user_id AND enrollment_id
-      let learner = await this.LearnerModel.findOne({
-        where: {
-          user_id: user.id,
-          enrollment_id: enrollment.enrollment_id,
-        },
-      })
-
-      if (!learner) {
-        // Create the learner record.
-        learner = await this.LearnerModel.create({
-          user_id: user.id,
-          year_level: enrollment.year_level,
-          enrollment_id: enrollment.enrollment_id,
-        })
-      }
-
       enrollment.status = 'approved'
-      enrollment.handled_by_id = adminId // The admin approving the enrollment
+      enrollment.handled_by_id = adminId
       await enrollment.save()
 
       return enrollment
     } catch (error) {
       log.error('Error approving enrollment:', error)
-      throw error // Re-throw for consistent error handling
+      throw error
     }
   }
 

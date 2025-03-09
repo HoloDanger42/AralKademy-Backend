@@ -109,7 +109,10 @@ const approveEnrollment = async (req, res) => {
     const enrollmentId = req.params.enrollmentId
     const adminId = req.user.id
     const enrollment = await enrollmentService.approveEnrollment(enrollmentId, adminId)
-    res.status(200).json(enrollment)
+    res.status(200).json({ 
+      message: 'Enrollment approved successfully',
+      status: enrollment.status 
+    })
     log.info(`Enrollment with ID: ${enrollmentId} was approved`)
   } catch (error) {
     return handleControllerError(
