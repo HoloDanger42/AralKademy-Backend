@@ -128,6 +128,8 @@ class EnrollmentService {
       await this.LearnerModel.create(
         {
           user_id: newUser.id,
+          year_level: enrollment.year_level,
+          enrollment_id: enrollment.enrollment_id,
         },
         { transaction }
       )

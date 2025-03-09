@@ -37,8 +37,8 @@ const getAllGroups = async (req, res) => {
  */
 const createGroup = async (req, res) => {
   try {
-    const { groupId, name, groupType } = req.body
-    const newGroup = await groupService.createGroup(groupId, name, groupType)
+    const { name, groupType, groupId } = req.body
+    const newGroup = await groupService.createGroup(name, groupType, groupId)
 
     res.status(201).json({
       message: 'Group created successfully',
