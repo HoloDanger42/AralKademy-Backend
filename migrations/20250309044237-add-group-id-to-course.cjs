@@ -2,45 +2,27 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('courses', {
-      id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
+    await queryInterface.addColumn('courses', 'student_teacher_group_id', {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'groups',
+        key: 'group_id',
       },
-      name: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true,
-      },
-      description: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      user_id: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: 'teachers',
-          key: 'user_id',
-        },
-      },
-      created_at: {
-        type: Sequelize.DATE,
-        allowNull: false,
-      },
-      updated_at: {
-        type: Sequelize.DATE,
-        allowNull: false,
-      },
-      deleted_at: {
-        type: Sequelize.DATE,
-        allowNull: true,
+    })
+
+    await queryInterface.addColumn('courses', 'learner_group_id', {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'groups',
+        key: 'group_id',
       },
     })
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('courses')
+    await queryInterface.removeColumn('courses', 'student_teacher_group_id')
+    await queryInterface.removeColumn('courses', 'learner_group_id')
   },
 }
