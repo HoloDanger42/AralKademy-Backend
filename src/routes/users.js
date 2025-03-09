@@ -354,7 +354,7 @@ router.post('/reset-password', resetPassword)
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get('/available-learners', authMiddleware, checkRole(['admin']), getAvailableLearners)
+router.get('/available-learners', rbac.adminOnly, getAvailableLearners)
 
 /**
  * @swagger
@@ -378,7 +378,7 @@ router.get('/available-learners', authMiddleware, checkRole(['admin']), getAvail
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get('/available-student-teachers', authMiddleware, checkRole(['admin']), getAvailableStudentTeachers)
+router.get('/available-student-teachers', rbac.adminOnly, getAvailableStudentTeachers)
 
 /**
  * @swagger
