@@ -93,21 +93,56 @@ class EnrollmentService {
    * @throws {Error} If there's any error during the approval process
    */
   async approveEnrollment(enrollmentId, adminId) {
+    const transaction = await this.EnrollmentModel.sequelize.transaction()
+
     try {
       const enrollment = await this.EnrollmentModel.findByPk(enrollmentId)
-      
+
       if (!enrollment) {
         throw new Error('Enrollment not found')
       }
 
       enrollment.status = 'approved'
       enrollment.handled_by_id = adminId
-      await enrollment.save()
+      await enrollment.save({ transaction })
 
+      // Create a user with the learner role using enrollment data
+      const hashedPassword = enrollment.password
+
+      const userData = {
+        email: enrollment.email,
+        password: hashedPassword,
+        first_name: enrollment.first_name,
+        last_name: enrollment.last_name,
+        middle_initial: enrollment.middle_initial,
+        birth_date: enrollment.birth_date,
+        contact_no: enrollment.contact_no,
+        school_id: enrollment.school_id,
+        role: 'learner',
+      }
+
+      // Create the user
+      const newUser = await this.UserModel.create(userData, { transaction })
+
+      // Create learner record associated with the new user
+      await this.LearnerModel.create(
+        {
+          user_id: newUser.id,
+        },
+        { transaction }
+      )
+
+      await transaction.commit()
       return enrollment
     } catch (error) {
+      await transaction.rollback()
       log.error('Error approving enrollment:', error)
-      throw error
+
+      if (error.message === 'Enrollment not found') {
+        throw error
+      }
+
+      throw new Error('Failed to approve enrollment')
     }
   }
 
