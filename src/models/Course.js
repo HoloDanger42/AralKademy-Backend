@@ -44,22 +44,22 @@ const Course = sequelize.define(
         key: 'user_id',
       },
     },
-    // student_teacher_group_id: {
-    //   type: DataTypes.INTEGER,
-    //   allowNull: true,
-    //   references: {
-    //     model: 'users',
-    //     key: 'user_id',
-    //   },
-    // },
-    // learner_group_id: {
-    //   type: DataTypes.INTEGER,
-    //   allowNull: true,
-    //   references: {
-    //     model: 'groups',
-    //     key: 'group_id',
-    //   },
-    // },
+    student_teacher_group_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'groups',
+        key: 'group_id',
+      },
+    },
+    learner_group_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'groups',
+        key: 'group_id',
+      },
+    },
   },
   {
     tableName: 'courses',

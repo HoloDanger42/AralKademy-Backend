@@ -210,6 +210,14 @@ courseRouter.post('/', rbac.adminOnly, createCourse)
  *                 type: integer
  *                 description: Teacher ID
  *                 example: 7
+ *               student_teacher_group_id:
+ *                 type: integer
+ *                 description: Student teacher group ID
+ *                 example: 2
+ *               learner_group_id:
+ *                 type: integer
+ *                 description: Learner group ID
+ *                 example: 3
  *     responses:
  *       200:
  *         description: Course updated successfully
