@@ -13,6 +13,12 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: 'goblin2204@gmail.com', // email account to test forgot password feature
     pass: 'ihbx prwm vcvl lnra'
+    /* put in .env file
+    EMAIL_USER='goblin2204@gmail.com'
+    EMAIL_PASS='ihbx prwm vcvl lnra'
+    then replace above with
+    process.env.EMAIL_USER and process.env.EMAIL_PASS
+    */
   },
 });
 
