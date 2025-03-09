@@ -1,20 +1,26 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-// import nodemailer from 'nodemailer';
+import nodemailer from 'nodemailer';
 
 //
 import dotenv from 'dotenv'
 dotenv.config()
 //
 
-/* Configure nodemailer
+// Configure nodemailer
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // You can use any email service provider
+  service: 'gmail', 
   auth: {
-    user: process.env.EMAIL_USER, // Your email address
-    pass: process.env.EMAIL_PASS, // Your email password or app-specific password
+    user: 'goblin2204@gmail.com', // email account to test forgot password feature
+    pass: 'ihbx prwm vcvl lnra'
+    /* put in .env file
+    EMAIL_USER='goblin2204@gmail.com'
+    EMAIL_PASS='ihbx prwm vcvl lnra'
+    then replace above with
+    process.env.EMAIL_USER and process.env.EMAIL_PASS
+    */
   },
-}); */
+});
 
 class UserService {
   /**
@@ -234,6 +240,46 @@ class UserService {
     return await this.UserModel.findAndCountAll({
       limit,
       offset: (page - 1) * limit,
+      attributes: { exclude: ['password'] },
+    })
+  }
+
+  /**
+   * Retrieves all learners who are not currently assigned to any group.
+   * @async
+   * @returns {Promise<Array>} A promise that resolves to an array of learner objects (excluding passwords).
+   */
+  async getAvailableLearners() {
+    return await this.UserModel.findAll({
+      where: { role: 'learner' },
+      include: [
+        {
+          model: this.LearnerModel,
+          as: 'learner',
+          where: { group_id: null },
+          required: false,
+        },
+      ],
+      attributes: { exclude: ['password'] },
+    })
+  }
+
+  /**
+   * Retrieves all student teachers who are not currently assigned to any group.
+   * @async
+   * @returns {Promise<Array>} A promise that resolves to an array of student teacher objects (excluding passwords).
+   */
+  async getAvailableStudentTeachers() {
+    return await this.UserModel.findAll({
+      where: { role: 'student_teacher' },
+      include: [
+        {
+          model: this.StudentTeacherModel,
+          as: 'studentTeacher',
+          where: { group_id: null },
+          required: false,
+        },
+      ],
       attributes: { exclude: ['password'] },
     })
   }
@@ -483,50 +529,48 @@ class UserService {
     }
   }
 
-  /**
-   * Generates a reset code for password recovery and saves it to the user's record.
-   * @async
-   * @param {string} email - The email address of the user requesting password reset
-   * @returns {Promise<string>} The generated 6-digit reset code
-   * @throws {Error} If user is not found with the provided email
-   * @throws {Error} If there's an error during the password reset process
-   */
-  async forgotPassword(email) {
-    try {
-      const user = await this.UserModel.findOne({ where: { email } })
-      if (!user) throw new Error('User not found')
+/**
+ * Generates a reset code for password recovery and saves it to the user's record.
+ * @async
+ * @param {string} email - The email address of the user requesting password reset
+ * @returns {Promise<string>} The generated 6-digit reset code
+ * @throws {Error} If user is not found with the provided email
+ * @throws {Error} If there's an error during the password reset process
+ */
+async forgotPassword(email) {
+  try {
+    const user = await this.UserModel.findOne({ where: { email } })
+    if (!user) throw new Error('User not found')
 
-      // Generate a random 6-digit code
-      const code = Math.floor(100000 + Math.random() * 900000).toString()
+    const code = Math.floor(100000 + Math.random() * 900000).toString()
 
-      user.reset_code = code
-      await user.save()
+    const expiryTime = new Date(Date.now() + 3 * 60 * 1000)
 
-      /* Send the code to the user's email
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Password Reset Code',
-        text: `Your password reset code is: ${code}`,
-      };
+    user.reset_code = code
+    user.reset_code_expiry = expiryTime
+    await user.save()
 
-      await transporter.sendMail(mailOptions); */
-
-      // For now, just return the code
-      return code
-    } catch (error) {
-      console.error('Forgot password error:', error)
-      throw error
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Password Reset Code',
+      text: `Your password reset code is: ${code}. It will expire in 3 minutes.`,
     }
+
+    await transporter.sendMail(mailOptions)
+  } catch (error) {
+    console.error('Forgot password error:', error)
+    throw error
   }
+}
 
   /**
-   * Verifies if the reset code matches the one stored for the user with the given email
-   * @param {string} email - The email address of the user
-   * @param {string} code - The reset code to verify
-   * @returns {Promise<boolean>} Returns true if code matches, throws error otherwise
-   * @throws {Error} Throws error if user is not found or if code is invalid
-   */
+ * Verifies if the reset code matches the one stored for the user with the given email
+ * @param {string} email - The email address of the user
+ * @param {string} code - The reset code to verify
+ * @returns {Promise<boolean>} Returns true if code matches and is not expired, throws error otherwise
+ * @throws {Error} Throws error if user is not found, if code is invalid, or if code is expired
+ */
   async verifyResetCode(email, code) {
     try {
       const user = await this.UserModel.findOne({ where: { email } })
@@ -536,6 +580,13 @@ class UserService {
         throw new Error('Invalid code')
       }
 
+      if (new Date() > new Date(user.reset_code_expiry)) {
+        user.reset_code = null
+        user.reset_code_expiry = null
+        await user.save()
+        throw new Error('Reset code has expired')
+      }
+
       return true
     } catch (error) {
       console.error('Confirm forgot password code error:', error)
@@ -543,15 +594,15 @@ class UserService {
     }
   }
 
-  /**
-   * Resets a user's password using their email address
-   * @async
-   * @param {string} email - The email address of the user
-   * @param {string} newPassword - The new password to set
-   * @throws {Error} When user is not found
-   * @throws {Error} When password validation fails
-   * @returns {Promise<boolean>} Returns true if password was reset successfully
-   */
+/**
+ * Resets a user's password using their email address
+ * @async
+ * @param {string} email - The email address of the user
+ * @param {string} newPassword - The new password to set
+ * @throws {Error} When user is not found
+ * @throws {Error} When password validation fails
+ * @returns {Promise<boolean>} Returns true if password was reset successfully
+ */
   async resetPassword(email, newPassword) {
     try {
       const user = await this.UserModel.findOne({ where: { email } })
@@ -562,6 +613,8 @@ class UserService {
       this.validatePassword(newPassword)
 
       user.password = hashedPassword
+      user.reset_code = null 
+      user.reset_code_expiry = null 
       await user.save()
 
       return true
