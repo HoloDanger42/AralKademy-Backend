@@ -312,7 +312,10 @@ describe('Enrollment Controller', () => {
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(200)
-      expect(mockRes.json).toHaveBeenCalledWith(mockEnrollment)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Enrollment approved successfully',
+        status: mockEnrollment.status
+      })
       expect(log.info).toHaveBeenCalledWith('Enrollment with ID: 1 was approved')
     })
 

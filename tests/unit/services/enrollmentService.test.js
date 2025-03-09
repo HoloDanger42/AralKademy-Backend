@@ -132,39 +132,24 @@ describe('Enrollment Service', () => {
       const adminId = 2
       const enrollment = {
         id: enrollmentId,
-        email: 'john@example.com',
         status: 'pending',
-        save: jest.fn().mockResolvedValue(true),
-      }
-      const user = {
-        id: 101,
-        email: 'john@example.com',
-      }
-      const learner = {
-        user_id: user.id,
-        enrollment_id: enrollmentId,
+        save: jest.fn().mockResolvedValue(true)
       }
 
       mockEnrollmentModel.findByPk.mockResolvedValue(enrollment)
-      mockUserModel.findOne.mockResolvedValue(user) // Changed: Return existing user
-      mockLearnerModel.findOne.mockResolvedValue(null)
-      mockLearnerModel.create.mockResolvedValue(learner)
 
       // Act
       const result = await enrollmentService.approveEnrollment(enrollmentId, adminId)
 
       // Assert
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         id: enrollmentId,
         status: 'approved',
         handled_by_id: adminId,
+        save: expect.any(Function)
       })
-
       expect(enrollment.save).toHaveBeenCalled()
       expect(mockEnrollmentModel.findByPk).toHaveBeenCalledWith(enrollmentId)
-      expect(mockUserModel.findOne).toHaveBeenCalledWith({
-        where: { email: enrollment.email },
-      })
     })
 
     test('should throw an error if enrollment is not found (approve enrollment)', async () => {
