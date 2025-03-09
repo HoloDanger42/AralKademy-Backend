@@ -11,8 +11,8 @@ dotenv.config()
 const transporter = nodemailer.createTransport({
   service: 'gmail', // You can use any email service provider
   auth: {
-    user: process.env.EMAIL_USER, // goblin2204@gmail.com
-    pass: process.env.EMAIL_PASS, // ihbx prwm vcvl lnra
+    user: 'goblin2204@gmail.com', // email account to test forgot password feature
+    pass: 'ihbx prwm vcvl lnra'
   },
 });
 

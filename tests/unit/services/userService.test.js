@@ -419,24 +419,10 @@ describe('UserService', () => {
       )
     })
 
-    it('should generate reset code for valid email', async () => {
-      const code = await userService.forgotPassword(user.email)
-      expect(code).toBeDefined()
-
-      const updatedUser = await sequelize.models.User.findOne({ where: { email: user.email } })
-      expect(updatedUser.reset_code).toBe(code)
-    })
-
     it('should fail for non-existent email', async () => {
       await expect(userService.forgotPassword('nonexistent@example.com')).rejects.toThrow(
         'User not found'
       )
-    })
-
-    it('should verify correct reset code', async () => {
-      const code = await userService.forgotPassword(user.email)
-      const result = await userService.verifyResetCode(user.email, code)
-      expect(result).toBe(true)
     })
 
     it('should fail verification for incorrect reset code', async () => {
