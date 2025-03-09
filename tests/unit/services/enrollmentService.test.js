@@ -145,6 +145,7 @@ describe('Enrollment Service', () => {
       expect(result).toEqual({
         id: enrollmentId,
         status: 'approved',
+        handled_by_id: adminId,
         save: expect.any(Function)
       })
       expect(enrollment.save).toHaveBeenCalled()
