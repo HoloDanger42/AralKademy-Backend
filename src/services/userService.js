@@ -1,26 +1,22 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import nodemailer from 'nodemailer';
+import nodemailer from 'nodemailer'
 
-//
-import dotenv from 'dotenv'
-dotenv.config()
-//
+// Configure nodemailer with proper error handling
+const transporter = (() => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn('Email credentials not configured. Password reset functionality will not work.')
+    return null
+  }
 
-// Configure nodemailer
-const transporter = nodemailer.createTransport({
-  service: 'gmail', 
-  auth: {
-    user: 'goblin2204@gmail.com', // email account to test forgot password feature
-    pass: 'ihbx prwm vcvl lnra'
-    /* put in .env file
-    EMAIL_USER='goblin2204@gmail.com'
-    EMAIL_PASS='ihbx prwm vcvl lnra'
-    then replace above with
-    process.env.EMAIL_USER and process.env.EMAIL_PASS
-    */
-  },
-});
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  })
+})()
 
 class UserService {
   /**
@@ -529,48 +525,62 @@ class UserService {
     }
   }
 
-/**
- * Generates a reset code for password recovery and saves it to the user's record.
- * @async
- * @param {string} email - The email address of the user requesting password reset
- * @returns {Promise<string>} The generated 6-digit reset code
- * @throws {Error} If user is not found with the provided email
- * @throws {Error} If there's an error during the password reset process
- */
-async forgotPassword(email) {
-  try {
-    const user = await this.UserModel.findOne({ where: { email } })
-    if (!user) throw new Error('User not found')
+  /**
+   * Generates a reset code for password recovery and saves it to the user's record.
+   * @async
+   * @param {string} email - The email address of the user requesting password reset
+   * @returns {Promise<string>} The generated 6-digit reset code
+   * @throws {Error} If user is not found with the provided email
+   * @throws {Error} If there's an error during the password reset process
+   */
+  async forgotPassword(email) {
+    try {
+      const user = await this.UserModel.findOne({ where: { email } })
+      if (!user) throw new Error('User not found')
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
+      const expiryTime = new Date(Date.now() + 3 * 60 * 1000)
 
-    const expiryTime = new Date(Date.now() + 3 * 60 * 1000)
+      user.reset_code = code
+      user.reset_code_expiry = expiryTime
+      await user.save()
 
-    user.reset_code = code
-    user.reset_code_expiry = expiryTime
-    await user.save()
+      if (!transporter) {
+        console.error('Email service not configured. Unable to send password reset code.')
+        throw new Error('Email service unavailable')
+      }
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Password Reset Code',
-      text: `Your password reset code is: ${code}. It will expire in 3 minutes.`,
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Password Reset Code',
+        text: `Your password reset code is: ${code}. It will expire in 3 minutes.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #4a4a4a;">Password Reset</h2>
+            <p>Your password reset code is:</p>
+            <h1 style="background-color: #f5f5f5; padding: 10px; text-align: center; font-size: 24px; letter-spacing: 5px;">${code}</h1>
+            <p>This code will expire in <strong>3 minutes</strong>.</p>
+            <p>If you didn't request this code, please ignore this email.</p>
+          </div>
+        `,
+      }
+
+      await transporter.sendMail(mailOptions)
+      return code
+    } catch (error) {
+      console.error('Forgot password error:', error)
+      throw error
     }
-
-    await transporter.sendMail(mailOptions)
-  } catch (error) {
-    console.error('Forgot password error:', error)
-    throw error
   }
-}
 
   /**
- * Verifies if the reset code matches the one stored for the user with the given email
- * @param {string} email - The email address of the user
- * @param {string} code - The reset code to verify
- * @returns {Promise<boolean>} Returns true if code matches and is not expired, throws error otherwise
- * @throws {Error} Throws error if user is not found, if code is invalid, or if code is expired
- */
+   * Verifies if the reset code matches the one stored for the user with the given email
+   * @param {string} email - The email address of the user
+   * @param {string} code - The reset code to verify
+   * @returns {Promise<boolean>} Returns true if code matches and is not expired, throws error otherwise
+   * @throws {Error} Throws error if user is not found, if code is invalid, or if code is expired
+   */
   async verifyResetCode(email, code) {
     try {
       const user = await this.UserModel.findOne({ where: { email } })
@@ -594,15 +604,15 @@ async forgotPassword(email) {
     }
   }
 
-/**
- * Resets a user's password using their email address
- * @async
- * @param {string} email - The email address of the user
- * @param {string} newPassword - The new password to set
- * @throws {Error} When user is not found
- * @throws {Error} When password validation fails
- * @returns {Promise<boolean>} Returns true if password was reset successfully
- */
+  /**
+   * Resets a user's password using their email address
+   * @async
+   * @param {string} email - The email address of the user
+   * @param {string} newPassword - The new password to set
+   * @throws {Error} When user is not found
+   * @throws {Error} When password validation fails
+   * @returns {Promise<boolean>} Returns true if password was reset successfully
+   */
   async resetPassword(email, newPassword) {
     try {
       const user = await this.UserModel.findOne({ where: { email } })
@@ -613,8 +623,8 @@ async forgotPassword(email) {
       this.validatePassword(newPassword)
 
       user.password = hashedPassword
-      user.reset_code = null 
-      user.reset_code_expiry = null 
+      user.reset_code = null
+      user.reset_code_expiry = null
       await user.save()
 
       return true
