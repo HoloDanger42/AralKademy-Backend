@@ -533,7 +533,7 @@ class UserService {
    * @throws {Error} If user is not found with the provided email
    * @throws {Error} If there's an error during the password reset process
    */
-  async forgotPassword(email) {
+  async forgotPassword(email, skipEmail = false) {
     try {
       const user = await this.UserModel.findOne({ where: { email } })
       if (!user) throw new Error('User not found')
@@ -545,17 +545,18 @@ class UserService {
       user.reset_code_expiry = expiryTime
       await user.save()
 
-      if (!transporter) {
-        console.error('Email service not configured. Unable to send password reset code.')
-        throw new Error('Email service unavailable')
-      }
+      if (!skipEmail) {
+        if (!transporter) {
+          console.error('Email service not configured. Unable to send password reset code.')
+          throw new Error('Email service unavailable')
+        }
 
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Password Reset Code',
-        text: `Your password reset code is: ${code}. It will expire in 3 minutes.`,
-        html: `
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: 'Password Reset Code',
+          text: `Your password reset code is: ${code}. It will expire in 3 minutes.`,
+          html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
             <h2 style="color: #4a4a4a;">Password Reset</h2>
             <p>Your password reset code is:</p>
@@ -564,9 +565,10 @@ class UserService {
             <p>If you didn't request this code, please ignore this email.</p>
           </div>
         `,
-      }
+        }
 
-      await transporter.sendMail(mailOptions)
+        await transporter.sendMail(mailOptions)
+      }
       return code
     } catch (error) {
       console.error('Forgot password error:', error)
