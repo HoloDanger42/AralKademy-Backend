@@ -426,12 +426,12 @@ describe('UserService', () => {
     })
 
     it('should fail verification for incorrect reset code', async () => {
-      await userService.forgotPassword(user.email)
+      await userService.forgotPassword(user.email, true)
       await expect(userService.verifyResetCode(user.email, 123456)).rejects.toThrow('Invalid code')
     })
 
     it('should reset password with valid reset code', async () => {
-      await userService.forgotPassword(user.email)
+      await userService.forgotPassword(user.email, true)
       await userService.resetPassword(user.email, 'newpassword123')
 
       const updatedUser = await sequelize.models.User.findOne({ where: { email: user.email } })
