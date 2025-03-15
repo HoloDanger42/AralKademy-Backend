@@ -7,6 +7,7 @@ import {
   getGroupById,
   updateGroup,
   deleteGroup,
+  getGroupMembers
 } from '../controllers/groupController.js'
 import { authMiddleware } from '../middleware/authMiddleware.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
@@ -419,5 +420,51 @@ groupsRouter.put('/:groupId', rbac.adminOnly, updateGroup)
  *               $ref: '#/components/schemas/Error'
  */
 groupsRouter.delete('/:groupId', rbac.adminOnly, deleteGroup)
+
+/**
+ * @swagger
+ * /groups/{groupId}/members:
+ *   get:
+ *     summary: Get members of a group
+ *     description: Retrieve the members of a specific group based on the group's type
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Group ID
+ *     responses:
+ *       200:
+ *         description: A list of group members
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User' // Assuming you have a User schema defined
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Group not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Failed to retrieve group members
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+groupsRouter.get('/:groupId/members', rbac.allAuthenticated, getGroupMembers)
 
 export { groupsRouter }

@@ -228,6 +228,45 @@ class GroupService {
       throw new Error('Failed to delete group')
     }
   }
+
+  /**
+ * Retrieves the members of a specific group based on the group's type.
+ *
+ * @async
+ * @param {number|string} groupId - The ID of the group to retrieve members for.
+ * @returns {Promise<Array>} A promise that resolves to an array of group members.
+ * @throws {Error} If the group is not found or if there's an error during the fetch operation.
+ * @throws {Error} If the group type is invalid.
+ * @throws {Error} If there is an issue fetching group members.
+ *
+ * @example
+ * const groupMembers = await groupService.getGroupMembers('group123');
+ * console.log(groupMembers);
+ */
+  async getGroupMembers(groupId) {
+    try {
+      const group = await this.GroupModel.findByPk(groupId)
+      if (!group) {
+        throw new Error('Group not found')
+      }
+
+      let groupMembers = [];
+
+      if (group.group_type === 'student_teacher') {
+        groupMembers = await this.StudentTeacherModel.findAll({
+          where: { group_id: groupId },
+        })
+      } else if (group.group_type === 'learner') {
+        groupMembers = await this.LearnerModel.findAll({
+          where: { group_id: groupId },
+        })
+      }
+
+      return groupMembers
+    } catch (error) {
+      throw new Error('Failed to fetch group members')
+    }
+  }
 }
 
 export default GroupService
