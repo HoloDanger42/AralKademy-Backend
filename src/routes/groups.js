@@ -445,7 +445,7 @@ groupsRouter.delete('/:groupId', rbac.adminOnly, deleteGroup)
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/User' // Assuming you have a User schema defined
+ *                 $ref: '#/components/schemas/User'
  *       401:
  *         description: Unauthorized
  *         content:

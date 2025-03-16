@@ -111,15 +111,15 @@ class GroupService {
     if (!groupId || !userIds) {
       throw new Error('All fields are required')
     }
-
+  
     try {
       const learners = await this.LearnerModel.findAll({ where: { user_id: userIds } })
-
+  
       for (const learner of learners) {
         learner.group_id = groupId
         await learner.save()
       }
-
+  
       return learners
     } catch (error) {
       throw new Error('Failed to assign learner members')
