@@ -107,14 +107,14 @@ class GroupService {
    * @returns {Promise<Array>} Promise resolving to an array of updated learner objects
    * @throws {Error} If any required fields are missing or if the assignment process fails
    */
-  async assignLearnerMembers(userIds, groupId) {
+  async assignLearnerMembers(groupId, userIds) {
     if (!groupId || !userIds) {
       throw new Error('All fields are required')
     }
   
     try {
-      const learners = await this.LearnerModel.findAll({ where: { user_id: userIds } })
-  
+      const learners = await this.LearnerModel.findAll({ where: { user_id: userIds }, })
+
       for (const learner of learners) {
         learner.group_id = groupId
         await learner.save()

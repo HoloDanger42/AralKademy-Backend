@@ -3,7 +3,7 @@ import { Group, Learner, StudentTeacher } from '../models/index.js'
 import { log } from '../utils/logger.js'
 import { handleControllerError } from '../utils/errorHandler.js'
 
-const groupService = new GroupService(Group, Learner, StudentTeacher)
+const groupService = new GroupService(Group, StudentTeacher, Learner)
 
 /**
  * Retrieves all groups, optionally filtered by group type.
@@ -84,7 +84,7 @@ const getGroupById = async (req, res) => {
 const assignLearnerMembers = async (req, res) => {
   try {
     const { userIds, groupId } = req.body
-    const learners = await groupService.assignLearnerMembers(userIds, groupId)
+    const learners = await groupService.assignLearnerMembers(groupId, userIds)
 
     res.status(200).json({
       message: 'Learners assigned successfully',
