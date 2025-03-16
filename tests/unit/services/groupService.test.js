@@ -151,8 +151,7 @@ describe('Group Service', () => {
       mockLearnerModel.findAll.mockResolvedValue(learners)
 
       // Act
-      const result = await groupService.assignLearnerMembers(validLearnerIds, '1')
-
+      const result = await groupService.assignLearnerMembers('1', validLearnerIds)
       // Assert
       expect(result).toEqual(learners)
       expect(mockLearnerModel.findAll).toHaveBeenCalledWith({ where: { user_id: validLearnerIds } })
