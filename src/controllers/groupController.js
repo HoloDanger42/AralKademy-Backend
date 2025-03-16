@@ -176,6 +176,28 @@ const deleteGroup = async (req, res) => {
   }
 }
 
+/**
+ * Retrieves the members of a specific group based on the group's type.
+ * @param {Object} req - The request object containing the group ID in req.params.
+ * @param {Object} res - The response object.
+ */
+const getGroupMembers = async (req, res) => {
+  try {
+    const { groupId } = req.params
+    const groupMembers = await groupService.getGroupMembers(groupId)
+
+    res.status(200).json(groupMembers)
+    log.info(`Retrieved group members for group with id ${groupId}`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Get group members for group ${req.params.groupId}`,
+      'Failed to retrieve group members'
+    )
+  }
+}
+
 export {
   getAllGroups,
   createGroup,
@@ -184,4 +206,5 @@ export {
   getGroupById,
   updateGroup,
   deleteGroup,
+  getGroupMembers
 }
