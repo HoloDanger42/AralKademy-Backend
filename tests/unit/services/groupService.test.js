@@ -382,4 +382,133 @@ describe('Group Service', () => {
       expect(mockLearnerModel.findAll).toHaveBeenCalledWith({ where: { group_id: groupId } })
     })
   })
+
+  describe('removeMember', () => {
+    test('should successfully remove a student teacher member from the group (remove member)', async () => {
+      // Arrange
+      const groupId = '1'
+      const userId = 'st1'
+      const mockGroup = { group_id: groupId, group_type: 'student_teacher' }
+      const mockMember = {
+        user_id: userId,
+        group_id: groupId,
+        save: jest.fn().mockResolvedValue(true),
+      }
+  
+      mockGroupModel.findByPk.mockResolvedValue(mockGroup)
+      mockStudentTeacherModel.findOne = jest.fn().mockResolvedValue(mockMember)
+  
+      // Act
+      const result = await groupService.removeMember(groupId, userId)
+  
+      // Assert
+      expect(result).toEqual(mockMember)
+      expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
+      expect(mockStudentTeacherModel.findOne).toHaveBeenCalledWith({
+        where: { group_id: groupId, user_id: userId },
+      })
+      expect(mockMember.group_id).toBeNull()
+      expect(mockMember.save).toHaveBeenCalled()
+    })
+  
+    test('should successfully remove a learner member from the group (remove member)', async () => {
+      // Arrange
+      const groupId = '2'
+      const userId = 'l1'
+      const mockGroup = { group_id: groupId, group_type: 'learner' }
+      const mockMember = {
+        user_id: userId,
+        group_id: groupId,
+        save: jest.fn().mockResolvedValue(true),
+      }
+  
+      mockGroupModel.findByPk.mockResolvedValue(mockGroup)
+      mockLearnerModel.findOne = jest.fn().mockResolvedValue(mockMember)
+  
+      // Act
+      const result = await groupService.removeMember(groupId, userId)
+  
+      // Assert
+      expect(result).toEqual(mockMember)
+      expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
+      expect(mockLearnerModel.findOne).toHaveBeenCalledWith({
+        where: { group_id: groupId, user_id: userId },
+      })
+      expect(mockMember.group_id).toBeNull()
+      expect(mockMember.save).toHaveBeenCalled()
+    })
+  
+    test('should throw error if group is not found (remove member)', async () => {
+      // Arrange
+      const groupId = 'invalidGroup'
+      const userId = 'st1'
+      mockGroupModel.findByPk.mockResolvedValue(null)
+  
+      // Act & Assert
+      await expect(groupService.removeMember(groupId, userId)).rejects.toThrow('Failed to remove member')
+      expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
+    })
+  
+    test('should throw error if member is not found in student teacher group (remove member)', async () => {
+      // Arrange
+      const groupId = '1'
+      const userId = 'invalidUser'
+      const mockGroup = { group_id: groupId, group_type: 'student_teacher' }
+  
+      mockGroupModel.findByPk.mockResolvedValue(mockGroup)
+      mockStudentTeacherModel.findOne = jest.fn().mockResolvedValue(null)
+  
+      // Act & Assert
+      await expect(groupService.removeMember(groupId, userId)).rejects.toThrow('Failed to remove member')
+      expect(mockStudentTeacherModel.findOne).toHaveBeenCalledWith({
+        where: { group_id: groupId, user_id: userId },
+      })
+    })
+  
+    test('should throw error if member is not found in learner group (remove member)', async () => {
+      // Arrange
+      const groupId = '2'
+      const userId = 'invalidUser'
+      const mockGroup = { group_id: groupId, group_type: 'learner' }
+  
+      mockGroupModel.findByPk.mockResolvedValue(mockGroup)
+      mockLearnerModel.findOne = jest.fn().mockResolvedValue(null)
+  
+      // Act & Assert
+      await expect(groupService.removeMember(groupId, userId)).rejects.toThrow('Failed to remove member')
+      expect(mockLearnerModel.findOne).toHaveBeenCalledWith({
+        where: { group_id: groupId, user_id: userId },
+      })
+    })
+  
+    test('should throw error if member removal fails due to save error (remove member)', async () => {
+      // Arrange
+      const groupId = '1'
+      const userId = 'st1'
+      const mockGroup = { group_id: groupId, group_type: 'student_teacher' }
+      const mockMember = {
+        user_id: userId,
+        group_id: groupId,
+        save: jest.fn().mockRejectedValue(new Error('Save error')),
+      }
+  
+      mockGroupModel.findByPk.mockResolvedValue(mockGroup)
+      mockStudentTeacherModel.findOne = jest.fn().mockResolvedValue(mockMember)
+  
+      // Act & Assert
+      await expect(groupService.removeMember(groupId, userId)).rejects.toThrow('Failed to remove member')
+      expect(mockMember.save).toHaveBeenCalled()
+    })
+  
+    test('should throw error if unexpected model query fails (remove member)', async () => {
+      // Arrange
+      const groupId = '1'
+      const userId = 'st1'
+      mockGroupModel.findByPk.mockRejectedValue(new Error('Database error'))
+  
+      // Act & Assert
+      await expect(groupService.removeMember(groupId, userId)).rejects.toThrow('Failed to remove member')
+      expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
+    })
+  })
 })
