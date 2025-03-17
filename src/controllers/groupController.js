@@ -132,7 +132,7 @@ const assignStudentTeacherMembers = async (req, res) => {
  * @param {Object} res - The response object.
  */
 const updateGroup = async (req, res) => {
-  try {
+  try {x
     const { groupId } = req.params
     const updateData = req.body
 
@@ -149,6 +149,31 @@ const updateGroup = async (req, res) => {
       res,
       `Update group ${req.params.groupId}`,
       'Failed to update group'
+    )
+  }
+}
+
+/**
+ * Removes a member from a specific group.
+ * @param {Object} req - The request object containing the group ID and user ID in req.params.
+ * @param {Object} res - The response object.
+ */
+const removeMember = async (req, res) => {
+  try {
+    const { groupId, userId } = req.params
+    const removedMember = await groupService.removeMember(groupId, userId)
+
+    res.status(200).json({
+      message: 'Member removed successfully',
+      member: removedMember,
+    })
+    log.info(`Member with id ${userId} removed from group with id ${groupId}`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Remove member ${req.params.userId} from group ${req.params.groupId}`,
+      'Failed to remove member'
     )
   }
 }
@@ -206,5 +231,6 @@ export {
   getGroupById,
   updateGroup,
   deleteGroup,
-  getGroupMembers
+  getGroupMembers,
+  removeMember
 }

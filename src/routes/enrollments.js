@@ -99,6 +99,10 @@ enrollmentRouter.get('/', rbac.adminOnly, enrollmentController.getAllEnrollments
  *                 type: string
  *                 format: password
  *                 example: "SecurePassword123!"
+ *               confirm_password:
+ *                 type: string
+ *                 format: password
+ *                 example: "SecurePassword123!"
  *               first_name:
  *                 type: string
  *                 example: John
@@ -118,7 +122,7 @@ enrollmentRouter.get('/', rbac.adminOnly, enrollmentController.getAllEnrollments
  *                 example: "09123456789"
  *               school_id:
  *                 type: integer
- *                 example: 1
+ *                 example: 1001
  *               year_level:
  *                 type: integer
  *                 minimum: 1

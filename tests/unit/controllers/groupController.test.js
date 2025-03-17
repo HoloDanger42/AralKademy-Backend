@@ -7,7 +7,8 @@ import {
   getGroupById,
   updateGroup,
   deleteGroup,
-  getGroupMembers
+  getGroupMembers,
+  removeMember
 } from '../../../src/controllers/groupController.js'
 import GroupService from '../../../src/services/groupService.js'
 import { log } from '../../../src/utils/logger.js'
@@ -424,6 +425,83 @@ describe('Group Controller', () => {
           code: 'INTERNAL_ERROR',
         },
       })
+    })
+  })
+
+  describe('removeMember', () => {
+    test('should remove a member from a group successfully', async () => {
+      // Arrange
+      mockReq.params.groupId = '1'
+      mockReq.params.userId = '10'
+  
+      const removedMember = { userId: 10, groupId: 1 }
+  
+      // Mocking the removeMember method to resolve successfully
+      GroupService.prototype.removeMember = jest.fn().mockResolvedValue(removedMember)
+  
+      // Act
+      await removeMember(mockReq, mockRes)
+  
+      // Assert
+      expect(GroupService.prototype.removeMember).toHaveBeenCalledWith('1', '10')
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Member removed successfully',
+        member: removedMember,
+      })
+      expect(log.info).toHaveBeenCalledWith('Member with id 10 removed from group with id 1')
+    })
+  
+    test('should handle member not found when trying to remove (remove member)', async () => {
+      // Arrange
+      mockReq.params.groupId = '1'
+      mockReq.params.userId = '999'
+  
+      const error = new Error('Member not found')
+      GroupService.prototype.removeMember = jest.fn().mockRejectedValue(error)
+  
+      // Act
+      await removeMember(mockReq, mockRes)
+  
+      // Assert
+      expect(GroupService.prototype.removeMember).toHaveBeenCalledWith('1', '999')
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Member not found',
+          code: 'NOT_FOUND',
+        },
+      })
+      expect(log.error).toHaveBeenCalledWith(
+        'Remove member 999 from group 1 error:',
+        expect.any(Error)
+      )
+    })
+  
+    test('should handle errors when removing a member (remove member)', async () => {
+      // Arrange
+      mockReq.params.groupId = '1'
+      mockReq.params.userId = '10'
+  
+      const error = new Error('Internal Server Error')
+      GroupService.prototype.removeMember = jest.fn().mockRejectedValue(error)
+  
+      // Act
+      await removeMember(mockReq, mockRes)
+  
+      // Assert
+      expect(GroupService.prototype.removeMember).toHaveBeenCalledWith('1', '10')
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Failed to remove member',
+          code: 'INTERNAL_ERROR',
+        },
+      })
+      expect(log.error).toHaveBeenCalledWith(
+        'Remove member 10 from group 1 error:',
+        expect.any(Error)
+      )
     })
   })
 })
