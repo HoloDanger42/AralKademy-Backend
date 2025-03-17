@@ -55,9 +55,6 @@ describe('Token Refresh API', () => {
     // Clean up test data
     await User.destroy({ where: { email: 'refresh-test@example.com' } })
     await School.destroy({ where: { name: 'Test School' } })
-
-    // Close database connection
-    await sequelize.close()
   })
 
   test('should return new access token when valid refresh token is provided', async () => {
