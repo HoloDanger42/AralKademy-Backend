@@ -161,14 +161,14 @@ class UserService {
         await this.AdminModel.create({ user_id: user.id }, { transaction })
       } else if (role === 'student_teacher') {
         await this.StudentTeacherModel.create(
-          { user_id: user.id, department, section, group_id: groupId },
+          { user_id: user.id, department: department, section: section, group_id: groupId },
           { transaction }
         )
       } else if (role === 'learner') {
         if (groupId) {
           await this.LearnerModel.create({ user_id: user.id, group_id: groupId }, { transaction })
         } else {
-          await this.LearnerModel.create({ user_id: user.id }, { transaction }) //create without group
+          await this.LearnerModel.create({ user_id: user.id }, { transaction }) // Create without group
         }
       }
 
