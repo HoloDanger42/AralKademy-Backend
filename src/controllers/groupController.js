@@ -132,7 +132,7 @@ const assignStudentTeacherMembers = async (req, res) => {
  * @param {Object} res - The response object.
  */
 const updateGroup = async (req, res) => {
-  try {x
+  try {
     const { groupId } = req.params
     const updateData = req.body
 
