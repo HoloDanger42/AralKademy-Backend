@@ -7,6 +7,7 @@ import {
   getGroupById,
   updateGroup,
   deleteGroup,
+  getGroupMembers
 } from '../../../src/controllers/groupController.js'
 import GroupService from '../../../src/services/groupService.js'
 import { log } from '../../../src/utils/logger.js'
@@ -361,6 +362,66 @@ describe('Group Controller', () => {
         error: {
           message: 'Group not found',
           code: 'NOT_FOUND',
+        },
+      })
+    })
+  })
+
+  describe('getGroupMembers', () => {
+    test('should retrieve group members successfully', async () => {
+      // Arrange
+      mockReq.params.groupId = '1'
+      const groupMembers = [{ userId: 1 }, { userId: 2 }]
+
+      GroupService.prototype.getGroupMembers = jest.fn().mockResolvedValue(groupMembers)
+
+      // Act
+      await getGroupMembers(mockReq, mockRes)
+
+      // Assert
+      expect(GroupService.prototype.getGroupMembers).toHaveBeenCalledWith('1')
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith(groupMembers)
+    })
+
+    test('should handle group not found error when retrieving group members', async () => {
+      // Arrange
+      mockReq.params.groupId = '999'
+
+      const error = new Error('Group not found')
+      GroupService.prototype.getGroupMembers = jest.fn().mockRejectedValue(error)
+
+      // Act
+      await getGroupMembers(mockReq, mockRes)
+
+      // Assert
+      expect(GroupService.prototype.getGroupMembers).toHaveBeenCalledWith('999')
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Group not found',
+          code: 'NOT_FOUND',
+        },
+      })
+    })
+
+    test('should handle errors when retrieving group members', async () => {
+      // Arrange
+      mockReq.params.groupId = '1'
+
+      const error = new Error('Error fetching group members')
+      GroupService.prototype.getGroupMembers = jest.fn().mockRejectedValue(error)
+
+      // Act
+      await getGroupMembers(mockReq, mockRes)
+
+      // Assert
+      expect(GroupService.prototype.getGroupMembers).toHaveBeenCalledWith('1')
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Failed to retrieve group members',
+          code: 'INTERNAL_ERROR',
         },
       })
     })

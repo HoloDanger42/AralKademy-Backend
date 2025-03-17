@@ -151,8 +151,7 @@ describe('Group Service', () => {
       mockLearnerModel.findAll.mockResolvedValue(learners)
 
       // Act
-      const result = await groupService.assignLearnerMembers(validLearnerIds, '1')
-
+      const result = await groupService.assignLearnerMembers('1', validLearnerIds)
       // Assert
       expect(result).toEqual(learners)
       expect(mockLearnerModel.findAll).toHaveBeenCalledWith({ where: { user_id: validLearnerIds } })
@@ -306,6 +305,81 @@ describe('Group Service', () => {
 
       // Act & Assert
       await expect(groupService.deleteGroup('1')).rejects.toThrow('Failed to delete group')
+    })
+  })
+
+  describe('getGroupMembers', () => {
+    test('should retrieve student teacher members of the group (get group members)', async () => {
+      // Arrange
+      const groupId = '1'
+      const mockGroup = { group_id: groupId, group_type: 'student_teacher' }
+      const mockMembers = [
+        { user_id: 'st1', group_id: groupId },
+        { user_id: 'st2', group_id: groupId },
+      ]
+  
+      mockGroupModel.findByPk.mockResolvedValue(mockGroup)
+      mockStudentTeacherModel.findAll.mockResolvedValue(mockMembers)
+  
+      // Act
+      const result = await groupService.getGroupMembers(groupId)
+  
+      // Assert
+      expect(result).toEqual(mockMembers)
+      expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
+      expect(mockStudentTeacherModel.findAll).toHaveBeenCalledWith({
+        where: { group_id: groupId },
+      })
+      expect(mockLearnerModel.findAll).not.toHaveBeenCalled()
+    })
+  
+    test('should retrieve learner members of the group (get group members)', async () => {
+      // Arrange
+      const groupId = '2'
+      const mockGroup = { group_id: groupId, group_type: 'learner' }
+      const mockMembers = [
+        { user_id: 'l1', group_id: groupId },
+        { user_id: 'l2', group_id: groupId },
+      ]
+  
+      mockGroupModel.findByPk.mockResolvedValue(mockGroup)
+      mockLearnerModel.findAll.mockResolvedValue(mockMembers)
+  
+      // Act
+      const result = await groupService.getGroupMembers(groupId)
+  
+      // Assert
+      expect(result).toEqual(mockMembers)
+      expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
+      expect(mockLearnerModel.findAll).toHaveBeenCalledWith({
+        where: { group_id: groupId },
+      })
+      expect(mockStudentTeacherModel.findAll).not.toHaveBeenCalled()
+    })
+  
+    test('should throw error if group is not found (get group members)', async () => {
+      // Arrange
+      const groupId = '3'
+      mockGroupModel.findByPk.mockResolvedValue(null)
+  
+      // Act & Assert
+      await expect(groupService.getGroupMembers(groupId)).rejects.toThrow('Failed to fetch group members')
+      expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
+      expect(mockStudentTeacherModel.findAll).not.toHaveBeenCalled()
+      expect(mockLearnerModel.findAll).not.toHaveBeenCalled()
+    })
+  
+    test('should throw error if model query fails (get group members)', async () => {
+      // Arrange
+      const groupId = '4'
+      const mockGroup = { group_id: groupId, group_type: 'learner' }
+      mockGroupModel.findByPk.mockResolvedValue(mockGroup)
+      mockLearnerModel.findAll.mockRejectedValue(new Error('Database error'))
+  
+      // Act & Assert
+      await expect(groupService.getGroupMembers(groupId)).rejects.toThrow('Failed to fetch group members')
+      expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
+      expect(mockLearnerModel.findAll).toHaveBeenCalledWith({ where: { group_id: groupId } })
     })
   })
 })

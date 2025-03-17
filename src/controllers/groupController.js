@@ -1,9 +1,9 @@
 import GroupService from '../services/groupService.js'
-import { Group } from '../models/Group.js'
+import { Group, Learner, StudentTeacher } from '../models/index.js'
 import { log } from '../utils/logger.js'
 import { handleControllerError } from '../utils/errorHandler.js'
 
-const groupService = new GroupService(Group)
+const groupService = new GroupService(Group, StudentTeacher, Learner)
 
 /**
  * Retrieves all groups, optionally filtered by group type.
@@ -84,7 +84,7 @@ const getGroupById = async (req, res) => {
 const assignLearnerMembers = async (req, res) => {
   try {
     const { userIds, groupId } = req.body
-    const learners = await groupService.assignLearnerMembers(userIds, groupId)
+    const learners = await groupService.assignLearnerMembers(groupId, userIds)
 
     res.status(200).json({
       message: 'Learners assigned successfully',
@@ -176,6 +176,28 @@ const deleteGroup = async (req, res) => {
   }
 }
 
+/**
+ * Retrieves the members of a specific group based on the group's type.
+ * @param {Object} req - The request object containing the group ID in req.params.
+ * @param {Object} res - The response object.
+ */
+const getGroupMembers = async (req, res) => {
+  try {
+    const { groupId } = req.params
+    const groupMembers = await groupService.getGroupMembers(groupId)
+
+    res.status(200).json(groupMembers)
+    log.info(`Retrieved group members for group with id ${groupId}`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Get group members for group ${req.params.groupId}`,
+      'Failed to retrieve group members'
+    )
+  }
+}
+
 export {
   getAllGroups,
   createGroup,
@@ -184,4 +206,5 @@ export {
   getGroupById,
   updateGroup,
   deleteGroup,
+  getGroupMembers
 }
