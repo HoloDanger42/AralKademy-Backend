@@ -171,11 +171,13 @@ const getEnrollmentById = async (req, res) => {
  * @param {Object} _req - The request object (not used).
  * @param {Object} res - The response object.
  */
-const getAllEnrollments = async (_req, res) => {
+const getAllEnrollments = async (req, res) => {
   try {
-    const enrollments = await enrollmentService.getAllEnrollments()
+    const { status } = req.query
+    const enrollments = await enrollmentService.getAllEnrollments(status)
+
     res.status(200).json(enrollments)
-    log.info('Retrieved all enrollments')
+    log.info(`Retrieved enrollments${status ? ` with status: ${status}` : ''}`)
   } catch (error) {
     return handleControllerError(
       error,
