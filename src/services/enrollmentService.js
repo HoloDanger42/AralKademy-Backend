@@ -181,12 +181,19 @@ class EnrollmentService {
    * @description Fetches all enrollment records from the database, excluding password fields
    * and including the associated school information for each enrollment
    */
-  async getAllEnrollments() {
+  async getAllEnrollments(status) {
     try {
-      const enrollments = await this.EnrollmentModel.findAll({
+      const queryOptions = {
         attributes: { exclude: ['password'] }, // Exclude password
         include: [{ model: this.SchoolModel, as: 'school' }], // Include associated school
-      })
+      }
+
+      // Add status filter if provided
+      if (status && ['pending', 'approved', 'rejected'].includes(status)) {
+        queryOptions.where = { status }
+      }
+
+      const enrollments = await this.EnrollmentModel.findAll(queryOptions)
       return enrollments
     } catch (error) {
       log.error('Error fetching all enrollments:', error)
