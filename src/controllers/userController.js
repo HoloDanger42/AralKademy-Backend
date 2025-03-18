@@ -48,6 +48,9 @@ const createUser = async (req, res) => {
       school_id,
       role,
       middle_initial,
+      department,
+      section,
+      group_id,
     } = req.body
 
     const user = await userService.createUser(
@@ -59,7 +62,10 @@ const createUser = async (req, res) => {
       contact_no,
       school_id,
       role,
-      middle_initial
+      middle_initial,
+      department,
+      section,
+      group_id,
     )
 
     res.status(201).json({
