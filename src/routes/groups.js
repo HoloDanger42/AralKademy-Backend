@@ -8,7 +8,7 @@ import {
   updateGroup,
   deleteGroup,
   getGroupMembers,
-  removeMember
+  removeMember,
 } from '../controllers/groupController.js'
 import { authMiddleware } from '../middleware/authMiddleware.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
@@ -296,7 +296,7 @@ groupsRouter.post('/assign-learners', rbac.adminOnly, assignLearnerMembers)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-groupsRouter.get('/:groupId', rbac.studentTeacherAndAbove, getGroupById)
+groupsRouter.get('/:groupId', rbac.allAuthenticated, getGroupById)
 
 /**
  * @swagger
@@ -520,6 +520,6 @@ groupsRouter.get('/:groupId/members', rbac.allAuthenticated, getGroupMembers)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-groupsRouter.patch('/:groupId/members/:userId', rbac.adminOnly, removeMember);
+groupsRouter.patch('/:groupId/members/:userId', rbac.adminOnly, removeMember)
 
 export { groupsRouter }
