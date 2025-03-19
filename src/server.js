@@ -213,6 +213,11 @@ app.get('/api/error', (_req, _res, next) => {
   next(new Error('Intentional error for testing'))
 })
 
+app.get('/api/swagger.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json')
+  res.send(swaggerSpec)
+})
+
 // 404 Handler (after routes, before errorMiddleware)
 app.use((_req, _res, next) => {
   const err = new Error('Not Found')
