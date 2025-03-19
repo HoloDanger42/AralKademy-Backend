@@ -192,7 +192,7 @@ describe('AuthController', () => {
       req.body.refreshToken = 'valid-refresh-token'
 
       // Setup JWT verify to return a valid decoded token
-      mockVerify.mockReturnValue({ userId: 123 })
+      mockVerify.mockReturnValue({ id: 123 })
 
       // Setup User.findOne to return a valid user
       mockFindOne.mockResolvedValue(mockUser)

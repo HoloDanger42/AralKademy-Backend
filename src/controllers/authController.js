@@ -89,11 +89,12 @@ export const AuthController = {
         return res.status(400).json({ message: 'CAPTCHA verification failed' })
       }
 
-      const { user, token } = await userService.loginUser(email, password)
+      const { user, token, refreshToken } = await userService.loginUser(email, password)
 
       res.status(200).json({
         message: 'Logged in successfully',
         token,
+        refreshToken,
         user,
       })
       log.info(`User ${email} logged in successfully`)
@@ -154,13 +155,13 @@ export const AuthController = {
       // Find the user
       const user = await User.findOne({
         where: {
-          id: decoded.userId,
+          id: decoded.id,
           refreshToken: refreshToken, // Only valid if stored token matches provided token
         },
       })
 
       if (!user) {
-        log.warn(`Refresh token used with non-existent user ID: ${decoded.userId}`)
+        log.warn(`Refresh token used with non-existent user ID: ${decoded.id}`)
         return res.status(401).json({ message: 'Invalid refresh token' })
       }
 

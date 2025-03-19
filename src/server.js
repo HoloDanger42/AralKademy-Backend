@@ -16,6 +16,7 @@ import cors from 'cors'
 // Middleware
 import { errorMiddleware, SpecificError } from './middleware/errorMiddleware.js'
 import { logMiddleware } from './middleware/logMiddleware.js'
+import { requestLogger, getRequestCounts } from './middleware/requestLogger.js'
 import { securityMiddleware } from './middleware/securityMiddleware.js'
 
 // Configuration
@@ -200,8 +201,23 @@ app.get('/api/health', async (_req, res) => {
   }
 })
 
+if (config.env === 'development') {
+  app.get('/api/debug/requests', (req, res) => {
+    res.json({
+      totalRequests: Object.values(getRequestCounts()).reduce((a, b) => a + b, 0),
+      requests: getRequestCounts(),
+      environment: config.env,
+    })
+  })
+}
+
 app.get('/api/error', (_req, _res, next) => {
   next(new Error('Intentional error for testing'))
+})
+
+app.get('/api/swagger.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json')
+  res.send(swaggerSpec)
 })
 
 // 404 Handler (after routes, before errorMiddleware)
