@@ -105,6 +105,18 @@ const options = {
             updatedAt: { type: 'string', format: 'date-time' },
           },
         },
+
+        Content: {
+          type: 'object',
+          properties: {
+            content_id: { type: 'integer' },
+            module_id: { type: 'integer' },
+            name: { type: 'string'},
+            link: { type: 'string'}, 
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
       },
     },
     security: [{ bearerAuth: [] }],

@@ -9,6 +9,7 @@ import { Group } from './Group.js'
 import { School } from './School.js'
 import { Blacklist } from './Blacklist.js'
 import { Module } from './Module.js'
+import { Content } from './Content.js'
 
 export {
   User,
@@ -21,5 +22,6 @@ export {
   Group,
   School,
   Blacklist,
-  Module
+  Module,
+  Content
 }
