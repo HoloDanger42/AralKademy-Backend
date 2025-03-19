@@ -64,31 +64,39 @@ describe('User Controller', () => {
   describe('getAllUsers', () => {
     test('should return all users successfully', async () => {
       // Arrange
+      const page = 1;
+      const limit = 10;
+  
       const mockUsers = validUsers.map((user, index) => ({
         id: index + 1,
         ...user,
-      }))
-
+      }));
+  
+      // Mock the service response
       getAllUsersSpy.mockResolvedValue({
         count: mockUsers.length,
-        rows: mockUsers.map((user) => ({
-          get: jest.fn().mockReturnValue(user), // Mock Sequelize's get() method
-        })),
-      })
-
+        rows: mockUsers, // No need for `get()` mocks if password is excluded
+      });
+  
+      // Mock request query parameters
+      mockReq.query = { page: String(page), limit: String(limit) };
+  
       // Act
-      await getAllUsers(mockReq, mockRes)
-
+      await getAllUsers(mockReq, mockRes);
+  
       // Assert
-      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(getAllUsersSpy).toHaveBeenCalledWith(page, limit); // Ensure service is called correctly
+      expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
         count: mockUsers.length,
-        users: mockUsers.map(({ password, ...rest }) => rest), // Remove passwords
-      })
-      expect(log.info).toHaveBeenCalled()
-    })
-  })
-
+        totalPages: Math.ceil(mockUsers.length / limit),
+        currentPage: page,
+        users: mockUsers, // Directly returned since passwords are excluded in the service
+      });
+      expect(log.info).toHaveBeenCalledWith('Retrieved all users');
+    });
+  });  
+  
   describe('forgotPassword', () => {
     test('should send password reset email successfully', async () => {
       // Arrange

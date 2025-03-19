@@ -88,21 +88,21 @@ const createUser = async (req, res) => {
  * @param {Object} _req - The request object (not used).
  * @param {Object} res - The response object.
  */
-const getAllUsers = async (_req, res) => {
+const getAllUsers = async (req, res) => {
   try {
-    const users = await userService.getAllUsers()
-    const usersWithoutPassword = users.rows.map((user) => {
-      const { password, ...userWithoutPassword } = user.get({
-        plain: true,
-      })
-      return userWithoutPassword
-    })
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 10
+
+    const users = await userService.getAllUsers(page, limit)
 
     res.status(200).json({
       count: users.count,
-      users: usersWithoutPassword,
+      totalPages: Math.ceil(users.count / limit),
+      currentPage: page,
+      users: users.rows,
     })
-    log.info('Retrieved all users')
+    
+    log.info('Retrieved all users');
   } catch (error) {
     return handleControllerError(error, res, 'Get all users', 'Failed to retrieve users')
   }
