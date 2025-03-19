@@ -1,10 +1,10 @@
 import ModuleService from '../services/moduleService.js'
-import { Module, Course } from '../models/index.js'
+import { Module, Course, Content } from '../models/index.js'
 import { log } from '../utils/logger.js'
 import { handleControllerError } from '../utils/errorHandler.js'
 
 // Instantiate module service
-const moduleService = new ModuleService(Module, Course)
+const moduleService = new ModuleService(Module, Course, Content)
 
 /**
  * Creates a new module.
@@ -94,7 +94,7 @@ const deleteModule = async (req, res) => {
         const deletedModule = await moduleService.deleteModule(moduleId)
         res.status(200).json({
           message: 'Module deleted successfully',
-          course: deletedModule,
+          module: deletedModule,
         })
         log.info(`Module ${moduleId} was successfully deleted`)
       } catch (error) {
@@ -107,10 +107,74 @@ const deleteModule = async (req, res) => {
       }
 }
 
+const addModuleContent = async (req, res) => {
+  try {
+    const { moduleId } = req.params
+    const { name, link } = req.body
+    const newContent = await moduleService.addModuleContent(moduleId, name, link)
+    res.status(201).json({
+         message: 'Content added successfully',
+         content: newContent,
+    })
+    log.info(`Content ${newContent.name} was successfully added`)
+ } catch (error) {
+     return handleControllerError(error, res, 'Add content', 'Error adding content')
+ }  
+}
+
+const updateModuleContent = async (req, res) => {
+  try {
+    const { contentId } = req.params
+    const { name, link } = req.body
+    const updatedContent = await moduleService.updateModuleContent(contentId, name, link)
+    res.status(200).json({
+         message: 'Content updated successfully',
+         content: updatedContent,
+    })
+    log.info(`Content ${updatedContent.name} was successfully updated`)
+ } catch (error) {
+     return handleControllerError(error, res, 'Update content', 'Error updating content')
+ }  
+}
+
+const deleteModuleContent = async (req, res) => {
+  try {
+    const { contentId } = req.params
+    const deletedContent = await moduleService.deleteModuleContent(contentId)
+    res.status(200).json({
+      message: 'Content deleted successfully',
+      content: deletedContent,
+    })
+    log.info(`Content ${contentId} was successfully deleted`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Delete content ${req.params.contentId}`,
+      'Error deleting content'
+    )
+  }
+}
+
+const getContentsByModuleId = async (req, res) => {
+  try {
+    const { moduleId } = req.params
+    const contents = await moduleService.getContentsByModuleId(moduleId)
+    res.status(200).json(contents)
+    log.info(`Contents retrieved successfully`)
+  } catch (error) {
+        return handleControllerError(error, res, 'Get contents by module ID', 'Error fetching contents')
+}
+}
+
 export {
     createModule,
     getModuleById,
     getModulesByCourseId,
     updateModule,
-    deleteModule
+    deleteModule,
+    addModuleContent,
+    updateModuleContent,
+    deleteModuleContent,
+    getContentsByModuleId
 }

@@ -8,7 +8,8 @@ import {
   Course,
   Group,
   School,
-  Module
+  Module,
+  Content
 } from './index.js'
 
 // User associations
@@ -91,6 +92,8 @@ Course.belongsTo(Group, {
   as: 'learnerGroup',
 })
 
+Course.hasMany(Module, { foreignKey: 'id', as: 'modules' })
+
 // Enrollment associations
 Enrollment.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
 Enrollment.belongsTo(Admin, {
@@ -104,5 +107,10 @@ Enrollment.hasOne(Learner, {
 
 //Module associations
 Module.belongsTo(Course, { foreignKey: 'course_id', as: 'course' })
+Module.hasMany(Content, { foreignKey: 'module_id', as: 'contents'})
 
-export { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School, Module }
+//Content associations
+Content.belongsTo(Module, { foreignKey: 'module_id', as: 'module'})
+
+
+export { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School, Module, Content }
