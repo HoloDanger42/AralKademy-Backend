@@ -23,7 +23,7 @@ const databaseConnection = async () => {
     log.info('Database connection has been established successfully.')
 
     // Import models and associations dynamically to avoid circular dependencies
-    const { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School } =
+    const { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School, Module } =
       await import('../models/index.js')
 
     // Import associations after models are loaded
@@ -42,6 +42,7 @@ const databaseConnection = async () => {
       Course,
       Group,
       School,
+      Module
     }
   } catch (error) {
     log.error('Database connection failed:', error)

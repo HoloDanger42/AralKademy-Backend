@@ -201,6 +201,54 @@ class GroupService {
   }
 
   /**
+  * Removes a member from a specific group
+  * 
+  * @async
+  * @param {number|string} groupId - ID of the group
+  * @param {number|string} userId - ID of the user to remove from the group
+  * @returns {Promise<object>} Promise resolving to the updated user object
+  * @throws {Error} If the group or user is not found or if the removal process fails
+  */
+  async removeMember(groupId, userId) {
+    try {
+      const group = await this.GroupModel.findByPk(groupId)
+      if (!group) {
+        throw new Error('Group not found')
+      }
+
+      if (group.group_type === 'student_teacher') {
+        const studentTeacher = await this.StudentTeacherModel.findOne({
+          where: { group_id: groupId, user_id: userId },
+        })
+  
+        if (!studentTeacher) {
+          throw new Error('Member not found')
+        }
+  
+        studentTeacher.group_id = null
+        await studentTeacher.save()
+  
+        return studentTeacher
+      } else if (group.group_type === 'learner') {
+        const learner = await this.LearnerModel.findOne({
+          where: { group_id: groupId, user_id: userId },
+        })
+  
+        if (!learner) {
+          throw new Error('Member not found')
+        }
+  
+        learner.group_id = null
+        await learner.save()
+  
+        return learner
+      }
+    } catch (error) {
+      throw new Error('Failed to remove member')
+    }
+  }
+
+  /**
    * Deletes a group
    *
    * @async

@@ -7,7 +7,8 @@ import {
   getGroupById,
   updateGroup,
   deleteGroup,
-  getGroupMembers
+  getGroupMembers,
+  removeMember,
 } from '../controllers/groupController.js'
 import { authMiddleware } from '../middleware/authMiddleware.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
@@ -295,7 +296,7 @@ groupsRouter.post('/assign-learners', rbac.adminOnly, assignLearnerMembers)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-groupsRouter.get('/:groupId', rbac.studentTeacherAndAbove, getGroupById)
+groupsRouter.get('/:groupId', rbac.allAuthenticated, getGroupById)
 
 /**
  * @swagger
@@ -466,5 +467,59 @@ groupsRouter.delete('/:groupId', rbac.adminOnly, deleteGroup)
  *               $ref: '#/components/schemas/Error'
  */
 groupsRouter.get('/:groupId/members', rbac.allAuthenticated, getGroupMembers)
+
+/**
+ * @swagger
+ * /groups/{groupId}/members/{userId}:
+ *   patch:
+ *     summary: Remove a member from a group
+ *     description: Update the group_id of a user to null, effectively removing them from the group
+ *     tags: [Groups]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Group ID
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Member removed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Member removed successfully"
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Group or member not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Failed to remove member
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+groupsRouter.patch('/:groupId/members/:userId', rbac.adminOnly, removeMember)
 
 export { groupsRouter }
