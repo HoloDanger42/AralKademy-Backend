@@ -8,6 +8,7 @@ import {
   Course,
   Group,
   School,
+  Module
 } from './index.js'
 
 // User associations
@@ -101,4 +102,7 @@ Enrollment.hasOne(Learner, {
   as: 'learner',
 })
 
-export { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School }
+//Module associations
+Module.belongsTo(Course, { foreignKey: 'course_id', as: 'course' })
+
+export { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School, Module }

@@ -27,6 +27,7 @@ import { usersRouter } from './routes/users.js'
 import { courseRouter } from './routes/courses.js'
 import { enrollmentRouter } from './routes/enrollments.js'
 import { groupsRouter } from './routes/groups.js'
+import { moduleRouter } from './routes/modules.js'
 
 // Token cleanup
 import TokenCleanup from './utils/tokenCleanup.js'
@@ -174,6 +175,7 @@ app.use('/api/courses', courseRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/enrollments', enrollmentRouter)
 app.use('/api/groups', groupsRouter)
+app.use('/api/modules', moduleRouter)
 
 /**
  * Health check endpoint for monitoring and kubernetes/load balancer readiness probes

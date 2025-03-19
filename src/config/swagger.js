@@ -93,6 +93,18 @@ const options = {
             createdAt: { type: 'string', format: 'date-time' },
           },
         },
+
+        Module: {
+          type: 'object',
+          properties: {
+            module_id: { type: 'integer' },
+            course_id: { type: 'integer' },
+            name: { type: 'string'},
+            description: { type: 'string' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
       },
     },
     security: [{ bearerAuth: [] }],
