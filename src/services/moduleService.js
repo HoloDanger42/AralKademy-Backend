@@ -1,0 +1,211 @@
+import { Module, Course } from '../models/index.js'
+import { log } from '../utils/logger.js'
+
+/**
+ * ModuleService
+ *
+ * This service handles operations related to course modules, including:
+ * - Creating new modules for a given course
+ * - Retrieving modules by ID or course association
+ * - Updating module details
+ * - Deleting modules
+ *
+ * @class ModuleService
+ * @requires log - A logging utility for error reporting
+ */
+class ModuleService {
+
+    /**
+     * Creates an instance of ModuleService.
+     *
+     * @param {Object} moduleModel - The model representing modules.
+     * @param {Object} courseModel - The model representing courses.
+     */
+    constructor(moduleModel, courseModel) {
+        this.moduleModel = moduleModel
+        this.courseModel = courseModel
+    }
+
+     /**
+     * Creates a new module under a specified course.
+     *
+     * @async
+     * @param {number|string} courseId - The ID of the course the module belongs to.
+     * @param {string} name - The name of the module (required, max 255 chars).
+     * @param {string} [description] - The description of the module.
+     * @returns {Promise<Object>} The newly created module.
+     * @throws {Error} When the course is not found or validation fails.
+     */
+    async createModule(courseId, name, description) {
+        try {
+            const course = await this.courseModel.findByPk(courseId)
+            if (!course) {
+                throw new Error('Course not found')
+            }
+
+            const moduleData = { 
+                name, 
+                description: description || null,
+                course_id: courseId
+            }
+
+            if (!name) {
+                throw new Error('Module name is required')
+            }
+        
+            if (name.length > 255) {
+                throw new Error('Module name is too long')
+            }
+
+            const newModule = await this.moduleModel.create(moduleData)
+            return newModule
+        } catch (error) {
+            log.error('Error creating module:', error)
+            if (
+              error.message === 'Course not found' ||
+              error.message === 'Module name is required' ||
+              error.message === 'Module name is too long'
+            ) {
+              throw error 
+            }
+      
+            if (error.name === 'SequelizeValidationError') {
+              throw error
+            }
+
+            throw new Error('Failed to create module')
+        }
+    }
+
+     /**
+     * Retrieves a module by its ID.
+     *
+     * @async
+     * @param {number|string} moduleId - The unique identifier of the module.
+     * @returns {Promise<Object>} The module object.
+     * @throws {Error} When the module is not found.
+     */
+    async getModuleById(moduleId) {
+        try {
+            const module = await this.moduleModel.findByPk(moduleId)
+            if (!module) {
+                throw new Error('Module not found')
+            }
+
+            return module
+        } catch (error) {
+            log.error('Error getting module:', error)
+
+            if (error.message === 'Module not found') {
+                throw error
+            }
+
+            throw new Error('Failed to get module')
+        }
+    }
+
+    /**
+     * Retrieves all modules associated with a given course.
+     *
+     * @async
+     * @param {number|string} courseId - The ID of the course.
+     * @returns {Promise<Array<Object>>} An array of module objects.
+     */
+    async getModulesByCourseId(courseId) {
+        try {
+            const course = await this.courseModel.findByPk(courseId)
+            if (!course) {
+                throw new Error('Course not found')
+            }
+
+            return await this.moduleModel.findAll({
+                where: { course_id: courseId },
+            })
+        } catch (error) {
+            log.error('Error getting modules:', error)
+
+            if (error.message === 'Course not found') {
+                throw error
+            }
+
+            throw new Error('Failed to get modules')
+        }
+    }
+
+     /**
+     * Updates a module's details.
+     *
+     * @async
+     * @param {number|string} moduleId - The ID of the module to update.
+     * @param {string} name - The new name of the module (required, max 255 chars).
+     * @param {string} [description] - The new description of the module.
+     * @returns {Promise<Object>} The updated module.
+     * @throws {Error} When validation fails or the module is not found.
+     */
+    async updateModule(moduleId, name, description) {
+        try {
+            if (!name) {
+                throw new Error('Module name is required')
+            }
+        
+            if (name.length > 255) {
+                throw new Error('Module name is too long')
+            }
+
+            const module = await this.moduleModel.findByPk(moduleId)
+            if (!module) {
+                throw new Error('Module not found')
+            }
+
+            module.name = name
+            module.description = description
+
+            await module.save()
+            return module
+        } catch (error) {
+            log.error('Error updating module:', error)
+
+            if (error.message === 'Module not found' ||
+                error.message === 'Module name is required' ||
+                error.message === 'Module name is too long'
+            ) {
+                throw error
+            }
+
+            if (error.name === 'SequelizeValidationError') {
+                throw error
+            }
+
+            throw new Error('Failed to update module')
+        }
+    }
+
+    /**
+     * Deletes a module by its ID.
+     *
+     * @async
+     * @param {number|string} moduleId - The ID of the module to delete.
+     * @returns {Promise<Object>} A confirmation message.
+     * @throws {Error} When the module is not found or deletion fails.
+     */
+    async deleteModule(moduleId) {
+        try {
+            const module = await this.moduleModel.findByPk(moduleId)
+            if (!module) {
+                throw new Error('Module not found')
+            }
+            await module.destroy()
+            return { message: 'Module deleted successfully' }
+        } catch (error) {
+            log.error(`Error deleting module with ID ${moduleId}:`, error)
+
+            if (error.message === 'Module not found') {
+                throw error
+            }
+
+            throw new Error('Failed to delete module')
+        }
+    }
+}
+
+export default ModuleService
