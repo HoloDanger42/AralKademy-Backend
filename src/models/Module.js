@@ -36,9 +36,11 @@ const Module = sequelize.define(
         description: {
             type: DataTypes.TEXT,
             allowNull: true,
-            len: {
-                args: [0, 1000],
-                msg: 'Module description must be less than 1000 characters',
+            validate: {
+                len: {
+                    args: [0, 1000],
+                    msg: 'Module description must be less than 1000 characters',
+                },
             },
         },
 

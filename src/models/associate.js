@@ -92,7 +92,7 @@ Course.belongsTo(Group, {
   as: 'learnerGroup',
 })
 
-Course.hasMany(Module, { foreignKey: 'id', as: 'modules' })
+Course.hasMany(Module, { foreignKey: 'course_id', as: 'modules' })
 
 // Enrollment associations
 Enrollment.belongsTo(School, { foreignKey: 'school_id', as: 'school' })

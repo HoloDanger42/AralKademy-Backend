@@ -107,6 +107,11 @@ const deleteModule = async (req, res) => {
       }
 }
 
+/**
+ * Adds new content to a module.
+ * @param {Object} req - The request object containing the module ID in req.params and content details in req.body.
+ * @param {Object} res - The response object.
+ */
 const addModuleContent = async (req, res) => {
   try {
     const { moduleId } = req.params
@@ -122,6 +127,11 @@ const addModuleContent = async (req, res) => {
  }  
 }
 
+/**
+ * Updates content in a module.
+ * @param {Object} req - The request object containing the content ID in req.params and updated details in req.body.
+ * @param {Object} res - The response object.
+ */
 const updateModuleContent = async (req, res) => {
   try {
     const { contentId } = req.params
@@ -137,6 +147,11 @@ const updateModuleContent = async (req, res) => {
  }  
 }
 
+/**
+ * Deletes content from a module.
+ * @param {Object} req - The request object containing the content ID in req.params.
+ * @param {Object} res - The response object.
+ */
 const deleteModuleContent = async (req, res) => {
   try {
     const { contentId } = req.params
@@ -156,6 +171,11 @@ const deleteModuleContent = async (req, res) => {
   }
 }
 
+/**
+ * Retrieves all contents for a given module ID.
+ * @param {Object} req - The request object containing the module ID in req.params.
+ * @param {Object} res - The response object.
+ */
 const getContentsByModuleId = async (req, res) => {
   try {
     const { moduleId } = req.params
