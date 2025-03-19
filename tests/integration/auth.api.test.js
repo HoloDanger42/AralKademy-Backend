@@ -43,7 +43,7 @@ describe('Token Refresh API', () => {
       { expiresIn: config.jwt.accessTokenExpiry }
     )
 
-    refreshToken = jwt.sign({ userId: testUser.id }, config.jwt.refreshTokenSecret, {
+    refreshToken = jwt.sign({ id: testUser.id }, config.jwt.refreshTokenSecret, {
       expiresIn: config.jwt.refreshTokenExpiry,
     })
 
@@ -58,11 +58,7 @@ describe('Token Refresh API', () => {
   })
 
   test('should return new access token when valid refresh token is provided', async () => {
-    console.log('Test is sending refresh token:', refreshToken)
     const response = await request(app).post('/api/auth/refresh').send({ refreshToken }).expect(200)
-
-    console.log('Status:', response.status)
-    console.log('Response body:', response.body)
 
     expect(response.body).toHaveProperty('accessToken')
     expect(response.body.accessToken).not.toBe(accessToken)

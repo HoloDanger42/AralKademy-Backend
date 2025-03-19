@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import nodemailer from 'nodemailer'
+import config from '../config/config.js'
 
 // Configure nodemailer with proper error handling
 const transporter = (() => {
@@ -201,8 +202,15 @@ class UserService {
         throw new Error('Invalid credentials')
       }
 
-      const token = this.generateToken(user)
-      return { user, token }
+      // Generate access token (short-lived)
+      const token = this.generateToken(user, '15m') // 15 minutes
+
+      // Generate refresh token (longer-lived)
+      const refreshToken = this.generateToken(user, '7d', true) // 7 days, refresh=true
+
+      await this.UserModel.update({ refreshToken: refreshToken }, { where: { id: user.id } })
+
+      return { user, token, refreshToken }
     } catch (error) {
       console.error('Error in loginUser:', error)
       throw error
@@ -211,16 +219,23 @@ class UserService {
 
   /**
    * Generates a JSON Web Token (JWT) for user authentication
-   * @param {Object} user - The user object containing authentication details
-   * @param {number} user.id - The unique identifier of the user
-   * @param {string} user.email - The email address of the user
-   * @param {string} user.role - The role/permission level of the user
-   * @returns {string} JWT token containing encoded user information
+   * @param {Object} user - The user object containing id, email, and role
+   * @param {string} [expiresIn='1h'] - Token expiration time (default: 1 hour)
+   * @param {boolean} [isRefreshToken=false] - Whether to generate a refresh token
+   * @returns {string} The generated JWT token
    */
-  generateToken(user) {
-    return jwt.sign({ id: user.id, email: user.email, role: user.role }, this.jwtSecret, {
-      expiresIn: '1h',
-    })
+  generateToken(user, expiresIn = '1h', isRefreshToken = false) {
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      type: isRefreshToken ? 'refresh' : 'access',
+    }
+    return jwt.sign(
+      payload,
+      isRefreshToken ? config.jwt.refreshTokenSecret : config.jwt.accessTokenSecret,
+      { expiresIn }
+    )
   }
 
   /**
