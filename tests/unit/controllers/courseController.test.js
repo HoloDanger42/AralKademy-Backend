@@ -3,7 +3,6 @@ import { User, Group } from '../../../src/models/index.js'
 import {
   getAllCourses,
   createCourse,
-  editCourse,
   assignLearnerGroupCourse,
   assignStudentTeacherGroupCourse,
   assignTeacherCourse,
@@ -80,6 +79,23 @@ describe('Course Controller', () => {
       })
       expect(log.info).toHaveBeenCalledWith('Course New Course was successfully created')
     })
+
+    test('should return 400 if course name exceeds 255 characters (create course)', async () => {
+      mockReq.user = { role: 'admin' }
+      mockReq.body = {
+        name: 'A'.repeat(256), // Exceeding 255 characters
+        description: 'Valid Description',
+      }
+    
+      await createCourse(mockReq, mockRes)
+    
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        errors: {
+          name: 'Course name is too long.',
+        },
+      })
+    })    
 
     test('should handle validation errors (create course)', async () => {
       mockReq.user = { role: 'admin' }
@@ -328,6 +344,21 @@ describe('Course Controller', () => {
         course: newCourse,
       })
     })
+
+    test('should return 403 if the user is not an admin (create course)', async () => {
+      // Arrange
+      mockReq.user = { role: 'teacher' } // Not an admin
+      mockReq.body = { name: 'Unauthorized Course', description: 'Should not be created' }
+    
+      // Act
+      await createCourse(mockReq, mockRes)
+    
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(403)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Forbidden: Only admins can create courses.',
+      })
+    })    
   })
 
   describe('assignStudentTeacherGroupCourse', () => {
@@ -396,6 +427,18 @@ describe('Course Controller', () => {
         expect.any(Error)
       )
     })
+
+    test('should return 403 if user is not admin or teacher (assign student-teacher group course)', async () => {
+      mockReq.user = { role: 'student' } // Neither admin nor teacher
+      mockReq.params = { id: 1 }
+    
+      await assignStudentTeacherGroupCourse(mockReq, mockRes)
+    
+      expect(mockRes.status).toHaveBeenCalledWith(403)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Forbidden: Only admins and teachers can assign student-teacher groups.',
+      })
+    })    
   })
 
   describe('assignLearnerGroupCourse', () => {
@@ -464,12 +507,36 @@ describe('Course Controller', () => {
         expect.any(Error)
       )
     })
+
+    test('should return 403 if user is not admin or teacher (assign learner group course)', async () => {
+      mockReq.user = { role: 'student' } // Neither admin nor teacher
+      mockReq.params = { id: 1 }
+    
+      await assignLearnerGroupCourse(mockReq, mockRes)
+    
+      expect(mockRes.status).toHaveBeenCalledWith(403)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Forbidden: Only admins and teachers can assign learner groups.',
+      })
+    })    
   })
 
   describe('assignTeacherCourse', () => {
+    test('should return 403 if user is not admin (assign teacher course)', async () => {
+      mockReq.user = { role: 'teacher' } // Only admins should be allowed
+      mockReq.params = { id: 1 }
+    
+      await assignTeacherCourse(mockReq, mockRes)
+    
+      expect(mockRes.status).toHaveBeenCalledWith(403)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Forbidden: Only admins can assign teachers to courses.',
+      })
+    })    
+
     test('should assign a teacher to a course (assign teacher course)', async () => {
       mockReq.user = { role: 'admin' }
-      mockReq.body = { courseId: 1, userId: 3 }
+      mockReq.body = { courseId: 1, teacherId: 3 }
       mockReq.params = { id: 1 }
 
       const updatedCourse = { id: 1, teacherId: 3 }
@@ -632,129 +699,6 @@ describe('Course Controller', () => {
         },
       })
       expect(log.error).toHaveBeenCalledWith('Soft delete course 1 error:', expect.any(Error))
-    })
-  })
-
-  describe('editCourse', () => {
-    test('should edit a course successfully (edit course)', async () => {
-      mockReq.params = { courseId: 1 }
-      mockReq.body = { name: 'Updated Course', description: 'Updated Description' }
-      const updatedCourse = { id: 1, name: 'Updated Course' }
-      jest.spyOn(CourseService.prototype, 'editCourse').mockResolvedValue(updatedCourse)
-
-      await editCourse(mockReq, mockRes)
-
-      expect(mockRes.status).toHaveBeenCalledWith(200)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Course edited successfully',
-        course: updatedCourse,
-      })
-      expect(log.info).toHaveBeenCalledWith('Course 1 was successfully edited')
-    })
-
-    test('should handle when course not found (edit course)', async () => {
-      mockReq.params = { courseId: 1 }
-      jest
-        .spyOn(CourseService.prototype, 'editCourse')
-        .mockRejectedValue(new Error('Course not found'))
-
-      await editCourse(mockReq, mockRes)
-
-      expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: {
-          code: 'NOT_FOUND',
-          message: 'Course not found',
-        },
-      })
-      expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
-    })
-
-    test('should handle course name is required (edit course)', async () => {
-      mockReq.params = { courseId: 1 }
-
-      jest
-        .spyOn(CourseService.prototype, 'editCourse')
-        .mockRejectedValue(new Error('Course name is required'))
-
-      await editCourse(mockReq, mockRes)
-
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Course name is required',
-        },
-      })
-      expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
-    })
-
-    test('should handle course name is too long (edit course)', async () => {
-      mockReq.params = { courseId: 1 }
-
-      jest
-        .spyOn(CourseService.prototype, 'editCourse')
-        .mockRejectedValue(new Error('Course name is too long'))
-
-      await editCourse(mockReq, mockRes)
-
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Course name is too long',
-        },
-      })
-      expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
-    })
-
-    test('should handle error when editing the course (edit course)', async () => {
-      mockReq.params = { courseId: 1 }
-      jest
-        .spyOn(CourseService.prototype, 'editCourse')
-        .mockRejectedValue(new Error('Error editing course'))
-
-      await editCourse(mockReq, mockRes)
-
-      expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Error editing course',
-        },
-      })
-      expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Error))
-    })
-
-    test('should handle course name already exists (edit course)', async () => {
-      mockReq.params = { courseId: 1 }
-
-      const sequelizeError = {
-        name: 'SequelizeUniqueConstraintError',
-        errors: [
-          {
-            message: 'Course name must be unique',
-            path: 'name',
-          },
-        ],
-        parent: { code: 'ER_DUP_ENTRY' },
-      }
-
-      jest.spyOn(CourseService.prototype, 'editCourse').mockRejectedValue(sequelizeError)
-
-      await editCourse(mockReq, mockRes)
-
-      expect(mockRes.status).toHaveBeenCalledWith(409)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: {
-          code: 'CONFLICT',
-          details: {
-            name: 'Name already exists.',
-          },
-          message: 'Resource already exists',
-        },
-      })
-      expect(log.error).toHaveBeenCalledWith('Edit course 1 error:', expect.any(Object))
     })
   })
 
