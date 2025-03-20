@@ -320,26 +320,12 @@ groupsRouter.get('/:groupId', rbac.allAuthenticated, getGroupById)
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *              - name
  *             properties:
  *               name:
  *                 type: string
  *                 example: "Updated Group Name"
- *               groupType:
- *                 type: string
- *                 enum: [student_teacher, learner]
- *                 example: "student_teacher"
- *               addUserIds:
- *                 type: array
- *                 description: User IDs to add to the group
- *                 items:
- *                   type: integer
- *                 example: [5, 6]
- *               removeUserIds:
- *                 type: array
- *                 description: User IDs to remove from the group
- *                 items:
- *                   type: integer
- *                 example: [3, 4]
  *     responses:
  *       200:
  *         description: Group updated successfully

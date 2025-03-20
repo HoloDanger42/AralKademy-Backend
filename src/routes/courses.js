@@ -198,6 +198,8 @@ courseRouter.post('/', rbac.adminOnly, createCourse)
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *              - name
  *             properties:
  *               name:
  *                 type: string
