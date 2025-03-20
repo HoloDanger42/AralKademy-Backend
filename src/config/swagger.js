@@ -99,7 +99,7 @@ const options = {
           properties: {
             module_id: { type: 'integer' },
             course_id: { type: 'integer' },
-            name: { type: 'string'},
+            name: { type: 'string' },
             description: { type: 'string' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
@@ -111,8 +111,90 @@ const options = {
           properties: {
             content_id: { type: 'integer' },
             module_id: { type: 'integer' },
-            name: { type: 'string'},
-            link: { type: 'string'}, 
+            name: { type: 'string' },
+            link: { type: 'string' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        Assessment: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            title: { type: 'string' },
+            description: { type: 'string' },
+            course_id: { type: 'integer' },
+            type: { type: 'string', enum: ['quiz', 'assignment', 'exam'] },
+            max_score: { type: 'integer' },
+            passing_score: { type: 'integer' },
+            duration_minutes: { type: 'integer' },
+            due_date: { type: 'string', format: 'date-time' },
+            is_published: { type: 'boolean' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        Question: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            assessment_id: { type: 'integer' },
+            question_text: { type: 'string' },
+            question_type: {
+              type: 'string',
+              enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
+            },
+            points: { type: 'integer' },
+            order_index: { type: 'integer' },
+            media_url: { type: 'string' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        QuestionOption: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            question_id: { type: 'integer' },
+            option_text: { type: 'string' },
+            is_correct: { type: 'boolean' },
+            order_index: { type: 'integer' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        Submission: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            assessment_id: { type: 'integer' },
+            user_id: { type: 'integer' },
+            status: { type: 'string', enum: ['in_progress', 'submitted', 'graded'] },
+            start_time: { type: 'string', format: 'date-time' },
+            submit_time: { type: 'string', format: 'date-time' },
+            score: { type: 'integer' },
+            max_score: { type: 'integer' },
+            is_late: { type: 'boolean' },
+            feedback: { type: 'string' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        AnswerResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            submission_id: { type: 'integer' },
+            question_id: { type: 'integer' },
+            selected_option_id: { type: 'integer' },
+            text_response: { type: 'string' },
+            points_awarded: { type: 'integer' },
+            feedback: { type: 'string' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
           },
