@@ -64,7 +64,7 @@ const router = express.Router()
  *                 example: "09123456789"
  *               school_id:
  *                 type: integer
- *                 example: 1
+ *                 example: 1001
  *               role:
  *                 type: string
  *                 enum: [admin, teacher, student_teacher, learner]
