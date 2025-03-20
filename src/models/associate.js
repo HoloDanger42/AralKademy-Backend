@@ -9,6 +9,7 @@ import {
   Group,
   School,
   Module,
+  Content,
   Assessment,
   Question,
   QuestionOption,
@@ -96,6 +97,8 @@ Course.belongsTo(Group, {
   as: 'learnerGroup',
 })
 
+Course.hasMany(Module, { foreignKey: 'course_id', as: 'modules' })
+
 // Enrollment associations
 Enrollment.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
 Enrollment.belongsTo(Admin, {
@@ -109,6 +112,10 @@ Enrollment.hasOne(Learner, {
 
 // Module associations
 Module.belongsTo(Course, { foreignKey: 'course_id', as: 'course' })
+Module.hasMany(Content, { foreignKey: 'module_id', as: 'contents' })
+
+// Content associations
+Content.belongsTo(Module, { foreignKey: 'module_id', as: 'module' })
 
 // Assessment associations
 Course.hasMany(Assessment, {
@@ -188,4 +195,16 @@ AnswerResponse.belongsTo(QuestionOption, {
   as: 'selected_option',
 })
 
-export { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School, Module }
+export {
+  User,
+  Teacher,
+  Admin,
+  StudentTeacher,
+  Learner,
+  Enrollment,
+  Course,
+  Group,
+  School,
+  Module,
+  Content,
+}

@@ -1,20 +1,20 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../config/database.js'
 
-const Module = sequelize.define(
-    'Module',
+const Content = sequelize.define(
+    'Content',
     {
-        module_id: {
+        content_id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
         },
-        course_id: {
+        module_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'courses',
-                key: 'id',
+                model: 'modules',
+                key: 'module_id',
             },
         },
         name: {
@@ -22,36 +22,39 @@ const Module = sequelize.define(
             allowNull: false,
             validate: {
                 notNull: {
-                    msg: 'Module name is required.',
+                    msg: 'Content name is required.',
                 },
                 notEmpty: {
-                    msg: 'Module name is required.',
+                    msg: 'Content name is required.',
                 },
                 len: {
                     args: [1, 255],
-                    msg: 'Module name must be between 1 and 255 characters',
+                    msg: 'Content name must be between 1 and 255 characters',
                 },
             },
         },
-        description: {
-            type: DataTypes.TEXT,
-            allowNull: true,
+        link: {
+            type: DataTypes.STRING,
+            allowNull: false,
             validate: {
-                len: {
-                    args: [0, 1000],
-                    msg: 'Module description must be less than 1000 characters',
+                notNull: {
+                    msg: 'Content link is required.',
+                },
+                notEmpty: {
+                    msg: 'Content link cannot be empty.',
+                },
+                isUrl: {
+                    msg: 'Content link must be a valid URL.',
                 },
             },
         },
-
     },
     {
-        tableName: 'modules',
+        tableName: 'contents',
         timestamps: true,
         underscored: true,
         paranoid: true,
     }
-)  
+)
 
-export { Module }
-    
+export { Content }
