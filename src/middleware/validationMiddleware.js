@@ -6,7 +6,7 @@ import { SpecificError } from './errorMiddleware.js'
  * @param {Object} schema - Validation schema object with body, query, and params properties
  * @returns {Function} Express middleware function that validates request data
  */
-export const validate = (schema) => {
+export const validateRequest = (schema) => {
   return (req, _res, next) => {
     try {
       const errors = []
@@ -54,6 +54,7 @@ export const validate = (schema) => {
       }
 
       if (errors.length > 0) {
+        console.log('Validation errors:', JSON.stringify(errors, null, 2))
         throw new SpecificError('Validation Error', 400, errors)
       }
 
@@ -63,3 +64,5 @@ export const validate = (schema) => {
     }
   }
 }
+
+export const validate = validateRequest

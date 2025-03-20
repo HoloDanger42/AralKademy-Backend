@@ -9,7 +9,12 @@ import {
   Group,
   School,
   Module,
-  Content
+  Content,
+  Assessment,
+  Question,
+  QuestionOption,
+  Submission,
+  AnswerResponse,
 } from './index.js'
 
 // User associations
@@ -105,12 +110,101 @@ Enrollment.hasOne(Learner, {
   as: 'learner',
 })
 
-//Module associations
+// Module associations
 Module.belongsTo(Course, { foreignKey: 'course_id', as: 'course' })
-Module.hasMany(Content, { foreignKey: 'module_id', as: 'contents'})
+Module.hasMany(Content, { foreignKey: 'module_id', as: 'contents' })
 
-//Content associations
-Content.belongsTo(Module, { foreignKey: 'module_id', as: 'module'})
+// Content associations
+Content.belongsTo(Module, { foreignKey: 'module_id', as: 'module' })
 
+// Assessment associations
+Course.hasMany(Assessment, {
+  foreignKey: 'course_id',
+  as: 'assessments',
+  onDelete: 'CASCADE',
+})
+Assessment.belongsTo(Course, {
+  foreignKey: 'course_id',
+  as: 'course',
+})
 
-export { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School, Module, Content }
+// Question associations
+Assessment.hasMany(Question, {
+  foreignKey: 'assessment_id',
+  as: 'questions',
+  onDelete: 'CASCADE',
+})
+Question.belongsTo(Assessment, {
+  foreignKey: 'assessment_id',
+  as: 'assessment',
+})
+
+// QuestionOption associations
+Question.hasMany(QuestionOption, {
+  foreignKey: 'question_id',
+  as: 'options',
+  onDelete: 'CASCADE',
+})
+QuestionOption.belongsTo(Question, {
+  foreignKey: 'question_id',
+  as: 'question',
+})
+
+// Submission associations
+Assessment.hasMany(Submission, {
+  foreignKey: 'assessment_id',
+  as: 'submissions',
+})
+Submission.belongsTo(Assessment, {
+  foreignKey: 'assessment_id',
+  as: 'assessment',
+})
+User.hasMany(Submission, {
+  foreignKey: 'user_id',
+  as: 'submissions',
+})
+Submission.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+})
+
+// AnswerResponse associations
+Submission.hasMany(AnswerResponse, {
+  foreignKey: 'submission_id',
+  as: 'answers',
+  onDelete: 'CASCADE',
+})
+AnswerResponse.belongsTo(Submission, {
+  foreignKey: 'submission_id',
+  as: 'submission',
+})
+Question.hasMany(AnswerResponse, {
+  foreignKey: 'question_id',
+  as: 'responses',
+})
+AnswerResponse.belongsTo(Question, {
+  foreignKey: 'question_id',
+  as: 'question',
+})
+QuestionOption.hasMany(AnswerResponse, {
+  foreignKey: 'selected_option_id',
+  as: 'selections',
+})
+AnswerResponse.belongsTo(QuestionOption, {
+  foreignKey: 'selected_option_id',
+  as: 'selected_option',
+})
+
+export {
+  User,
+  Teacher,
+  Admin,
+  StudentTeacher,
+  Learner,
+  Enrollment,
+  Course,
+  Group,
+  School,
+  Module,
+  Content,
+}
