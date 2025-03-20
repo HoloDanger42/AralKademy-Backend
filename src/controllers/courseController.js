@@ -165,35 +165,6 @@ const updateCourse = async (req, res) => {
 }
 
 /**
- * Edits a course.
- * @param {Object} req - The request object containing the course ID in req.params and updated data in req.body.
- * @param {Object} res - The response object.
- */
-const editCourse = async (req, res) => {
-  try {
-    const { courseId } = req.params
-    const courseData = req.body
-
-    const updatedCourse = await courseService.editCourse(courseId, courseData)
-
-    // Return the response in the expected format
-    res.status(200).json({
-      message: 'Course edited successfully',
-      course: updatedCourse,
-    })
-
-    log.info(`Course ${courseId} was successfully edited`)
-  } catch (error) {
-    return handleControllerError(
-      error,
-      res,
-      `Edit course ${req.params.courseId}`,
-      'Error editing course'
-    )
-  }
-}
-
-/**
  * Soft deletes a course.
  * @param {Object} req - The request object containing the course ID in req.params.
  * @param {Object} res - The response object.
@@ -263,13 +234,13 @@ const assignTeacherCourse = async (req, res) => {
     }
 
     const { id } = req.params // Course ID
-    const { userId } = req.body // Teacher's user ID
+    const { teacherId } = req.body // Teacher's user ID
 
-    const updatedCourse = await courseService.assignTeacherCourse(id, userId)
+    const updatedCourse = await courseService.assignTeacherCourse(id, teacherId)
     res
       .status(200)
       .json({ message: 'Teacher assigned to course successfully', course: updatedCourse })
-    log.info(`Teacher ${userId} assigned to course ${id}`)
+    log.info(`Teacher ${teacherId} assigned to course ${id}`)
   } catch (error) {
     return handleControllerError(
       error,
@@ -348,7 +319,6 @@ const assignStudentTeacherGroupCourse = async (req, res) => {
 export {
   getAllCourses,
   createCourse,
-  editCourse,
   updateCourse,
   getCourseById,
   softDeleteCourse,

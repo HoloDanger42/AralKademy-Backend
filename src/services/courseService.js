@@ -185,41 +185,6 @@ class CourseService {
     }
   }
 
-  async editCourse(courseId, name, description) {
-    try {
-      // Validate inputs first
-      if (!name) {
-        throw new Error('Course name is required')
-      }
-
-      if (name.length > 255) {
-        throw new Error('Course name is too long')
-      }
-
-      const course = await this.courseModel.findByPk(courseId)
-      if (!course) {
-        throw new Error('Course not found')
-      }
-
-      // Update course properties
-      course.name = name
-      course.description = description
-
-      await course.save()
-      return course
-    } catch (error) {
-      log.error(`Error editing course with ID ${courseId}:`, error)
-      if (
-        error.message === 'Course not found' ||
-        error.message === 'Course name is required' ||
-        error.message === 'Course name is too long'
-      ) {
-        throw error // Re-throw these specific errors
-      }
-      throw new Error('Failed to edit course')
-    }
-  }
-
   /**
    * Updates an existing course with the provided data
    * @async
@@ -330,14 +295,14 @@ class CourseService {
    * @throws {Error} When the provided user is not a teacher
    * @throws {Error} When assignment fails for other reasons
    */
-  async assignTeacherCourse(courseId, userId) {
+  async assignTeacherCourse(courseId, teacherId) {
     try {
       const course = await this.courseModel.findByPk(courseId)
       if (!course) {
         throw new Error('Course not found')
       }
 
-      const teacher = await this.userModel.findByPk(userId)
+      const teacher = await this.userModel.findByPk(teacherId)
       if (!teacher) {
         throw new Error('Teacher not found')
       }
@@ -345,12 +310,12 @@ class CourseService {
         throw new Error('Provided user ID is not a teacher.')
       }
 
-      course.user_id = userId
+      course.user_id = teacherId
       await course.save()
       return course
     } catch (error) {
       log.error(
-        `Error assigning teacher to course. Course ID: ${courseId}, User ID: ${userId}`,
+        `Error assigning teacher to course. Course ID: ${courseId}, User ID: ${teacherId}`,
         error
       )
 
