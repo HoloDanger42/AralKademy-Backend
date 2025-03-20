@@ -85,7 +85,10 @@ export const handleControllerError = (
     })
   }
 
-  if (error.message.includes('permission')) {
+  if (
+    error.message.includes('permission') ||
+    error.message.toLowerCase().includes('unauthorized submission')
+  ) {
     return res.status(403).json({
       error: {
         message: error.message,

@@ -9,6 +9,11 @@ import { Group } from './Group.js'
 import { School } from './School.js'
 import { Blacklist } from './Blacklist.js'
 import { Module } from './Module.js'
+import { Assessment } from './Assessment.js'
+import { Question } from './Question.js'
+import { QuestionOption } from './QuestionOption.js'
+import { Submission } from './Submission.js'
+import { AnswerResponse } from './AnswerResponse.js'
 
 export {
   User,
@@ -21,5 +26,10 @@ export {
   Group,
   School,
   Blacklist,
-  Module
+  Module,
+  Assessment,
+  Question,
+  QuestionOption,
+  Submission,
+  AnswerResponse,
 }
