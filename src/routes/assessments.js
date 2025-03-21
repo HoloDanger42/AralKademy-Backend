@@ -678,7 +678,7 @@ router.post(
  */
 router.get(
   '/:assessmentId/submissions',
-  rbac.teacherAndAdmin,
+  rbac.studentTeacherAndAbove,
   validateRequest(assessmentSchemas.getSubmissionsForAssessment),
   getSubmissionsForAssessment
 )
@@ -856,7 +856,7 @@ router.get(
  */
 router.post(
   '/submissions/:submissionId/grade',
-  rbac.teacherAndAdmin,
+  rbac.studentTeacherAndAbove,
   validateRequest(assessmentSchemas.gradeSubmission),
   gradeSubmission
 )
