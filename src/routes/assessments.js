@@ -12,7 +12,7 @@ import {
   gradeSubmission,
 } from '../controllers/assessmentController.js'
 import { validateRequest } from '../middleware/validationMiddleware.js'
-import { assessmentSchemas } from '../validations/assessmentSchemas.js'
+import { assessmentSchemas } from '../schemas/assessmentSchemas.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
 
 const router = express.Router()
