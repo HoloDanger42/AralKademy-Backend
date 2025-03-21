@@ -16,6 +16,29 @@ export const assessmentSchemas = {
     }),
   },
 
+  updateAssessment: {
+    params: Joi.object({
+      assessmentId: Joi.number().integer().required(),
+    }),
+    body: Joi.object({
+      title: Joi.string(),
+      description: Joi.string().allow('', null),
+      type: Joi.string().valid('quiz', 'assignment', 'exam'),
+      max_score: Joi.number().integer().min(0),
+      passing_score: Joi.number().integer().min(0).allow(null),
+      duration_minutes: Joi.number().integer().min(1).allow(null),
+      due_date: Joi.date().iso().allow(null),
+      is_published: Joi.boolean(),
+      instructions: Joi.string().allow('', null),
+    }).min(1), // At least one field must be provided
+  },
+
+  deleteAssessment: {
+    params: Joi.object({
+      assessmentId: Joi.number().integer().required(),
+    }),
+  },
+
   addQuestion: {
     body: Joi.object({
       question_text: Joi.string().required(),
@@ -38,9 +61,49 @@ export const assessmentSchemas = {
           .required(),
         otherwise: Joi.forbidden(),
       }),
+      answer_key: Joi.when('question_type', {
+        is: Joi.string().valid('short_answer', 'essay'),
+        then: Joi.string().allow('', null),
+        otherwise: Joi.forbidden(),
+      }),
+      word_limit: Joi.when('question_type', {
+        is: 'essay',
+        then: Joi.number().integer().min(0).allow(null),
+        otherwise: Joi.forbidden(),
+      }),
     }),
     params: Joi.object({
       assessmentId: Joi.number().integer().required(),
+    }),
+  },
+
+  updateQuestion: {
+    params: Joi.object({
+      assessmentId: Joi.number().integer().required(),
+      questionId: Joi.number().integer().required(),
+    }),
+    body: Joi.object({
+      question_text: Joi.string(),
+      question_type: Joi.string().valid('multiple_choice', 'true_false', 'short_answer', 'essay'),
+      points: Joi.number().integer().min(1),
+      order_index: Joi.number().integer().min(0),
+      media_url: Joi.string().uri().allow('', null),
+      options: Joi.array().items(
+        Joi.object({
+          id: Joi.number().integer(),
+          text: Joi.string().required(),
+          is_correct: Joi.boolean().required(),
+        })
+      ),
+      answer_key: Joi.string().allow('', null),
+      word_limit: Joi.number().integer().min(0).allow(null),
+    }).min(1), // At least one field must be provided
+  },
+
+  deleteQuestion: {
+    params: Joi.object({
+      assessmentId: Joi.number().integer().required(),
+      questionId: Joi.number().integer().required(),
     }),
   },
 

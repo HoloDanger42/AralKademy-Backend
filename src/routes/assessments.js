@@ -2,8 +2,12 @@ import express from 'express'
 import {
   createAssessment,
   getAssessmentById,
+  updateAssessment,
+  deleteAssessment,
   getAssessmentsForCourse,
   addQuestion,
+  updateQuestion,
+  deleteQuestion,
   startSubmission,
   saveAnswer,
   submitAssessment,
@@ -273,6 +277,128 @@ router.get(
 
 /**
  * @swagger
+ * /assessments/{assessmentId}:
+ *   put:
+ *     summary: Update an existing assessment
+ *     tags: [Assessments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: assessmentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Assessment ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 example: "Updated Midterm Exam"
+ *               description:
+ *                 type: string
+ *                 example: "Revised midterm covering chapters 1-6"
+ *               type:
+ *                 type: string
+ *                 enum: [quiz, assignment, exam]
+ *               max_score:
+ *                 type: integer
+ *                 example: 120
+ *               passing_score:
+ *                 type: integer
+ *                 example: 75
+ *               duration_minutes:
+ *                 type: integer
+ *                 example: 120
+ *               due_date:
+ *                 type: string
+ *                 format: date-time
+ *               is_published:
+ *                 type: boolean
+ *               instructions:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Assessment updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Assessment updated successfully"
+ *                 assessment:
+ *                   $ref: '#/components/schemas/Assessment'
+ *       400:
+ *         description: Invalid input data
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - requires student teacher, teacher, or admin role
+ *       404:
+ *         description: Assessment not found
+ */
+router.put(
+  '/:assessmentId',
+  rbac.studentTeacherAndAbove,
+  validateRequest(assessmentSchemas.updateAssessment),
+  updateAssessment
+)
+
+/**
+ * @swagger
+ * /assessments/{assessmentId}:
+ *   delete:
+ *     summary: Delete an assessment
+ *     tags: [Assessments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: assessmentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Assessment ID
+ *     responses:
+ *       200:
+ *         description: Assessment deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Assessment deleted successfully"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - requires student teacher, teacher, or admin role
+ *       404:
+ *         description: Assessment not found
+ */
+router.delete(
+  '/:assessmentId',
+  rbac.studentTeacherAndAbove,
+  validateRequest(assessmentSchemas.deleteAssessment),
+  deleteAssessment
+)
+
+/**
+ * @swagger
  * /assessments/{assessmentId}/questions:
  *   post:
  *     summary: Add a question to an assessment
@@ -406,6 +532,141 @@ router.post(
   rbac.studentTeacherAndAbove,
   validateRequest(assessmentSchemas.addQuestion),
   addQuestion
+)
+
+/**
+ * @swagger
+ * /assessments/{assessmentId}/questions/{questionId}:
+ *   put:
+ *     summary: Update a question in an assessment
+ *     tags: [Assessments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: assessmentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Assessment ID
+ *       - in: path
+ *         name: questionId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Question ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               question_text:
+ *                 type: string
+ *               question_type:
+ *                 type: string
+ *                 enum: [multiple_choice, true_false, short_answer, essay]
+ *               points:
+ *                 type: integer
+ *               order_index:
+ *                 type: integer
+ *               media_url:
+ *                 type: string
+ *               options:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     text:
+ *                       type: string
+ *                     is_correct:
+ *                       type: boolean
+ *               answer_key:
+ *                 type: string
+ *               word_limit:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Question updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Question updated successfully"
+ *                 question:
+ *                   $ref: '#/components/schemas/Question'
+ *       400:
+ *         description: Invalid input data
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - requires student teacher, teacher, or admin role
+ *       404:
+ *         description: Question or assessment not found
+ */
+router.put(
+  '/:assessmentId/questions/:questionId',
+  rbac.studentTeacherAndAbove,
+  validateRequest(assessmentSchemas.updateQuestion),
+  updateQuestion
+)
+
+/**
+ * @swagger
+ * /assessments/{assessmentId}/questions/{questionId}:
+ *   delete:
+ *     summary: Delete a question from an assessment
+ *     tags: [Assessments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: assessmentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Assessment ID
+ *       - in: path
+ *         name: questionId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Question ID
+ *     responses:
+ *       200:
+ *         description: Question deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Question deleted successfully"
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - requires student teacher, teacher, or admin role
+ *       404:
+ *         description: Question or assessment not found
+ */
+router.delete(
+  '/:assessmentId/questions/:questionId',
+  rbac.studentTeacherAndAbove,
+  validateRequest(assessmentSchemas.deleteQuestion),
+  deleteQuestion
 )
 
 /**
