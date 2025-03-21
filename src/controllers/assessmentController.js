@@ -164,3 +164,57 @@ export const gradeSubmission = async (req, res) => {
     handleControllerError(error, res, 'Grade submission', 'Error grading submission')
   }
 }
+
+export const updateAssessment = async (req, res) => {
+  try {
+    const { assessmentId } = req.params
+    const assessment = await assessmentService.updateAssessment(assessmentId, req.body)
+    res.status(200).json({
+      success: true,
+      message: 'Assessment updated successfully',
+      assessment,
+    })
+  } catch (error) {
+    handleControllerError(error, res, 'Update assessment', 'Error updating assessment')
+  }
+}
+
+export const deleteAssessment = async (req, res) => {
+  try {
+    const { assessmentId } = req.params
+    await assessmentService.deleteAssessment(assessmentId)
+    res.status(200).json({
+      success: true,
+      message: 'Assessment deleted successfully',
+    })
+  } catch (error) {
+    handleControllerError(error, res, 'Delete assessment', 'Error deleting assessment')
+  }
+}
+
+export const updateQuestion = async (req, res) => {
+  try {
+    const { assessmentId, questionId } = req.params
+    const question = await assessmentService.updateQuestion(assessmentId, questionId, req.body)
+    res.status(200).json({
+      success: true,
+      message: 'Question updated successfully',
+      question,
+    })
+  } catch (error) {
+    handleControllerError(error, res, 'Update question', 'Error updating question')
+  }
+}
+
+export const deleteQuestion = async (req, res) => {
+  try {
+    const { assessmentId, questionId } = req.params
+    await assessmentService.deleteQuestion(assessmentId, questionId)
+    res.status(200).json({
+      success: true,
+      message: 'Question deleted successfully',
+    })
+  } catch (error) {
+    handleControllerError(error, res, 'Delete question', 'Error deleting question')
+  }
+}

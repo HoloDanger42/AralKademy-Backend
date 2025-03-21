@@ -504,6 +504,235 @@ class AssessmentService {
       throw error
     }
   }
+
+  /**
+   * Updates an assessment
+   * @param {number} assessmentId - ID of the assessment to update
+   * @param {Object} assessmentData - Updated assessment data
+   * @returns {Promise<Object>} The updated assessment
+   */
+  async updateAssessment(assessmentId, assessmentData) {
+    try {
+      const assessment = await this.AssessmentModel.findByPk(assessmentId)
+      if (!assessment) {
+        throw new Error('Assessment not found')
+      }
+
+      // If course_id is being updated, verify the course exists
+      if (assessmentData.course_id && assessmentData.course_id !== assessment.course_id) {
+        const course = await this.CourseModel.findByPk(assessmentData.course_id)
+        if (!course) {
+          throw new Error('Course not found')
+        }
+      }
+
+      // Update the assessment
+      await assessment.update(assessmentData)
+      return assessment
+    } catch (error) {
+      log.error('Update assessment error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Deletes an assessment
+   * @param {number} assessmentId - ID of the assessment to delete
+   * @returns {Promise<boolean>} True if successful
+   */
+  async deleteAssessment(assessmentId) {
+    try {
+      const assessment = await this.AssessmentModel.findByPk(assessmentId)
+      if (!assessment) {
+        throw new Error('Assessment not found')
+      }
+
+      // Check if there are any submissions for this assessment
+      const submissionCount = await this.SubmissionModel.count({
+        where: { assessment_id: assessmentId },
+      })
+
+      if (submissionCount > 0) {
+        throw new Error('Cannot delete assessment with existing submissions')
+      }
+
+      // Delete associated questions first (which will cascade delete options)
+      await this.QuestionModel.destroy({
+        where: { assessment_id: assessmentId },
+      })
+
+      // Delete the assessment
+      await assessment.destroy()
+      return true
+    } catch (error) {
+      log.error('Delete assessment error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Updates a question
+   * @param {number} assessmentId - ID of the assessment
+   * @param {number} questionId - ID of the question to update
+   * @param {Object} questionData - Updated question data
+   * @returns {Promise<Object>} The updated question
+   */
+  async updateQuestion(assessmentId, questionId, questionData) {
+    try {
+      // Verify the assessment exists
+      const assessment = await this.AssessmentModel.findByPk(assessmentId)
+      if (!assessment) {
+        throw new Error('Assessment not found')
+      }
+
+      // Find the question and verify it belongs to the assessment
+      const question = await this.QuestionModel.findOne({
+        where: {
+          id: questionId,
+          assessment_id: assessmentId,
+        },
+      })
+
+      if (!question) {
+        throw new Error('Question not found in this assessment')
+      }
+
+      // Handle question type change if necessary
+      if (questionData.question_type && questionData.question_type !== question.question_type) {
+        // If changing to/from multiple choice or true/false, handle options accordingly
+        if (
+          (question.question_type === 'multiple_choice' ||
+            question.question_type === 'true_false') &&
+          questionData.question_type !== 'multiple_choice' &&
+          questionData.question_type !== 'true_false'
+        ) {
+          // Changing from MC/TF to short_answer/essay - remove options
+          await this.QuestionOptionModel.destroy({
+            where: { question_id: questionId },
+          })
+        }
+      }
+
+      // Update the question
+      await question.update(questionData)
+
+      // Handle options if provided and question is multiple choice or true/false
+      if (
+        questionData.options &&
+        (question.question_type === 'multiple_choice' || question.question_type === 'true_false')
+      ) {
+        // Delete existing options not in the update
+        const optionIds = questionData.options.filter((opt) => opt.id).map((opt) => opt.id)
+
+        // Delete options not included in the update
+        if (optionIds.length > 0) {
+          await this.QuestionOptionModel.destroy({
+            where: {
+              question_id: questionId,
+              id: { [Op.notIn]: optionIds },
+            },
+          })
+        } else {
+          // If no IDs provided, delete all existing options
+          await this.QuestionOptionModel.destroy({
+            where: { question_id: questionId },
+          })
+        }
+
+        // Update or create options
+        for (let i = 0; i < questionData.options.length; i++) {
+          const optionData = questionData.options[i]
+
+          if (optionData.id) {
+            // Update existing option
+            await this.QuestionOptionModel.update(
+              {
+                option_text: optionData.text,
+                is_correct: optionData.is_correct || false,
+                order_index: i,
+              },
+              {
+                where: {
+                  id: optionData.id,
+                  question_id: questionId,
+                },
+              }
+            )
+          } else {
+            // Create new option
+            await this.QuestionOptionModel.create({
+              question_id: questionId,
+              option_text: optionData.text,
+              is_correct: optionData.is_correct || false,
+              order_index: i,
+            })
+          }
+        }
+      }
+
+      // Reload the question with its options
+      return await this.QuestionModel.findByPk(questionId, {
+        include: [
+          {
+            model: this.QuestionOptionModel,
+            as: 'options',
+          },
+        ],
+      })
+    } catch (error) {
+      log.error('Update question error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Deletes a question
+   * @param {number} assessmentId - ID of the assessment
+   * @param {number} questionId - ID of the question to delete
+   * @returns {Promise<boolean>} True if successful
+   */
+  async deleteQuestion(assessmentId, questionId) {
+    try {
+      // Verify the assessment exists
+      const assessment = await this.AssessmentModel.findByPk(assessmentId)
+      if (!assessment) {
+        throw new Error('Assessment not found')
+      }
+
+      // Find the question and verify it belongs to the assessment
+      const question = await this.QuestionModel.findOne({
+        where: {
+          id: questionId,
+          assessment_id: assessmentId,
+        },
+      })
+
+      if (!question) {
+        throw new Error('Question not found in this assessment')
+      }
+
+      // Check if there are any answers for this question
+      const answerCount = await this.AnswerResponseModel.count({
+        where: { question_id: questionId },
+      })
+
+      if (answerCount > 0) {
+        throw new Error('Cannot delete question with existing answers')
+      }
+
+      // Delete options first
+      await this.QuestionOptionModel.destroy({
+        where: { question_id: questionId },
+      })
+
+      // Delete the question
+      await question.destroy()
+      return true
+    } catch (error) {
+      log.error('Delete question error:', error)
+      throw error
+    }
+  }
 }
 
 export default AssessmentService

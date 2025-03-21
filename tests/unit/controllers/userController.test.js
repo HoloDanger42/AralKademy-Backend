@@ -64,39 +64,39 @@ describe('User Controller', () => {
   describe('getAllUsers', () => {
     test('should return all users successfully', async () => {
       // Arrange
-      const page = 1;
-      const limit = 10;
-  
+      const page = 1
+      const limit = 10
+
       const mockUsers = validUsers.map((user, index) => ({
         id: index + 1,
         ...user,
-      }));
-  
+      }))
+
       // Mock the service response
       getAllUsersSpy.mockResolvedValue({
         count: mockUsers.length,
         rows: mockUsers, // No need for `get()` mocks if password is excluded
-      });
-  
+      })
+
       // Mock request query parameters
-      mockReq.query = { page: String(page), limit: String(limit) };
-  
+      mockReq.query = { page: String(page), limit: String(limit) }
+
       // Act
-      await getAllUsers(mockReq, mockRes);
-  
+      await getAllUsers(mockReq, mockRes)
+
       // Assert
-      expect(getAllUsersSpy).toHaveBeenCalledWith(page, limit); // Ensure service is called correctly
-      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(getAllUsersSpy).toHaveBeenCalledWith(page, limit) // Ensure service is called correctly
+      expect(mockRes.status).toHaveBeenCalledWith(200)
       expect(mockRes.json).toHaveBeenCalledWith({
         count: mockUsers.length,
         totalPages: Math.ceil(mockUsers.length / limit),
         currentPage: page,
         users: mockUsers, // Directly returned since passwords are excluded in the service
-      });
-      expect(log.info).toHaveBeenCalledWith('Retrieved all users');
-    });
-  });  
-  
+      })
+      expect(log.info).toHaveBeenCalledWith('Retrieved all users')
+    })
+  })
+
   describe('forgotPassword', () => {
     test('should send password reset email successfully', async () => {
       // Arrange
@@ -495,6 +495,234 @@ describe('User Controller', () => {
         error: {
           code: 'INTERNAL_ERROR',
           message: 'Failed to create user',
+        },
+      })
+      expect(log.error).toHaveBeenCalled()
+    })
+  })
+
+  describe('getAvailableLearners', () => {
+    test('should return all available learners successfully', async () => {
+      // Arrange
+      const mockLearners = [
+        { id: 1, first_name: 'John', last_name: 'Doe', email: 'john@example.com' },
+        { id: 2, first_name: 'Jane', last_name: 'Smith', email: 'jane@example.com' },
+      ]
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'getAvailableLearners')
+        .mockResolvedValue(mockLearners)
+
+      // Act
+      await userControllerModule.getAvailableLearners(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith(mockLearners)
+      expect(log.info).toHaveBeenCalledWith('Retrieved available learners')
+    })
+
+    test('should return 500 if an error occurs', async () => {
+      // Arrange
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'getAvailableLearners')
+        .mockRejectedValue(new Error('Database error'))
+
+      // Act
+      await userControllerModule.getAvailableLearners(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to retrieve learners',
+        },
+      })
+      expect(log.error).toHaveBeenCalled()
+    })
+  })
+
+  describe('getAvailableStudentTeachers', () => {
+    test('should return all available student teachers successfully', async () => {
+      // Arrange
+      const mockStudentTeachers = [
+        { id: 1, first_name: 'Alice', last_name: 'Brown', email: 'alice@example.com' },
+        { id: 2, first_name: 'Bob', last_name: 'Johnson', email: 'bob@example.com' },
+      ]
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'getAvailableStudentTeachers')
+        .mockResolvedValue(mockStudentTeachers)
+
+      // Act
+      await userControllerModule.getAvailableStudentTeachers(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith(mockStudentTeachers)
+      expect(log.info).toHaveBeenCalledWith('Retrieved available student teachers')
+    })
+
+    test('should return 500 if an error occurs', async () => {
+      // Arrange
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'getAvailableStudentTeachers')
+        .mockRejectedValue(new Error('Database error'))
+
+      // Act
+      await userControllerModule.getAvailableStudentTeachers(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to retrieve student teachers',
+        },
+      })
+      expect(log.error).toHaveBeenCalled()
+    })
+  })
+
+  describe('updateUser', () => {
+    test('should update a user successfully', async () => {
+      // Arrange
+      const userId = '123'
+      const userData = {
+        first_name: 'Updated',
+        last_name: 'User',
+        email: 'updated@example.com',
+        role: 'teacher',
+      }
+
+      mockReq.params = { id: userId }
+      mockReq.body = userData
+
+      const updatedUser = {
+        id: userId,
+        ...userData,
+      }
+
+      jest.spyOn(UserServiceModule.default.prototype, 'updateUser').mockResolvedValue(updatedUser)
+
+      // Act
+      await userControllerModule.updateUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'User updated successfully',
+        user: updatedUser,
+      })
+      expect(log.info).toHaveBeenCalledWith(`User with ID ${userId} updated successfully`)
+    })
+
+    test('should return 400 if admin role is provided', async () => {
+      // Arrange
+      const userId = '123'
+      const userData = {
+        first_name: 'Admin',
+        last_name: 'User',
+        role: 'admin',
+      }
+
+      mockReq.params = { id: userId }
+      mockReq.body = userData
+
+      // Act
+      await userControllerModule.updateUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Cannot set admin role through this endpoint',
+        },
+      })
+      expect(UserServiceModule.default.prototype.updateUser).not.toHaveBeenCalled()
+    })
+
+    test('should return 400 if invalid role is provided', async () => {
+      // Arrange
+      const userId = '123'
+      const userData = {
+        first_name: 'Invalid',
+        last_name: 'Role',
+        role: 'invalid_role',
+      }
+
+      mockReq.params = { id: userId }
+      mockReq.body = userData
+
+      // Act
+      await userControllerModule.updateUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid role. Allowed roles are: teacher, student teacher, learner',
+        },
+      })
+      expect(UserServiceModule.default.prototype.updateUser).not.toHaveBeenCalled()
+    })
+
+    test('should return 404 if user is not found', async () => {
+      // Arrange
+      const userId = '999'
+      const userData = {
+        first_name: 'Not',
+        last_name: 'Found',
+      }
+
+      mockReq.params = { id: userId }
+      mockReq.body = userData
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'updateUser')
+        .mockRejectedValue(new Error('User not found'))
+
+      // Act
+      await userControllerModule.updateUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        },
+      })
+      expect(log.error).toHaveBeenCalled()
+    })
+
+    test('should return 500 if an error occurs during update', async () => {
+      // Arrange
+      const userId = '123'
+      const userData = {
+        first_name: 'Error',
+        last_name: 'User',
+      }
+
+      mockReq.params = { id: userId }
+      mockReq.body = userData
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'updateUser')
+        .mockRejectedValue(new Error('Database error'))
+
+      // Act
+      await userControllerModule.updateUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to update user',
         },
       })
       expect(log.error).toHaveBeenCalled()
