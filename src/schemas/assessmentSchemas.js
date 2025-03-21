@@ -38,6 +38,16 @@ export const assessmentSchemas = {
           .required(),
         otherwise: Joi.forbidden(),
       }),
+      answer_key: Joi.when('question_type', {
+        is: Joi.string().valid('short_answer', 'essay'),
+        then: Joi.string().allow('', null),
+        otherwise: Joi.forbidden(),
+      }),
+      word_limit: Joi.when('question_type', {
+        is: 'essay',
+        then: Joi.number().integer().min(0).allow(null),
+        otherwise: Joi.forbidden(),
+      }),
     }),
     params: Joi.object({
       assessmentId: Joi.number().integer().required(),

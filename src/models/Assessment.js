@@ -69,6 +69,11 @@ export const Assessment = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    instructions: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Instructions for students taking the assessment',
+    },
   },
   {
     tableName: 'assessments',
