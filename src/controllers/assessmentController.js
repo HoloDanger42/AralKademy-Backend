@@ -218,3 +218,17 @@ export const deleteQuestion = async (req, res) => {
     handleControllerError(error, res, 'Delete question', 'Error deleting question')
   }
 }
+
+export const getSubmissionById = async (req, res) => {
+  try {
+    const { submissionId } = req.params
+    const submission = await assessmentService.getSubmissionById(submissionId)
+
+    res.status(200).json({
+      success: true,
+      submission,
+    })
+  } catch (error) {
+    handleControllerError(error, res, 'Get submission', 'Error retrieving submission')
+  }
+}

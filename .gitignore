@@ -15,6 +15,7 @@ node_modules/
 logs/
 *.log
 npm-debug.log*
+request-log.txt
 
 # Testing
 coverage/
