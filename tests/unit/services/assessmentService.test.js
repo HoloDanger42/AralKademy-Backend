@@ -22,10 +22,14 @@ describe('Assessment Service', () => {
       create: jest.fn(),
       findAll: jest.fn(),
       findByPk: jest.fn(),
+      findOne: jest.fn(),
+      destroy: jest.fn(),
     }
 
     mockQuestionOptionModel = {
       create: jest.fn(),
+      destroy: jest.fn(),
+      update: jest.fn(),
     }
 
     mockSubmissionModel = {
@@ -33,6 +37,7 @@ describe('Assessment Service', () => {
       findAll: jest.fn(),
       findByPk: jest.fn(),
       findOne: jest.fn(),
+      count: jest.fn(),
     }
 
     mockAnswerResponseModel = {
@@ -40,6 +45,7 @@ describe('Assessment Service', () => {
       findAll: jest.fn(),
       findOne: jest.fn(),
       save: jest.fn(),
+      count: jest.fn(),
     }
 
     mockCourseModel = {
@@ -1002,6 +1008,315 @@ describe('Assessment Service', () => {
       expect(mockSubmission.status).toBe('graded')
       expect(mockSubmission.save).toHaveBeenCalled()
       expect(result).toEqual(mockSubmission)
+    })
+  })
+
+  describe('updateAssessment', () => {
+    test('should update an assessment successfully', async () => {
+      // Arrange
+      const assessmentId = 1
+      const updateData = {
+        title: 'Updated Assessment Title',
+        description: 'Updated description',
+        duration_minutes: 60,
+      }
+
+      const mockAssessment = {
+        id: 1,
+        title: 'Original Title',
+        description: 'Original description',
+        duration_minutes: 45,
+        save: jest.fn().mockResolvedValue(true),
+        update: jest.fn().mockImplementation(function (data) {
+          // Update the mock assessment properties
+          Object.assign(this, data)
+          return Promise.resolve(this)
+        }),
+      }
+
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
+
+      // Act
+      const result = await assessmentService.updateAssessment(assessmentId, updateData)
+
+      // Assert
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId)
+      expect(mockAssessment.title).toBe('Updated Assessment Title')
+      expect(mockAssessment.description).toBe('Updated description')
+      expect(mockAssessment.duration_minutes).toBe(60)
+      expect(mockAssessment.update).toHaveBeenCalledWith(updateData)
+      expect(result).toEqual(mockAssessment)
+    })
+
+    test('should throw error if assessment does not exist', async () => {
+      // Arrange
+      const assessmentId = 999
+      const updateData = { title: 'Updated Title' }
+
+      mockAssessmentModel.findByPk.mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(assessmentService.updateAssessment(assessmentId, updateData)).rejects.toThrow(
+        'Assessment not found'
+      )
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId)
+    })
+  })
+
+  describe('deleteAssessment', () => {
+    test('should delete an assessment successfully', async () => {
+      // Arrange
+      const assessmentId = 1
+
+      const mockAssessment = {
+        id: assessmentId,
+        destroy: jest.fn().mockResolvedValue(true),
+      }
+
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
+
+      // Act
+      await assessmentService.deleteAssessment(assessmentId)
+
+      // Assert
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId)
+      expect(mockAssessment.destroy).toHaveBeenCalled()
+    })
+
+    test('should throw error if assessment does not exist', async () => {
+      // Arrange
+      const assessmentId = 999
+
+      mockAssessmentModel.findByPk.mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(assessmentService.deleteAssessment(assessmentId)).rejects.toThrow(
+        'Assessment not found'
+      )
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId)
+    })
+  })
+
+  describe('updateQuestion', () => {
+    test('should update a question successfully', async () => {
+      // Arrange
+      const assessmentId = 1
+      const questionId = 2
+      const updateData = {
+        question_text: 'Updated question text',
+        points: 10,
+        options: [{ id: 5, option_text: 'Updated option', is_correct: true }],
+      }
+
+      const mockAssessment = { id: assessmentId }
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
+
+      // Create the mock option with a Jest function
+      const mockOptionSave = jest.fn().mockResolvedValue(true)
+      const mockOption = {
+        id: 5,
+        option_text: 'Original option',
+        is_correct: false,
+        save: mockOptionSave,
+      }
+
+      const mockQuestion = {
+        id: questionId,
+        assessment_id: assessmentId,
+        question_text: 'Original question',
+        question_type: 'multiple_choice',
+        points: 5,
+        options: [mockOption],
+        update: jest.fn().mockImplementation(function (data) {
+          Object.assign(this, data)
+          return Promise.resolve(this)
+        }),
+      }
+
+      mockQuestionModel.findOne = jest.fn().mockImplementation(() => {
+        // When options are updated in the service, this will call save on our mockOption
+        updateData.options.forEach((optionData) => {
+          if (optionData.id === mockOption.id) {
+            Object.assign(mockOption, optionData)
+            mockOption.save()
+          }
+        })
+        return Promise.resolve(mockQuestion)
+      })
+
+      mockQuestionModel.findByPk.mockResolvedValue(mockQuestion)
+
+      // Act
+      const result = await assessmentService.updateQuestion(assessmentId, questionId, updateData)
+
+      // Assert
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId)
+      expect(mockQuestion.update).toHaveBeenCalledWith(updateData)
+      expect(mockOptionSave).toHaveBeenCalled()
+      expect(result).toEqual(mockQuestion)
+    })
+
+    test('should throw error if assessment does not exist', async () => {
+      // Arrange
+      const assessmentId = 999
+      const questionId = 2
+      const updateData = { question_text: 'Updated text' }
+
+      mockAssessmentModel.findByPk.mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(
+        assessmentService.updateQuestion(assessmentId, questionId, updateData)
+      ).rejects.toThrow('Assessment not found')
+      expect(mockQuestionModel.findByPk).not.toHaveBeenCalled()
+    })
+
+    test('should throw error if question does not exist', async () => {
+      // Arrange
+      const assessmentId = 1
+      const questionId = 999
+      const updateData = { question_text: 'Updated text' }
+
+      const mockAssessment = { id: assessmentId }
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
+      mockQuestionModel.findByPk.mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(
+        assessmentService.updateQuestion(assessmentId, questionId, updateData)
+      ).rejects.toThrow('Question not found')
+    })
+  })
+
+  describe('deleteQuestion', () => {
+    test('should delete a question successfully', async () => {
+      // Arrange
+      const assessmentId = 1
+      const questionId = 2
+
+      const mockAssessment = { id: assessmentId }
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
+
+      const mockQuestion = {
+        id: questionId,
+        assessment_id: assessmentId,
+        destroy: jest.fn().mockResolvedValue(true),
+      }
+      mockQuestionModel.findOne.mockResolvedValue(mockQuestion)
+
+      // Act
+      await assessmentService.deleteQuestion(assessmentId, questionId)
+
+      // Assert
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId)
+      expect(mockQuestionModel.findOne).toHaveBeenCalledWith({
+        where: {
+          id: questionId,
+          assessment_id: assessmentId,
+        },
+      })
+      expect(mockQuestion.destroy).toHaveBeenCalled()
+    })
+
+    test('should throw error if assessment does not exist', async () => {
+      // Arrange
+      const assessmentId = 999
+      const questionId = 2
+
+      mockAssessmentModel.findByPk.mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(assessmentService.deleteQuestion(assessmentId, questionId)).rejects.toThrow(
+        'Assessment not found'
+      )
+      expect(mockQuestionModel.findByPk).not.toHaveBeenCalled()
+    })
+
+    test('should throw error if question does not exist', async () => {
+      // Arrange
+      const assessmentId = 1
+      const questionId = 999
+
+      const mockAssessment = { id: assessmentId }
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
+      mockQuestionModel.findByPk.mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(assessmentService.deleteQuestion(assessmentId, questionId)).rejects.toThrow(
+        'Question not found'
+      )
+    })
+
+    test('should throw error if question belongs to different assessment', async () => {
+      // Arrange
+      const assessmentId = 1
+      const questionId = 2
+
+      const mockAssessment = { id: assessmentId }
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
+
+      const mockQuestion = {
+        id: questionId,
+        assessment_id: 999, // Different assessment ID
+        destroy: jest.fn(),
+      }
+      mockQuestionModel.findByPk.mockResolvedValue(mockQuestion)
+
+      // Act & Assert
+      await expect(assessmentService.deleteQuestion(assessmentId, questionId)).rejects.toThrow(
+        'Question not found in this assessment'
+      )
+      expect(mockQuestion.destroy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('getSubmissionById', () => {
+    test('should get submission by ID successfully', async () => {
+      // Arrange
+      const submissionId = 1
+
+      const mockSubmission = {
+        id: submissionId,
+        assessment_id: 5,
+        user_id: 10,
+        status: 'submitted',
+      }
+      mockSubmissionModel.findByPk.mockResolvedValue(mockSubmission)
+
+      // Act
+      const result = await assessmentService.getSubmissionById(submissionId)
+
+      // Assert
+      expect(mockSubmissionModel.findByPk).toHaveBeenCalledWith(submissionId, {
+        include: [
+          expect.objectContaining({
+            model: mockUserModel,
+            as: 'user',
+          }),
+          expect.objectContaining({
+            model: mockAnswerResponseModel,
+            as: 'answers',
+          }),
+          expect.objectContaining({
+            model: mockAssessmentModel,
+            as: 'assessment',
+          }),
+        ],
+      })
+      expect(result).toEqual(mockSubmission)
+    })
+
+    test('should throw error if submission does not exist', async () => {
+      // Arrange
+      const submissionId = 999
+
+      mockSubmissionModel.findByPk.mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(assessmentService.getSubmissionById(submissionId)).rejects.toThrow(
+        'Submission not found'
+      )
+      expect(mockSubmissionModel.findByPk).toHaveBeenCalledWith(submissionId, expect.anything())
     })
   })
 })

@@ -1,4 +1,5 @@
 import { log } from '../utils/logger.js'
+import { Op } from 'sequelize'
 
 class AssessmentService {
   /**
