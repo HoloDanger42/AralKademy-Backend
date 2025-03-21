@@ -14,6 +14,7 @@ import {
   getSubmissionsForAssessment,
   getStudentSubmission,
   gradeSubmission,
+  getSubmissionById,
 } from '../controllers/assessmentController.js'
 import { validateRequest } from '../middleware/validationMiddleware.js'
 import { assessmentSchemas } from '../schemas/assessmentSchemas.js'
@@ -1171,6 +1172,32 @@ router.post(
   rbac.studentTeacherAndAbove,
   validateRequest(assessmentSchemas.gradeSubmission),
   gradeSubmission
+)
+
+/**
+ * @swagger
+ * /assessments/submissions/{submissionId}:
+ *   get:
+ *     summary: Get a specific submission with answers
+ *     tags: [Assessments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: submissionId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Submission ID
+ *     responses:
+ *       200:
+ *         description: Submission details with answers
+ */
+router.get(
+  '/submissions/:submissionId',
+  rbac.studentTeacherAndAbove,
+  validateRequest(assessmentSchemas.getSubmissionById),
+  getSubmissionById
 )
 
 export { router as assessmentRouter }

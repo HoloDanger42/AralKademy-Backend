@@ -457,6 +457,64 @@ class AssessmentService {
   }
 
   /**
+   * Gets a specific submission with answers
+   * @param {number} submissionId - ID of the submission
+   * @returns {Promise<Object>} The submission with answers
+   */
+  async getSubmissionById(submissionId) {
+    try {
+      const submission = await this.SubmissionModel.findByPk(submissionId, {
+        include: [
+          {
+            model: this.UserModel,
+            as: 'user',
+            attributes: ['id', 'first_name', 'last_name', 'email'],
+          },
+          {
+            model: this.AnswerResponseModel,
+            as: 'answers',
+            include: [
+              {
+                model: this.QuestionModel,
+                as: 'question',
+              },
+              {
+                model: this.QuestionOptionModel,
+                as: 'selected_option',
+              },
+            ],
+          },
+          {
+            model: this.AssessmentModel,
+            as: 'assessment',
+            include: [
+              {
+                model: this.QuestionModel,
+                as: 'questions',
+                include: [
+                  {
+                    model: this.QuestionOptionModel,
+                    as: 'options',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+
+      if (!submission) {
+        throw new Error('Submission not found')
+      }
+
+      return submission
+    } catch (error) {
+      log.error('Get submission by ID error:', error)
+      throw error
+    }
+  }
+
+  /**
    * Grades a submission
    * @param {number} submissionId - ID of the submission
    * @param {Array} grades = Array of question grades

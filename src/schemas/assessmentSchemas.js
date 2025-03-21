@@ -187,4 +187,13 @@ export const assessmentSchemas = {
       limit: Joi.number().integer().min(1).max(100).default(20),
     }),
   },
+
+  getSubmissionById: {
+    params: Joi.object({
+      submissionId: Joi.number().integer().required(),
+    }),
+    query: Joi.object({
+      includeAnswers: Joi.boolean().default(true),
+    }),
+  },
 }
