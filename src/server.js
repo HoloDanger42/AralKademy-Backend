@@ -8,13 +8,12 @@ import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './config/swagger.js'
 import fs from 'fs'
 import https from 'https'
-import path from 'path'
 
 // CORS
 import cors from 'cors'
 
 // Middleware
-import { errorMiddleware, SpecificError } from './middleware/errorMiddleware.js'
+import { errorMiddleware } from './middleware/errorMiddleware.js'
 import { logMiddleware } from './middleware/logMiddleware.js'
 import { requestLogger, getRequestCounts } from './middleware/requestLogger.js'
 import { securityMiddleware } from './middleware/securityMiddleware.js'
@@ -156,6 +155,7 @@ if (config.cache.enabled) {
 
 // Other Middleware
 app.use(logMiddleware)
+app.use(requestLogger)
 securityMiddleware.forEach((middleware) => app.use(middleware))
 
 // API Documentation
