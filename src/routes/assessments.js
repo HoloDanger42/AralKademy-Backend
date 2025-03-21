@@ -71,10 +71,37 @@ const router = express.Router()
  *     responses:
  *       201:
  *         description: Assessment created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Assessment created successfully"
+ *                 assessment:
+ *                   $ref: '#/components/schemas/Assessment'
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Forbidden - requires student teacher, teacher, or admin role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   '/',
@@ -104,13 +131,63 @@ router.post(
  *           type: boolean
  *           default: false
  *         description: Whether to include question details
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: List of assessments for the course
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 assessments:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Assessment'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       example: 15
+ *                     pages:
+ *                       type: integer
+ *                       example: 2
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: Course not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get(
   '/course/:courseId',
@@ -149,10 +226,43 @@ router.get(
  *     responses:
  *       200:
  *         description: Assessment details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 assessment:
+ *                   type: object
+ *                   allOf:
+ *                     - $ref: '#/components/schemas/Assessment'
+ *                     - type: object
+ *                       properties:
+ *                         questions:
+ *                           type: array
+ *                           items:
+ *                             allOf:
+ *                               - $ref: '#/components/schemas/Question'
+ *                               - type: object
+ *                                 properties:
+ *                                   options:
+ *                                     type: array
+ *                                     items:
+ *                                       $ref: '#/components/schemas/QuestionOption'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: Assessment not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get(
   '/:assessmentId',
@@ -217,12 +327,43 @@ router.get(
  *     responses:
  *       201:
  *         description: Question added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Question added successfully"
+ *                 question:
+ *                   $ref: '#/components/schemas/Question'
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Forbidden - requires student teacher, teacher, or admin role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: Assessment not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   '/:assessmentId/questions',
@@ -249,10 +390,37 @@ router.post(
  *     responses:
  *       201:
  *         description: Submission created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Submission started successfully"
+ *                 submission:
+ *                   $ref: '#/components/schemas/Submission'
+ *       400:
+ *         description: Invalid request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: Assessment not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   '/:assessmentId/submissions',
@@ -300,12 +468,43 @@ router.post(
  *     responses:
  *       200:
  *         description: Answer saved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Answer saved successfully"
+ *                 answer:
+ *                   $ref: '#/components/schemas/AnswerResponse'
  *       400:
  *         description: Invalid answer format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: User doesn't own this submission
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: Submission or question not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   '/submissions/:submissionId/questions/:questionId/answers',
@@ -332,14 +531,59 @@ router.post(
  *     responses:
  *       200:
  *         description: Assessment submitted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Assessment submitted successfully"
+ *                 submission:
+ *                   $ref: '#/components/schemas/Submission'
+ *                 score:
+ *                   type: object
+ *                   properties:
+ *                     points:
+ *                       type: integer
+ *                       example: 85
+ *                     max_points:
+ *                       type: integer
+ *                       example: 100
+ *                     percentage:
+ *                       type: number
+ *                       format: float
+ *                       example: 85.0
+ *                     pass:
+ *                       type: boolean
+ *                       example: true
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: User doesn't own this submission
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: Submission not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       409:
  *         description: Assessment already submitted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   '/submissions/:submissionId/submit',
@@ -363,19 +607,78 @@ router.post(
  *         schema:
  *           type: integer
  *         description: Assessment ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: List of submissions for the assessment
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 submissions:
+ *                   type: array
+ *                   items:
+ *                     allOf:
+ *                       - $ref: '#/components/schemas/Submission'
+ *                       - type: object
+ *                         properties:
+ *                           user:
+ *                             $ref: '#/components/schemas/User'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       example: 30
+ *                     pages:
+ *                       type: integer
+ *                       example: 2
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 20
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Forbidden - requires teacher or admin role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: Assessment not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get(
   '/:assessmentId/submissions',
-  rbac.teacherAndAdmin,
+  rbac.studentTeacherAndAbove,
   validateRequest(assessmentSchemas.getSubmissionsForAssessment),
   getSubmissionsForAssessment
 )
@@ -401,13 +704,56 @@ router.get(
  *           type: boolean
  *           default: false
  *         description: Whether to include user's answers
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *         description: Number of items per page
  *     responses:
  *       200:
  *         description: User's submission for the assessment
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 submission:
+ *                   type: object
+ *                   allOf:
+ *                     - $ref: '#/components/schemas/Submission'
+ *                     - type: object
+ *                       properties:
+ *                         answers:
+ *                           type: array
+ *                           items:
+ *                             $ref: '#/components/schemas/AnswerResponse'
+ *                 assessment:
+ *                   $ref: '#/components/schemas/Assessment'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: Assessment or submission not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get(
   '/:assessmentId/my-submission',
@@ -463,16 +809,54 @@ router.get(
  *     responses:
  *       200:
  *         description: Submission graded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Submission graded successfully"
+ *                 submission:
+ *                   allOf:
+ *                     - $ref: '#/components/schemas/Submission'
+ *                     - type: object
+ *                       properties:
+ *                         answers:
+ *                           type: array
+ *                           items:
+ *                             $ref: '#/components/schemas/AnswerResponse'
+ *       400:
+ *         description: Invalid grading data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Forbidden - requires teacher or admin role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: Submission not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post(
   '/submissions/:submissionId/grade',
-  rbac.teacherAndAdmin,
+  rbac.studentTeacherAndAbove,
   validateRequest(assessmentSchemas.gradeSubmission),
   gradeSubmission
 )
