@@ -50,6 +50,22 @@ export const Question = sequelize.define(
       type: DataTypes.STRING(1000),
       allowNull: true,
     },
+    answer_key: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Model answer or correct answer for short_answer and essay questions',
+    },
+    word_limit: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      validate: {
+        min: {
+          args: [0],
+          msg: 'Word limit must be a non-negative number',
+        },
+      },
+      comment: 'Maximum word count for essay questions',
+    },
   },
   {
     tableName: 'questions',

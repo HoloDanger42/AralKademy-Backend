@@ -12,7 +12,7 @@ import {
   gradeSubmission,
 } from '../controllers/assessmentController.js'
 import { validateRequest } from '../middleware/validationMiddleware.js'
-import { assessmentSchemas } from '../validations/assessmentSchemas.js'
+import { assessmentSchemas } from '../schemas/assessmentSchemas.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
 
 const router = express.Router()
@@ -324,6 +324,42 @@ router.get(
  *                     is_correct:
  *                       type: boolean
  *                       example: true
+ *               answer_key:
+ *                 type: string
+ *                 description: Optional model answer for short_answer or essay questions
+ *                 example: "Paris is the capital of France."
+ *               word_limit:
+ *                 type: integer
+ *                 description: Optional word limit for essay questions
+ *                 example: 500
+ *           examples:
+ *             multiple_choice:
+ *               summary: Multiple choice question
+ *               value:
+ *                 question_text: "What is the capital of France?"
+ *                 question_type: "multiple_choice"
+ *                 points: 5
+ *                 options: [
+ *                   { text: "Paris", is_correct: true },
+ *                   { text: "London", is_correct: false },
+ *                   { text: "Berlin", is_correct: false },
+ *                   { text: "Madrid", is_correct: false }
+ *                 ]
+ *             short_answer:
+ *               summary: Short answer question
+ *               value:
+ *                 question_text: "Name the capital of France."
+ *                 question_type: "short_answer"
+ *                 points: 5
+ *                 answer_key: "Paris"
+ *             essay:
+ *               summary: Essay question
+ *               value:
+ *                 question_text: "Explain the historical significance of Paris as the capital of France."
+ *                 question_type: "essay"
+ *                 points: 10
+ *                 word_limit: 500
+ *                 answer_key: "A comprehensive answer should discuss the historical context..."
  *     responses:
  *       201:
  *         description: Question added successfully
@@ -461,10 +497,25 @@ router.post(
  *                   optionId:
  *                     type: integer
  *                     example: 1
+ *                 description: For multiple_choice or true_false questions
  *               - properties:
  *                   textResponse:
  *                     type: string
  *                     example: "Paris is the capital of France"
+ *                 description: For short_answer or essay questions
+ *           examples:
+ *             multiple_choice:
+ *               summary: Answer for multiple choice question
+ *               value:
+ *                 optionId: 1
+ *             short_answer:
+ *               summary: Answer for short answer question
+ *               value:
+ *                 textResponse: "Paris"
+ *             essay:
+ *               summary: Answer for essay question
+ *               value:
+ *                 textResponse: "Paris has been the capital of France since the 10th century. As the capital, it has been the center of government, culture, and economics..."
  *     responses:
  *       200:
  *         description: Answer saved successfully
