@@ -70,7 +70,8 @@ describe('Password Reset Flow', () => {
     // Step 3: Reset the password
     const resetResponse = await request(server).post('/api/users/reset-password').send({
       email: 'reset@pwtest.com',
-      password: 'NewPass123!',
+      newPassword: 'NewPass123!',
+      confirmPassword: 'NewPass123!'
     })
 
     expect(resetResponse.status).toBe(200)
