@@ -44,6 +44,10 @@ class AssessmentService {
         throw new Error('Course not found')
       }
 
+      if (assessmentData.passing_score && assessmentData.passing_score > assessmentData.max_score) {
+        throw new Error('Passing score cannot exceed maximum score')
+      }
+
       return await this.AssessmentModel.create(assessmentData)
     } catch (error) {
       log.error('Create assessment error:', error)
@@ -585,6 +589,15 @@ class AssessmentService {
         }
       }
 
+      if (
+        (assessmentData.passing_score &&
+          assessmentData.max_score &&
+          assessmentData.passing_score > assessmentData.max_score) ||
+        (assessmentData.max_score && assessmentData.passing_score > assessmentData.max_score)
+      ) {
+        throw new Error('Passing score cannot exceed maximum score')
+      }
+
       // Update the assessment
       await assessment.update(assessmentData)
       return assessment
@@ -670,6 +683,17 @@ class AssessmentService {
             where: { question_id: questionId },
           })
         }
+      }
+
+      // Should enforce options when changing to multiple_choice/true_false
+      if (
+        questionData.question_type &&
+        (questionData.question_type === 'multiple_choice' ||
+          questionData.question_type === 'true_false') &&
+        question.question_type !== questionData.question_type &&
+        (!questionData.options || questionData.options.length < 2)
+      ) {
+        throw new Error('Multiple choice questions require at least 2 options')
       }
 
       // Update the question

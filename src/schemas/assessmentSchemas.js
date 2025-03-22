@@ -13,6 +13,12 @@ export const assessmentSchemas = {
       due_date: Joi.date().iso().allow(null),
       is_published: Joi.boolean().default(false),
       instructions: Joi.string().allow('', null),
+    }).custom((value, helpers) => {
+      // Check passing_score <= max_score
+      if (value.passing_score !== null && value.passing_score > value.max_score) {
+        return helpers.error('Passing score cannot exceed maximum score')
+      }
+      return value
     }),
   },
 
@@ -30,7 +36,18 @@ export const assessmentSchemas = {
       due_date: Joi.date().iso().allow(null),
       is_published: Joi.boolean(),
       instructions: Joi.string().allow('', null),
-    }).min(1), // At least one field must be provided
+    })
+      .custom((value, helpers) => {
+        if (
+          value.passing_score !== undefined &&
+          value.max_score !== undefined &&
+          value.passing_score > value.max_score
+        ) {
+          return helpers.error('Passing score cannot exceed maximum score')
+        }
+        return value
+      })
+      .min(1), // At least one field must be provided
   },
 
   deleteAssessment: {
@@ -58,7 +75,14 @@ export const assessmentSchemas = {
             })
           )
           .min(2)
-          .required(),
+          .required()
+          .custom((value, helpers) => {
+            // Check that at least one option is marked as correct
+            if (!value.some((option) => option.is_correct)) {
+              return helpers.error('At least one option must be marked as correct')
+            }
+            return value
+          }),
         otherwise: Joi.forbidden(),
       }),
       answer_key: Joi.when('question_type', {
@@ -88,13 +112,36 @@ export const assessmentSchemas = {
       points: Joi.number().integer().min(1),
       order_index: Joi.number().integer().min(0),
       media_url: Joi.string().uri().allow('', null),
-      options: Joi.array().items(
-        Joi.object({
-          id: Joi.number().integer(),
-          text: Joi.string().required(),
-          is_correct: Joi.boolean().required(),
-        })
-      ),
+      options: Joi.array()
+        .items(
+          Joi.object({
+            id: Joi.number().integer(),
+            text: Joi.string().required(),
+            is_correct: Joi.boolean().required(),
+          })
+        )
+        .custom((value, helpers) => {
+          const context = helpers.state.ancestors[0]
+
+          // If question_type is multiple_choice or true_false, and options are provided
+          if (
+            (context.question_type === 'multiple_choice' ||
+              context.question_type === 'true_false') &&
+            value
+          ) {
+            // Check if we have at least 2 options
+            if (value.length < 2) {
+              return helpers.error('Multiple choice questions must have at least 2 options')
+            }
+
+            // Check that at least one option is marked as correct
+            if (!value.some((option) => option.is_correct)) {
+              return helpers.error('At least one option must be marked as correct')
+            }
+          }
+
+          return value
+        }),
       answer_key: Joi.string().allow('', null),
       word_limit: Joi.number().integer().min(0).allow(null),
     }).min(1), // At least one field must be provided
