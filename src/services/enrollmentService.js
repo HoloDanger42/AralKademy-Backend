@@ -168,7 +168,10 @@ class EnrollmentService {
       return enrollment
     } catch (error) {
       log.error('Error rejecting enrollment:', error)
-      throw error // Re-throw for consistent error handling
+      if (error.message === 'Enrollment not found') {
+        throw error
+      }
+      throw new Error ('Failed to reject enrollment')
     }
   }
 
@@ -220,7 +223,10 @@ class EnrollmentService {
       return enrollment
     } catch (error) {
       log.error('Error fetching enrollment by ID:', error)
-      throw error // Re-throw for consistent error handling
+      if (error.message === 'Enrollment not found') {
+        throw error
+      }
+      throw new Error('Failed to fetch enrollment')
     }
   }
 
@@ -251,7 +257,10 @@ class EnrollmentService {
       return enrollments
     } catch (error) {
       log.error('Error fetching enrollments by school:', error)
-      throw error // Re-throw for consistent error handling
+      if (error.message === 'School not found') {
+        throw error
+      }
+      throw new Error('Failed to fetch enrollments by school')
     }
   }
 
@@ -270,13 +279,16 @@ class EnrollmentService {
       })
 
       if (!enrollment) {
-        return null
+        throw new Error('Enrollment not found')
       }
 
       return enrollment.status
     } catch (error) {
       log.error('Error checking enrollment status:', error)
-      throw error // Consistent error handling
+      if (error.message === 'Enrollment not found') {
+        throw error
+      }
+      throw new Error('Failed to fetch enrollment status')
     }
   }
 
@@ -312,13 +324,16 @@ class EnrollmentService {
       return updatedEnrollment
     } catch (error) {
       log.error('Error updating enrollment in service:', error)
+      if (error.message === 'Enrollment not found') {
+        throw error
+      }
       if (error.name === 'SequelizeValidationError') {
         throw error
       }
       if (error.name === 'SequelizeUniqueConstraintError') {
         throw new Error('Email already exists')
       }
-      throw error // Re-throw for consistent error handling
+      throw new Error('Failed to update enrollment')
     }
   }
 
@@ -338,7 +353,10 @@ class EnrollmentService {
       await enrollment.destroy() // Soft delete (paranoid: true)
     } catch (error) {
       log.error('Error deleting enrollment in service:', error)
-      throw error // Re-throw for consistent error handling
+      if (error.message === 'Enrollment not found') {
+        throw error
+      }
+      throw new Error('Failed to delete enrollment')
     }
   }
 }

@@ -258,7 +258,7 @@ describe('Course Service', () => {
       const studentTeacherGroupId = 101
 
       // Mock successful course lookup
-      const course = { id: courseId, save: jest.fn().mockRejectedValue(new Error('Assign error')) }
+      const course = { id: courseId, save: jest.fn().mockRejectedValue(new Error('Failed to assign student teacher group to course')) }
       mockCourseModel.findByPk = jest.fn().mockResolvedValue(course)
 
       // Mock successful group lookup
@@ -268,7 +268,7 @@ describe('Course Service', () => {
       // Act & Assert
       await expect(
         courseService.assignStudentTeacherGroupCourse(courseId, studentTeacherGroupId)
-      ).rejects.toThrow('Assign error') // Now expecting the actual error message
+      ).rejects.toThrow('Failed to assign student teacher group to course') // Now expecting the actual error message
 
       expect(course.save).toHaveBeenCalled()
     })

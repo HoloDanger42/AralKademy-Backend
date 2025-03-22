@@ -67,6 +67,9 @@ class GroupService {
 
       return await this.GroupModel.create(createData)
     } catch (error) {
+      if (error.message === 'All fields are required') {
+        throw error
+      }
       throw new Error('Failed to create group')
     }
   }
@@ -96,6 +99,9 @@ class GroupService {
 
       return studentTeachers
     } catch (error) {
+      if (error.message === 'All fields are required') {
+        throw error
+      }
       throw new Error('Failed to assign student teacher members')
     }
   }
@@ -122,6 +128,9 @@ class GroupService {
   
       return learners
     } catch (error) {
+      if (error.message === 'All fields are required') {
+        throw error
+      }
       throw new Error('Failed to assign learner members')
     }
   }
@@ -166,6 +175,9 @@ class GroupService {
       }
       return group
     } catch (error) {
+      if (error.message === 'Group not found') {
+        throw error
+      }
       throw new Error('Failed to fetch group')
     }
   }
@@ -244,6 +256,12 @@ class GroupService {
         return learner
       }
     } catch (error) {
+      if (error.message === 'Group not found') {
+        throw error
+      }
+      if (error.message === 'Member not found') {
+        throw error
+      }
       throw new Error('Failed to remove member')
     }
   }
@@ -312,6 +330,9 @@ class GroupService {
 
       return groupMembers
     } catch (error) {
+      if (error.message === 'Group not found') {
+        throw error
+      }
       throw new Error('Failed to fetch group members')
     }
   }

@@ -8,7 +8,7 @@ import {
   updateGroup,
   deleteGroup,
   getGroupMembers,
-  removeMember
+  removeMember,
 } from '../../../src/controllers/groupController.js'
 import GroupService from '../../../src/services/groupService.js'
 import { log } from '../../../src/utils/logger.js'
@@ -428,7 +428,7 @@ describe('Group Controller', () => {
     })
   })
 
-  describe('removeMember', () => {
+ describe('removeMember', () => {
     test('should remove a member from a group successfully', async () => {
       // Arrange
       mockReq.params.groupId = '1'
@@ -503,5 +503,5 @@ describe('Group Controller', () => {
         expect.any(Error)
       )
     })
-  })
+  }) 
 })

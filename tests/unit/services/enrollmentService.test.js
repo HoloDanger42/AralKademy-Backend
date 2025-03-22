@@ -445,11 +445,10 @@ describe('Enrollment Service', () => {
       const email = 'test@example.com'
       mockEnrollmentModel.findOne.mockResolvedValue(null)
 
-      // Act
-      const status = await enrollmentService.checkEnrollmentStatus(email)
-
-      // Assert
-      expect(status).toBeNull()
+      // Act & Assert
+      await expect(enrollmentService.checkEnrollmentStatus(email)).rejects.toThrow(
+        'Enrollment not found'
+      )
       expect(mockEnrollmentModel.findOne).toHaveBeenCalledWith({
         where: { email },
         attributes: ['status'],
@@ -587,7 +586,7 @@ describe('Enrollment Service', () => {
       // Arrange
       const enrollmentId = 1
       const updateData = { first_name: 'Updated' }
-      const mockError = new Error('Database connection failed')
+      const mockError = new Error('Failed to update enrollment')
 
       const mockEnrollment = {
         enrollment_id: enrollmentId,
@@ -638,7 +637,7 @@ describe('Enrollment Service', () => {
     test('should re-throw errors during deletion', async () => {
       // Arrange
       const enrollmentId = 1
-      const mockError = new Error('Database error during deletion')
+      const mockError = new Error('Failed to delete enrollment')
 
       const mockEnrollment = {
         enrollment_id: enrollmentId,
