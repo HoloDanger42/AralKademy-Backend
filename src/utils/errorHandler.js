@@ -106,6 +106,15 @@ export const handleControllerError = (
     })
   }
 
+  if (error.message === 'Cannot delete assessment with existing submissions') {
+    return res.status(409).json({
+      error: {
+        code: 'CONFLICT',
+        message: error.message,
+      },
+    })
+  }
+
   // Handle custom validation errors from services
   if (
     error.message.toLowerCase().includes('required') ||
