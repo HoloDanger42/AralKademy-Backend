@@ -234,12 +234,16 @@ describe('User Controller', () => {
   describe('resetPassword', () => {
     test('should reset password successfully', async () => {
       // Arrange
-      mockReq.body = { email: validUsers[0].email, password: 'NewPass123' }
+      mockReq.body = { 
+        email: validUsers[0].email, 
+        newPassword: 'NewPass123', 
+        confirmPassword: 'NewPass123' 
+      }
       jest.spyOn(UserServiceModule.default.prototype, 'resetPassword').mockResolvedValue()
-
+    
       // Act
       await userControllerModule.resetPassword(mockReq, mockRes)
-
+    
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(200)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Password reset successfully' })

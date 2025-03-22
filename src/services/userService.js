@@ -583,8 +583,9 @@ class UserService {
         }
 
         await transporter.sendMail(mailOptions)
+      } else {
+        return code // Used for testing purposes only
       }
-      return code
     } catch (error) {
       console.error('Forgot password error:', error)
       throw error
@@ -630,10 +631,14 @@ class UserService {
    * @throws {Error} When password validation fails
    * @returns {Promise<boolean>} Returns true if password was reset successfully
    */
-  async resetPassword(email, newPassword) {
+  async resetPassword(email, newPassword, confirmPassword) {
     try {
       const user = await this.UserModel.findOne({ where: { email } })
       if (!user) throw new Error('User not found')
+
+      if (newPassword !== confirmPassword) {
+        throw new Error('newPassword and confirmPassword must be the same')
+      }
 
       const hashedPassword = await bcrypt.hash(newPassword, 10)
 

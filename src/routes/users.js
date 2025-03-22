@@ -141,8 +141,16 @@ router.post('/', rbac.adminOnly, createUser)
  *                     $ref: '#/components/schemas/User'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Forbidden - Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/', rbac.adminOnly, getAllUsers)
 
@@ -165,8 +173,16 @@ router.get('/', rbac.adminOnly, getAllUsers)
  *                 $ref: '#/components/schemas/User'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Forbidden - Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/available-learners', rbac.adminOnly, getAvailableLearners)
 
@@ -189,8 +205,16 @@ router.get('/available-learners', rbac.adminOnly, getAvailableLearners)
  *                 $ref: '#/components/schemas/User'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Forbidden - Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/available-student-teachers', rbac.adminOnly, getAvailableStudentTeachers)
 
@@ -218,10 +242,22 @@ router.get('/available-student-teachers', rbac.adminOnly, getAvailableStudentTea
  *               $ref: '#/components/schemas/User'
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Forbidden - Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/:id', rbac.adminOnly, getUserById)
 
@@ -253,10 +289,22 @@ router.get('/:id', rbac.adminOnly, getUserById)
  *                   example: User deleted successfully
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Forbidden - Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.delete('/:id', rbac.adminOnly, deleteUser)
 
@@ -264,7 +312,7 @@ router.delete('/:id', rbac.adminOnly, deleteUser)
  * @swagger
  * /users/forgot-password:
  *   post:
- *     summary: Request password reset
+ *     summary: Request password reset (set skipEmail to true for testing)
  *     tags: [Users]
  *     requestBody:
  *       required: true
@@ -274,11 +322,15 @@ router.delete('/:id', rbac.adminOnly, deleteUser)
  *             type: object
  *             required:
  *               - email
+ *               - skipEmail
  *             properties:
  *               email:
  *                 type: string
  *                 format: email
  *                 example: user@example.com
+ *               skipEmail:
+ *                 type: boolean
+ *                 example: true
  *     responses:
  *       200:
  *         description: Password reset email sent successfully
@@ -290,10 +342,21 @@ router.delete('/:id', rbac.adminOnly, deleteUser)
  *                 message:
  *                   type: string
  *                   example: Password reset email sent successfully
- *       400:
- *         description: Email is required
+ *                 code:
+ *                   type: string
+ *                   example: "123456"
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/forgot-password', forgotPassword)
 
@@ -332,9 +395,23 @@ router.post('/forgot-password', forgotPassword)
  *                   type: string
  *                   example: Code confirmed successfully
  *       400:
- *         description: Invalid or missing email/code
+ *         description: Code is invalid or expired
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/verify-reset-code', verifyResetCode)
 
@@ -352,13 +429,18 @@ router.post('/verify-reset-code', verifyResetCode)
  *             type: object
  *             required:
  *               - email
- *               - password
+ *               - newPassword
+ *               - confirmPassword
  *             properties:
  *               email:
  *                 type: string
  *                 format: email
  *                 example: user@example.com
- *               password:
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: "NewPassword123!"
+ *               confirmPassword:
  *                 type: string
  *                 format: password
  *                 example: "NewPassword123!"
@@ -374,9 +456,23 @@ router.post('/verify-reset-code', verifyResetCode)
  *                   type: string
  *                   example: Password reset successfully
  *       400:
- *         description: Invalid or missing email/password
+ *         description: Password is invalid or does not match
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/reset-password', resetPassword)
 
