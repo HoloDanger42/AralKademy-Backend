@@ -828,11 +828,22 @@ describe('Assessment Service', () => {
           user_id: userId,
         },
         include: [
-          expect.objectContaining({
+          {
             model: mockAnswerResponseModel,
             as: 'answers',
-          }),
+            include: [
+              {
+                model: mockQuestionModel,
+                as: 'question',
+              },
+              {
+                model: mockQuestionOptionModel,
+                as: 'selected_option',
+              },
+            ],
+          },
         ],
+        order: [['submit_time', 'DESC']],
       })
       expect(result).toEqual(mockSubmission)
     })
@@ -860,6 +871,7 @@ describe('Assessment Service', () => {
           user_id: userId,
         },
         include: [],
+        order: [['submit_time', 'DESC']],
       })
       expect(result).toEqual(mockSubmission)
     })
