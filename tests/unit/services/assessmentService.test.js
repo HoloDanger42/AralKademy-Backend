@@ -843,7 +843,10 @@ describe('Assessment Service', () => {
             ],
           },
         ],
-        order: [['submit_time', 'DESC']],
+        order: [
+          ['status', 'DESC'],
+          ['submit_time', 'DESC'],
+        ],
       })
       expect(result).toEqual(mockSubmission)
     })
@@ -871,7 +874,10 @@ describe('Assessment Service', () => {
           user_id: userId,
         },
         include: [],
-        order: [['submit_time', 'DESC']],
+        order: [
+          ['status', 'DESC'],
+          ['submit_time', 'DESC'],
+        ],
       })
       expect(result).toEqual(mockSubmission)
     })
