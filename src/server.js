@@ -36,6 +36,8 @@ import TokenCleanup from './utils/tokenCleanup.js'
 
 const app = express()
 
+app.set('trust proxy', 1)
+
 // CORS configuration
 const allowedOrigins = config.cors.origins
 const corsOptions = {
