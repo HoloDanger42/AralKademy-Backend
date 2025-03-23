@@ -6,8 +6,8 @@ import xss from 'xss-clean'
 
 // Security constants
 const FIFTEEN_MINUTES = 15 * 60 * 1000
-const MAX_REQUESTS = 100
-const AUTH_MAX_REQUESTS = 5
+const MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_MAX, 10) || 5000
+const AUTH_MAX_REQUESTS = parseInt(process.env.AUTH_RATE_LIMIT_MAX, 10) || 50
 const STRICT_POLICY = true
 
 // CORS configuration
