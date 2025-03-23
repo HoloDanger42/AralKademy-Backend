@@ -187,7 +187,7 @@ app.use('/api/assessments', assessmentRouter)
 app.get('/api/health', async (_req, res) => {
   try {
     // Check database connection by running a simple query
-    await databaseConnection.authenticate()
+    await sequelize.authenticate()
     res.status(200).json({
       status: 'UP',
       timestamp: new Date().toISOString(),
