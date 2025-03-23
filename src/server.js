@@ -8,6 +8,7 @@ import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './config/swagger.js'
 import fs from 'fs'
 import https from 'https'
+import basicAuth from 'express-basic-auth'
 
 // CORS
 import cors from 'cors'
@@ -159,8 +160,13 @@ app.use(requestLogger)
 securityMiddleware.forEach((middleware) => app.use(middleware))
 
 // API Documentation
+// Restrict /api-docs in production or add authentication.
 app.use(
   '/api-docs',
+  basicAuth({
+    users: { [process.env.API_DOC_USER] : process.env.API_DOC_PASS }, 
+    challenge: true, 
+  }),
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
     explorer: true,
@@ -213,9 +219,12 @@ if (config.env === 'development') {
   })
 }
 
-app.get('/api/error', (_req, _res, next) => {
-  next(new Error('Intentional error for testing'))
-})
+// Comment out or conditionally disable the test error endpoint.
+if (config.env !== 'production') {
+  app.get('/api/error', (_req, _res, next) => {
+    next(new Error('Intentional error for testing'));
+  });
+}
 
 app.get('/api/swagger.json', (_req, res) => {
   res.setHeader('Content-Type', 'application/json')
