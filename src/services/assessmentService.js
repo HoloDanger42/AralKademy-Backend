@@ -457,7 +457,11 @@ class AssessmentService {
       return await this.SubmissionModel.findOne({
         where,
         include,
-        order: [['submit_time', 'DESC']],
+        order: [
+          ['status', 'DESC'], // Order by status first ('submitted'/'graded' before 'in_progress')
+          ['submit_time', 'DESC'], // Then by submission time
+          ['start_time', 'DESC'], // Finally by start time for submissions with same status
+        ],
       })
     } catch (error) {
       log.error('Get student submission error:', error)
