@@ -131,6 +131,7 @@ const options = {
             duration_minutes: { type: 'integer' },
             due_date: { type: 'string', format: 'date-time' },
             is_published: { type: 'boolean' },
+            instructions: { type: 'string' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
           },
