@@ -5,6 +5,11 @@ const requestCounts = {}
 const logFile = 'request-log.txt'
 
 export const requestLogger = (req, res, next) => {
+  // Skip logging for health checks
+  if (req.path === '/api/health' && req.headers['render-health-check']) {
+    return next()
+  }
+
   const start = Date.now()
   const route = `${req.method} ${req.path}`
 
