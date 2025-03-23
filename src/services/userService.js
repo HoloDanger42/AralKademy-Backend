@@ -174,57 +174,66 @@ class UserService {
         }
       }
 
-      if (!skipEmail) {
-        if (!transporter) {
-          console.error('Email service not configured.')
-          throw new Error('Email service unavailable')
-        }
-
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
-          to: email,
-          subject: 'Your Account Has Been Created',
-          text: `
-            Hello ${firstName},
-
-            Your account has been successfully created.
-
-            Email: ${email}
-            Password: ${password}
-
-            For security reasons, we recommend changing your password.
-
-            Best regards,  
-            AralKademy Team`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-              <h2 style="color: #4a4a4a;">Welcome to AralKademy!</h2>
-              <p>Your account has been successfully created. Below are your login details:</p>
-              <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
-                <p><strong>Email:</strong> ${email}</p>
-                <p><strong>Password:</strong> ${password}</p>
-              </div>
-              <p>For security reasons, we recommend changing your password.</p>
-              <p>If you have any questions, feel free to contact us.</p>
-              <p>Best regards,</p>
-              <p><strong>AralKademy Team</strong></p>
-            </div>
-          `,
-        }
-
-        await transporter.sendMail(mailOptions)
-      }
-
       await transaction.commit()
-      return user
-    } catch (error) {
-      await transaction.rollback()
-      if (error.name === 'SequelizeUniqueConstraintError') {
-        if (error.errors[0].path === 'email') {
-          throw new Error('Email already exists')
+
+      if (!skipEmail) {
+        try {
+          if (!transporter) {
+            console.error("Email service not configured.");
+            throw new Error("Email service unavailable");
+          }
+  
+          const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Your Account Has Been Created",
+            text: `
+              Hello ${firstName},
+  
+              Your account has been successfully created.
+  
+              Email: ${email}
+              Password: ${password}
+  
+              For security reasons, we recommend changing your password.
+  
+              Best regards,  
+              AralKademy Team`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                <h2 style="color: #4a4a4a;">Welcome to AralKademy!</h2>
+                <p>Your account has been successfully created. Below are your login details:</p>
+                <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
+                  <p><strong>Email:</strong> ${email}</p>
+                  <p><strong>Password:</strong> ${password}</p>
+                </div>
+                <p>For security reasons, we recommend changing your password.</p>
+                <p>If you have any questions, feel free to contact us.</p>
+                <p>Best regards,</p>
+                <p><strong>AralKademy Team</strong></p>
+              </div>
+            `,
+          };
+  
+          await transporter.sendMail(mailOptions);
+        } catch (emailError) {
+          console.error("Failed to send email:", emailError);
         }
       }
-      throw error
+  
+      return user;
+    } catch (error) {
+      if (transaction && transaction.finished !== "commit") {
+        await transaction.rollback();
+      }
+  
+      if (error.name === "SequelizeUniqueConstraintError") {
+        if (error.errors[0].path === "email") {
+          throw new Error("Email already exists");
+        }
+      }
+  
+      throw error;
     }
   }
 
