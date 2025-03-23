@@ -409,7 +409,16 @@ class CourseService {
       return course
     } catch (error) {
       log.error('Error assigning student teacher group to course:', error)
-      throw error
+      if (
+        error.message === 'Course not found' ||
+        error.message === 'Student Teacher Group not found' ||
+        error.message === 'Invalid group type. Expected type is student_teacher'
+      ) {
+        throw error
+      }
+
+      // Wrap all other errors with a generic message
+      throw new Error('Failed to assign student teacher group to course')
     }
   }
 }

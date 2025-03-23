@@ -200,7 +200,7 @@ describe('Group Service', () => {
 
       // Act & Assert
       await expect(groupService.getGroupById('invalidGroupId')).rejects.toThrow(
-        'Failed to fetch group'
+        'Group not found'
       )
     })
 
@@ -363,7 +363,7 @@ describe('Group Service', () => {
       mockGroupModel.findByPk.mockResolvedValue(null)
   
       // Act & Assert
-      await expect(groupService.getGroupMembers(groupId)).rejects.toThrow('Failed to fetch group members')
+      await expect(groupService.getGroupMembers(groupId)).rejects.toThrow('Group not found')
       expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
       expect(mockStudentTeacherModel.findAll).not.toHaveBeenCalled()
       expect(mockLearnerModel.findAll).not.toHaveBeenCalled()
@@ -445,7 +445,7 @@ describe('Group Service', () => {
       mockGroupModel.findByPk.mockResolvedValue(null)
   
       // Act & Assert
-      await expect(groupService.removeMember(groupId, userId)).rejects.toThrow('Failed to remove member')
+      await expect(groupService.removeMember(groupId, userId)).rejects.toThrow('Group not found')
       expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
     })
   
@@ -459,7 +459,7 @@ describe('Group Service', () => {
       mockStudentTeacherModel.findOne = jest.fn().mockResolvedValue(null)
   
       // Act & Assert
-      await expect(groupService.removeMember(groupId, userId)).rejects.toThrow('Failed to remove member')
+      await expect(groupService.removeMember(groupId, userId)).rejects.toThrow('Member not found')
       expect(mockStudentTeacherModel.findOne).toHaveBeenCalledWith({
         where: { group_id: groupId, user_id: userId },
       })
@@ -475,7 +475,7 @@ describe('Group Service', () => {
       mockLearnerModel.findOne = jest.fn().mockResolvedValue(null)
   
       // Act & Assert
-      await expect(groupService.removeMember(groupId, userId)).rejects.toThrow('Failed to remove member')
+      await expect(groupService.removeMember(groupId, userId)).rejects.toThrow('Member not found')
       expect(mockLearnerModel.findOne).toHaveBeenCalledWith({
         where: { group_id: groupId, user_id: userId },
       })
