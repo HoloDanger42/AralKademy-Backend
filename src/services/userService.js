@@ -6,7 +6,7 @@ import config from '../config/config.js'
 // Configure nodemailer with proper error handling
 const transporter = (() => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('Email credentials not configured. Password reset functionality will not work.')
+    console.warn('Email credentials not configured.')
     return null
   }
 
@@ -132,7 +132,8 @@ class UserService {
     middleInitial = null,
     department = null,
     section = null,
-    groupId = null
+    groupId = null,
+    skipEmail = false
   ) {
     const transaction = await this.UserModel.sequelize.transaction()
     try {
@@ -174,6 +175,48 @@ class UserService {
       }
 
       await transaction.commit()
+
+      if (!skipEmail) {
+        if (!transporter) {
+          console.error('Email service not configured.')
+          throw new Error('Email service unavailable')
+        }
+
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: 'Your Account Has Been Created',
+          text: `
+            Hello ${firstName},
+
+            Your account has been successfully created.
+
+            Email: ${email}
+            Password: ${password}
+
+            For security reasons, we recommend changing your password.
+
+            Best regards,  
+            AralKademy Team`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+              <h2 style="color: #4a4a4a;">Welcome to AralKademy!</h2>
+              <p>Your account has been successfully created. Below are your login details:</p>
+              <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Password:</strong> ${password}</p>
+              </div>
+              <p>For security reasons, we recommend changing your password.</p>
+              <p>If you have any questions, feel free to contact us.</p>
+              <p>Best regards,</p>
+              <p><strong>AralKademy Team</strong></p>
+            </div>
+          `,
+        }
+
+        await transporter.sendMail(mailOptions)
+      }
+
       return user
     } catch (error) {
       await transaction.rollback()
