@@ -174,8 +174,6 @@ class UserService {
         }
       }
 
-      await transaction.commit()
-
       if (!skipEmail) {
         if (!transporter) {
           console.error('Email service not configured.')
@@ -217,6 +215,7 @@ class UserService {
         await transporter.sendMail(mailOptions)
       }
 
+      await transaction.commit()
       return user
     } catch (error) {
       await transaction.rollback()
