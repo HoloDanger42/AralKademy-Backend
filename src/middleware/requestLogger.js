@@ -1,7 +1,7 @@
 import fs from 'fs'
 
-// Track request counts in memory
-const requestCounts = {}
+// Track global request count in memory
+let totalRequestCount = 0
 const logFile = 'request-log.txt'
 
 export const requestLogger = (req, res, next) => {
@@ -13,11 +13,11 @@ export const requestLogger = (req, res, next) => {
   const start = Date.now()
   const route = `${req.method} ${req.path}`
 
-  // Increment route counter
-  requestCounts[route] = (requestCounts[route] || 0) + 1
+  // Increment global counter
+  totalRequestCount++
 
   // Log the request
-  const requestInfo = `[${new Date().toISOString()}] ${route} (Count: ${requestCounts[route]})`
+  const requestInfo = `[${new Date().toISOString()}] ${route} (Count: ${totalRequestCount})`
   fs.appendFileSync(logFile, requestInfo + '\n')
 
   // Capture the rate limit info if available
@@ -47,7 +47,7 @@ export const requestLogger = (req, res, next) => {
   next()
 }
 
-// Return current request counts
+// Return current total request count
 export const getRequestCounts = () => {
-  return requestCounts
+  return { total: totalRequestCount }
 }
