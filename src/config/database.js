@@ -4,18 +4,34 @@ import { log } from '../utils/logger.js'
 
 dotenv.config()
 
-const dbConfig = {
-  host: process.env.DB_HOST,
-  dialect: 'postgres',
-  logging: process.env.NODE_ENV === 'test' ? false : console.log,
-}
+let sequelize
 
-export const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  dbConfig
-)
+// Check if DB_HOST is a connection URL (starts with postgres:// or postgresql://)
+if (
+  process.env.DB_HOST &&
+  (process.env.DB_HOST.startsWith('postgres://') || process.env.DB_HOST.startsWith('postgresql://'))
+) {
+  // Use the connection URL directly
+  sequelize = new Sequelize(process.env.DB_HOST, {
+    dialect: 'postgres',
+    logging: process.env.NODE_ENV === 'test' ? false : console.log,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
+    },
+  })
+  log.info('Using connection string for database connection')
+} else {
+  // Use individual connection parameters
+  sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+    host: process.env.DB_HOST,
+    dialect: 'postgres',
+    logging: process.env.NODE_ENV === 'test' ? false : console.log,
+  })
+  log.info('Using individual parameters for database connection')
+}
 
 const databaseConnection = async () => {
   try {
@@ -23,8 +39,19 @@ const databaseConnection = async () => {
     log.info('Database connection has been established successfully.')
 
     // Import models and associations dynamically to avoid circular dependencies
-    const { User, Teacher, Admin, StudentTeacher, Learner, Enrollment, Course, Group, School, Module, Content } =
-      await import('../models/index.js')
+    const {
+      User,
+      Teacher,
+      Admin,
+      StudentTeacher,
+      Learner,
+      Enrollment,
+      Course,
+      Group,
+      School,
+      Module,
+      Content,
+    } = await import('../models/index.js')
 
     // Import associations after models are loaded
     await import('../models/associate.js')
@@ -43,7 +70,7 @@ const databaseConnection = async () => {
       Group,
       School,
       Module,
-      Content
+      Content,
     }
   } catch (error) {
     log.error('Database connection failed:', error)
@@ -68,4 +95,4 @@ export const initializeDatabase = async () => {
   }
 }
 
-export { databaseConnection }
+export { sequelize, databaseConnection }
