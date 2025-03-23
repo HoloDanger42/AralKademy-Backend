@@ -428,7 +428,7 @@ class AssessmentService {
    * @param {boolean} includeAnswers - Whether to include answers
    * @returns {Promise<Object>} The submission
    */
-  async getStudentSubmission(assessmentId, userId, includeAnswers = false) {
+  /* async getStudentSubmission(assessmentId, userId, includeAnswers = false) {
     try {
       const where = {
         assessment_id: assessmentId,
@@ -465,6 +465,50 @@ class AssessmentService {
     } catch (error) {
       log.error('Get student submission error:', error)
       throw error
+    }
+  } */
+
+  /**
+ * Gets the latest student submission for an assessment
+ * @param {number} assessmentId - ID of the assessment
+ * @param {number} userId - ID of the user
+ * @param {boolean} includeAnswers - Whether to include answers
+ * @returns {Promise<Object>} The latest submission
+ */
+  async getStudentSubmission(assessmentId, userId, includeAnswers = false) {
+    try {
+      const where = {
+        assessment_id: assessmentId,
+        user_id: userId,
+      };
+
+      const include = [];
+
+      if (includeAnswers) {
+        include.push({
+          model: this.AnswerResponseModel,
+          as: 'answers',
+          include: [
+            {
+              model: this.QuestionModel,
+              as: 'question',
+            },
+            {
+              model: this.QuestionOptionModel,
+              as: 'selected_option',
+            },
+          ],
+        });
+      }
+
+      return await this.SubmissionModel.findOne({
+        where,
+        include,
+        order: [['submit_time', 'DESC']],
+      });
+    } catch (error) {
+      log.error('Get student submission error:', error);
+      throw error;
     }
   }
 

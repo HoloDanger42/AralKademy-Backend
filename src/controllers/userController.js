@@ -167,9 +167,9 @@ const deleteUser = async (req, res) => {
  */
 const forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body
-    await userService.forgotPassword(email)
-    res.status(200).json({ message: 'Password reset email sent successfully' })
+    const { email, skipEmail } = req.body // skipEmail is used for testing purposes only
+    const code = await userService.forgotPassword(email, skipEmail)
+    res.status(200).json({ message: 'Password reset email sent successfully', code: code })
     log.info(`Password reset email sent to ${email}`)
   } catch (error) {
     return handleControllerError(
@@ -209,8 +209,8 @@ const verifyResetCode = async (req, res) => {
  */
 const resetPassword = async (req, res) => {
   try {
-    const { email, password } = req.body
-    await userService.resetPassword(email, password)
+    const { email, newPassword, confirmPassword } = req.body
+    await userService.resetPassword(email, newPassword, confirmPassword)
     res.status(200).json({ message: 'Password reset successfully' })
     log.info(`Password reset for ${email}`)
   } catch (error) {

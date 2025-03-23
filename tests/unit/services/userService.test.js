@@ -432,7 +432,7 @@ describe('UserService', () => {
 
     it('should reset password with valid reset code', async () => {
       await userService.forgotPassword(user.email, true)
-      await userService.resetPassword(user.email, 'newpassword123')
+      await userService.resetPassword(user.email, 'newpassword123', 'newpassword123')
 
       const updatedUser = await sequelize.models.User.findOne({ where: { email: user.email } })
       expect(updatedUser.password).not.toBe('password123')
