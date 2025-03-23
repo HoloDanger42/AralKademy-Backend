@@ -457,10 +457,7 @@ class AssessmentService {
       return await this.SubmissionModel.findOne({
         where,
         include,
-        order: [
-          ['status', 'DESC'],
-          ['submit_time', 'DESC'],
-        ],
+        order: [['submit_time', 'DESC']],
       })
     } catch (error) {
       log.error('Get student submission error:', error)
