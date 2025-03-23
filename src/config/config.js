@@ -74,9 +74,9 @@ const config = {
   api: {
     rateLimit: {
       window: parseInt(process.env.RATE_LIMIT_WINDOW, 10) || 900000, // 15 minutes
-      max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
+      max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 5000,
       auth: {
-        max: parseInt(process.env.AUTH_RATE_LIMIT_MAX, 10) || 15,
+        max: parseInt(process.env.AUTH_RATE_LIMIT_MAX, 10) || 50,
       },
     },
   },

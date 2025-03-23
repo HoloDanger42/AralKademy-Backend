@@ -164,8 +164,8 @@ securityMiddleware.forEach((middleware) => app.use(middleware))
 app.use(
   '/api-docs',
   basicAuth({
-    users: { [process.env.API_DOC_USER] : process.env.API_DOC_PASS }, 
-    challenge: true, 
+    users: { [process.env.API_DOC_USER]: process.env.API_DOC_PASS },
+    challenge: true,
   }),
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
@@ -222,8 +222,8 @@ if (config.env === 'development') {
 // Comment out or conditionally disable the test error endpoint.
 if (config.env !== 'production') {
   app.get('/api/error', (_req, _res, next) => {
-    next(new Error('Intentional error for testing'));
-  });
+    next(new Error('Intentional error for testing'))
+  })
 }
 
 app.get('/api/swagger.json', (_req, res) => {
