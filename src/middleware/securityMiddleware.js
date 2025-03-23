@@ -1,4 +1,3 @@
-import cors from 'cors'
 import helmet from 'helmet'
 import mongoSanitize from 'express-mongo-sanitize'
 import rateLimit from 'express-rate-limit'
@@ -9,16 +8,6 @@ const FIFTEEN_MINUTES = 15 * 60 * 1000
 const MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_MAX, 10) || 5000
 const AUTH_MAX_REQUESTS = parseInt(process.env.AUTH_RATE_LIMIT_MAX, 10) || 50
 const STRICT_POLICY = true
-
-// CORS configuration
-const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  credentials: true,
-  maxAge: FIFTEEN_MINUTES,
-  exposedHeaders: ['set-cookie'],
-}
 
 // Rate limiters
 const standardLimiter = rateLimit({
@@ -69,12 +58,6 @@ const helmetConfig = {
   xssFilter: STRICT_POLICY,
 }
 
-const securityMiddleware = [
-  cors(corsOptions),
-  helmet(helmetConfig),
-  xss(),
-  mongoSanitize(),
-  standardLimiter,
-]
+const securityMiddleware = [helmet(helmetConfig), xss(), mongoSanitize(), standardLimiter]
 
 export { securityMiddleware, authLimiter }

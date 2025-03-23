@@ -20,21 +20,6 @@ describe('Security Middleware', () => {
     })
   })
 
-  describe('CORS', () => {
-    it('should allow requests from allowed origins', async () => {
-      const res = await request(app).get('/test').set('Origin', 'http://localhost:3000')
-
-      expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3000')
-      expect(res.headers['access-control-allow-credentials']).toBe('true')
-    })
-
-    it('should block requests from unauthorized origins', async () => {
-      const res = await request(app).get('/test').set('Origin', 'http://evil.com')
-
-      expect(res.headers['access-control-allow-origin']).toBeUndefined()
-    })
-  })
-
   describe('Helmet', () => {
     it('should set security headers', async () => {
       const res = await request(app).get('/test')
