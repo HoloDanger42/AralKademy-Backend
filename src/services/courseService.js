@@ -1,4 +1,3 @@
-import { Course, User, Group } from '../models/index.js'
 import { log } from '../utils/logger.js'
 
 /**

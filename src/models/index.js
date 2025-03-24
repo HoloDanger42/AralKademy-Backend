@@ -15,6 +15,7 @@ import { Question } from './Question.js'
 import { QuestionOption } from './QuestionOption.js'
 import { Submission } from './Submission.js'
 import { AnswerResponse } from './AnswerResponse.js'
+import { AuthToken } from './AuthToken.js'
 
 export {
   User,
@@ -34,4 +35,5 @@ export {
   QuestionOption,
   Submission,
   AnswerResponse,
+  AuthToken,
 }
