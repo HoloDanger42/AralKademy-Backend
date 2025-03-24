@@ -10,6 +10,7 @@ import {
   getAvailableLearners,
   getAvailableStudentTeachers,
   updateUser,
+  changePassword
 } from '../controllers/userController.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
 
@@ -573,5 +574,75 @@ router.post('/reset-password', resetPassword)
  *               $ref: '#/components/schemas/Error'
  */
 router.put('/:id', rbac.adminOnly, updateUser)
+
+/**
+ * @swagger
+ * /users/{userId}/change-password:
+ *   put:
+ *     summary: Change user password
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - oldPassword
+ *               - newPassword
+ *               - confirmPassword
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: "OldPassword123!"
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: "NewPassword123!"
+ *               confirmPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: "NewPassword123!"
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Password changed successfully
+ *       400:
+ *         description: Password is invalid or does not match
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.put('/:userId/change-password', rbac.allAuthenticated, changePassword)
 
 export { router as usersRouter }
