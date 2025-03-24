@@ -208,7 +208,7 @@ class UserService {
                   <p><strong>Password:</strong> ${password}</p>
                 </div>
                 <p>For security reasons, we recommend changing your password.</p>
-                <p>If you have any questions, feel free to contact us.</p>
+                <p>If you have any questions, feel free to contact us at aralkademy.techsupp@gmail.com.</p>
                 <p>Best regards,</p>
                 <p><strong>AralKademy Team</strong></p>
               </div>
