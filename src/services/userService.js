@@ -501,12 +501,12 @@ class UserService {
    * @param {string|number} userId - The ID of the user
    * @param {string} oldPassword - The current password of the user
    * @param {string} newPassword - The new password to set
+   * @param {string} confirmPassword - The new password to confirm
    * @returns {Promise<boolean>} Returns true if password was changed successfully
    * @throws {Error} When user is not found
    * @throws {Error} When old password is invalid
    */
-  async changePassword(userId, oldPassword, newPassword) {
-    const transaction = await this.UserModel.sequelize.transaction()
+  async changePassword(userId, oldPassword, newPassword, confirmPassword) {
     try {
       const user = await this.UserModel.findByPk(userId)
       if (!user) throw new Error('User not found')
@@ -514,13 +514,18 @@ class UserService {
       const isValid = await bcrypt.compare(oldPassword, user.password)
       if (!isValid) throw new Error('Invalid password')
 
+      if (newPassword !== confirmPassword) {
+        throw new Error('newPassword and confirmPassword must be the same')
+      }
+  
       const hashedPassword = await bcrypt.hash(newPassword, 10)
-      await user.update({ password: hashedPassword }, { transaction })
+      this.validatePassword(newPassword)
 
-      await transaction.commit()
+      user.password = hashedPassword
+      await user.save()
       return true
     } catch (error) {
-      await transaction.rollback()
+      console.error('Change password error:', error)
       throw error
     }
   }
@@ -678,6 +683,7 @@ class UserService {
    * @async
    * @param {string} email - The email address of the user
    * @param {string} newPassword - The new password to set
+   * @param {string} confirmPassword - The new password to confirm
    * @throws {Error} When user is not found
    * @throws {Error} When password validation fails
    * @returns {Promise<boolean>} Returns true if password was reset successfully

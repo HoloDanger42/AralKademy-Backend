@@ -161,6 +161,28 @@ const deleteUser = async (req, res) => {
 }
 
 /**
+ * Changes the password of the user.
+ * @param {Object} req - The request object containing the user ID and new password.
+ * @param {Object} res - The response object.
+ */
+const changePassword = async (req, res) => {
+  try {
+    const { userId } = req.params
+    const { oldPassword, newPassword, confirmPassword } = req.body
+    await userService.changePassword(userId, oldPassword, newPassword, confirmPassword)
+    res.status(200).json({ message: 'Password changed successfully' })
+    log.info(`Password changed for user with ID ${userId}`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Change password for user with ID ${req.params.userId}`,
+      'Failed to change password'
+    )
+  }
+}
+
+/**
  * Handles forgot password requests.
  * @param {Object} req - The request object containing the user's email.
  * @param {Object} res - The response object.
@@ -307,4 +329,5 @@ export {
   getAvailableLearners,
   getAvailableStudentTeachers,
   updateUser,
+  changePassword
 }

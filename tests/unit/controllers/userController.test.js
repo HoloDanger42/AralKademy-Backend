@@ -732,4 +732,58 @@ describe('User Controller', () => {
       expect(log.error).toHaveBeenCalled()
     })
   })
+  describe('changePassword', () => { 
+    test('should change the password of the user', async () => {
+      // Arrange
+      const userId = '123'
+      const userData = {
+        oldPassword: 'OldPassw0rd!',
+        newPassword: 'NewPassw0rd!',
+        confirmPassword: 'NewPassw0rd!',
+      }
+
+      mockReq.params = { userId }
+      mockReq.body = userData
+
+      jest.spyOn(UserServiceModule.default.prototype, 'changePassword').mockResolvedValue()
+
+      // Act
+      await userControllerModule.changePassword(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Password changed successfully' })
+      expect(log.info).toHaveBeenCalledWith(`Password changed for user with ID ${userId}`)
+    })
+
+    test('should return 400 if old password is incorrect', async () => {
+      // Arrange
+      const userId = '123'
+      const userData = {
+        oldPassword: 'Wrongpassword',
+        newPassword: 'NewPassw0rd!',
+        confirmPassword: 'NewPassw0rd!',
+      }
+
+      mockReq.params = { userId }
+      mockReq.body = userData
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'changePassword')
+        .mockRejectedValue(new Error('Invalid password'))
+
+      // Act
+      await userControllerModule.changePassword(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid password',
+        },
+      })
+      expect(log.error).toHaveBeenCalled()
+    })
+  })
 })
