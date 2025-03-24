@@ -573,7 +573,7 @@ router.post('/reset-password', resetPassword)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', rbac.adminOnly, updateUser)
+router.put('/:id', rbac.allAuthenticated, updateUser)
 
 /**
  * @swagger
