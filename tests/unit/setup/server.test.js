@@ -68,6 +68,9 @@ jest.unstable_mockModule('../../../src/middleware/securityMiddleware.js', () => 
       next()
     },
   ],
+  authLimiter: (_req, _res, next) => {
+    next()
+  },
 }))
 
 jest.unstable_mockModule('../../../src/middleware/errorMiddleware.js', () => ({

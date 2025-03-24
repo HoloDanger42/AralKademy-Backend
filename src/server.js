@@ -17,7 +17,7 @@ import cors from 'cors'
 import { errorMiddleware } from './middleware/errorMiddleware.js'
 import { logMiddleware } from './middleware/logMiddleware.js'
 import { requestLogger, getRequestCounts } from './middleware/requestLogger.js'
-import { securityMiddleware } from './middleware/securityMiddleware.js'
+import { securityMiddleware, authLimiter } from './middleware/securityMiddleware.js'
 
 // Configuration
 import { sequelize, databaseConnection, initializeDatabase } from './config/database.js'
@@ -30,6 +30,7 @@ import { enrollmentRouter } from './routes/enrollments.js'
 import { groupsRouter } from './routes/groups.js'
 import { moduleRouter } from './routes/modules.js'
 import { assessmentRouter } from './routes/assessments.js'
+import { passwordlessAuthRouter } from './routes/passwordlessAuth.js'
 
 // Token cleanup
 import TokenCleanup from './utils/tokenCleanup.js'
@@ -76,18 +77,6 @@ if (applyRateLimiter) {
     handler: (_req, res) => {
       res.status(429).json({ message: 'Too many requests, please try again later' })
     },
-  })
-
-  const authLimiter = rateLimit({
-    windowMs: FIFTEEN_MINUTES,
-    max: AUTH_MAX_REQUESTS,
-    handler: (_req, res) => {
-      res.status(429).json({
-        message: 'Too many authentication requests',
-      })
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
   })
 
   // Apply auth limiter to auth routes
@@ -187,6 +176,7 @@ app.use('/api/enrollments', enrollmentRouter)
 app.use('/api/groups', groupsRouter)
 app.use('/api/modules', moduleRouter)
 app.use('/api/assessments', assessmentRouter)
+app.use('/api/auth/passwordless', passwordlessAuthRouter)
 
 /**
  * Health check endpoint for monitoring and kubernetes/load balancer readiness probes

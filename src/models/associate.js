@@ -15,6 +15,7 @@ import {
   QuestionOption,
   Submission,
   AnswerResponse,
+  AuthToken,
 } from './index.js'
 
 // User associations
@@ -39,6 +40,10 @@ User.hasOne(Learner, {
   as: 'learner',
   onDelete: 'CASCADE',
 })
+
+// Associate AuthToken with User
+AuthToken.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
+User.hasMany(AuthToken, { foreignKey: 'user_id', as: 'authTokens' })
 
 // Teacher associations
 Teacher.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
@@ -207,4 +212,10 @@ export {
   School,
   Module,
   Content,
+  Assessment,
+  Question,
+  QuestionOption,
+  Submission,
+  AnswerResponse,
+  AuthToken,
 }

@@ -76,7 +76,11 @@ export const handleControllerError = (
     })
   }
 
-  if (error.message === 'Unauthorized' || error.message.includes('unauthorized')) {
+  if (
+    error.message === 'Unauthorized' ||
+    error.message.includes('unauthorized') ||
+    error.message === 'Invalid or expired token'
+  ) {
     return res.status(401).json({
       error: {
         message: error.message,

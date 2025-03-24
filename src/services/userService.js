@@ -2,11 +2,12 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import nodemailer from 'nodemailer'
 import config from '../config/config.js'
+import { log } from '../utils/logger.js'
 
 // Configure nodemailer with proper error handling
 const transporter = (() => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('Email credentials not configured.')
+    log.warn('Email credentials not configured.')
     return null
   }
 
@@ -179,14 +180,14 @@ class UserService {
       if (!skipEmail) {
         try {
           if (!transporter) {
-            console.error("Email service not configured.");
-            throw new Error("Email service unavailable");
+            log.error('Email service not configured.')
+            throw new Error('Email service unavailable')
           }
-  
+
           const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,
-            subject: "Your Account Has Been Created",
+            subject: 'Your Account Has Been Created',
             text: `
               Hello ${firstName},
   
@@ -213,27 +214,27 @@ class UserService {
                 <p><strong>AralKademy Team</strong></p>
               </div>
             `,
-          };
-  
-          await transporter.sendMail(mailOptions);
+          }
+
+          await transporter.sendMail(mailOptions)
         } catch (emailError) {
-          console.error("Failed to send email:", emailError);
+          log.error('Failed to send email:', emailError)
         }
       }
-  
-      return user;
+
+      return user
     } catch (error) {
-      if (transaction && transaction.finished !== "commit") {
-        await transaction.rollback();
+      if (transaction && transaction.finished !== 'commit') {
+        await transaction.rollback()
       }
-  
-      if (error.name === "SequelizeUniqueConstraintError") {
-        if (error.errors[0].path === "email") {
-          throw new Error("Email already exists");
+
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        if (error.errors[0].path === 'email') {
+          throw new Error('Email already exists')
         }
       }
-  
-      throw error;
+
+      throw error
     }
   }
 
@@ -263,7 +264,7 @@ class UserService {
 
       return { user, token, refreshToken }
     } catch (error) {
-      console.error('Error in loginUser:', error)
+      log.error('Error in loginUser:', error)
       throw error
     }
   }
@@ -591,7 +592,7 @@ class UserService {
 
       return { message: 'User logged out successfully' }
     } catch (error) {
-      console.error('Logout error:', error)
+      log.error('Logout error:', error)
       throw new Error('Invalid token or logout failed')
     }
   }
@@ -618,7 +619,7 @@ class UserService {
 
       if (!skipEmail) {
         if (!transporter) {
-          console.error('Email service not configured. Unable to send password reset code.')
+          log.error('Email service not configured. Unable to send password reset code.')
           throw new Error('Email service unavailable')
         }
 
@@ -643,7 +644,7 @@ class UserService {
         return code // Used for testing purposes only
       }
     } catch (error) {
-      console.error('Forgot password error:', error)
+      log.error('Forgot password error:', error)
       throw error
     }
   }
@@ -673,7 +674,7 @@ class UserService {
 
       return true
     } catch (error) {
-      console.error('Confirm forgot password code error:', error)
+      log.error('Confirm forgot password code error:', error)
       throw error
     }
   }
@@ -708,7 +709,7 @@ class UserService {
 
       return true
     } catch (error) {
-      console.error('Reset password error:', error)
+      log.error('Reset password error:', error)
       throw error
     }
   }
