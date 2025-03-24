@@ -19,6 +19,10 @@ const options = {
         url: `http://localhost:${config.port}/api`,
         description: 'Development server',
       },
+      {
+        url: process.env.PRODUCTION_API_URL || 'https://aralkademy-backend.onrender.com/api',
+        description: 'Production server',
+      },
     ],
     components: {
       securitySchemes: {

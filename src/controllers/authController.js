@@ -47,7 +47,6 @@ export const verifyCaptcha = async (captchaResponse) => {
   }
 
   const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captchaResponse}`
-  console.log('Constructed verifyUrl in controller:', verifyUrl)
   const verifyResponse = await fetch(verifyUrl, {
     method: 'POST',
     headers: { Connection: 'close' },
