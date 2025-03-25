@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import nodemailer from 'nodemailer'
 import config from '../config/config.js'
 import { log } from '../utils/logger.js'
+import { Op } from 'sequelize';
 
 // Configure nodemailer with proper error handling
 const transporter = (() => {
@@ -711,6 +712,31 @@ class UserService {
     } catch (error) {
       log.error('Reset password error:', error)
       throw error
+    }
+  }
+
+  /**
+   * Retrieves all soft-deleted users from the database.
+   * @async
+   * @param {number} [page=1] - The page number to retrieve (defaults to 1)
+   * @param {number} [limit=10] - The number of users per page (defaults to 10)
+   * @returns {Promise<Object>} An object containing the deleted users and count
+   * @returns {Array} returns.rows - Array of deleted user objects
+   * @returns {number} returns.count - Total number of deleted users
+   * @throws {Error} If an error occurs while retrieving deleted users
+   */
+  async getAllDeletedUsers(page = 1, limit = 10) {
+    try {
+      return await this.UserModel.findAndCountAll({
+        where: { deleted_at: { [Op.ne]: null } }, // Use Op.ne to find non-null deleted_at
+        limit,
+        offset: (page - 1) * limit,
+        paranoid: false, // Include soft-deleted records
+        attributes: { exclude: ['password'] },
+      });
+    } catch (error) {
+      log.error('Error retrieving deleted users:', error);
+      throw error;
     }
   }
 

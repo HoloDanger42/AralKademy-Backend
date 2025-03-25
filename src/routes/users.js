@@ -12,6 +12,7 @@ import {
   updateUser,
   changePassword,
   restoreUser,
+  getAllDeletedUsers
 } from '../controllers/userController.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
 
@@ -155,6 +156,38 @@ router.post('/', rbac.adminOnly, createUser)
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/', rbac.adminOnly, getAllUsers)
+
+/**
+ * @swagger
+ * /users/deleted:
+ *   get:
+ *     summary: Get all deleted users
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of deleted users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/deleted', rbac.adminOnly, getAllDeletedUsers)
 
 /**
  * @swagger
