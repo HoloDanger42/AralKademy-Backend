@@ -318,6 +318,22 @@ const updateUser = async (req, res) => {
   }
 }
 
+/**
+ * Restores a user that has been soft-deleted.
+ * @param {Object} req - The request object containing the user ID.
+ * @param {Object} res - The response object.
+ */
+const restoreUser = async (req, res) => {
+  try {
+    const { id } = req.params
+    const user = await userService.restoreUser(id)
+    res.status(200).json({ message: 'User restored successfully ', user })
+    log.info(`User with ID ${id} restored successfully`)
+  } catch (error) {
+    return handleControllerError(error, res, 'Restore user', 'Failed to restore user')
+  }
+}
+
 export {
   createUser,
   getAllUsers,
@@ -329,5 +345,6 @@ export {
   getAvailableLearners,
   getAvailableStudentTeachers,
   updateUser,
-  changePassword
+  changePassword,
+  restoreUser,
 }

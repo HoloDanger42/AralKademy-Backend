@@ -10,7 +10,8 @@ import {
   getAvailableLearners,
   getAvailableStudentTeachers,
   updateUser,
-  changePassword
+  changePassword,
+  restoreUser,
 } from '../controllers/userController.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
 
@@ -644,5 +645,52 @@ router.put('/:id', rbac.allAuthenticated, updateUser)
  *               $ref: '#/components/schemas/Error'
  */
 router.put('/:userId/change-password', rbac.allAuthenticated, changePassword)
+
+/**
+ * @swagger
+ * /users/{id}/restore:
+ *   put:
+ *     summary: Restore a user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID to restore
+ *     responses:
+ *       200:
+ *         description: User restored successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User restored successfully
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.put('/:id/restore', rbac.adminOnly, restoreUser)
 
 export { router as usersRouter }
