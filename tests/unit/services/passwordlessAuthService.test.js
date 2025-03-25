@@ -93,11 +93,18 @@ describe('PasswordlessAuthService', () => {
   })
 
   describe('generateNumericCode', () => {
+    beforeEach(() => {
+      // Mock the teacher authority verification to return true for tests
+      jest.spyOn(passwordlessAuthService, '_verifyTeacherAuthority').mockResolvedValue(true)
+    })
+
+    afterEach(() => {
+      jest.restoreAllMocks()
+    })
+
     test('should generate a numeric code for student login', async () => {
       // Act
-      const result = await passwordlessAuthService.generateNumericCode(
-        testSchool.school_id.toString()
-      )
+      const result = await passwordlessAuthService.generateNumericCode(testUser.email, testUser.id)
 
       // Assert
       expect(result).toHaveProperty('code')
@@ -122,11 +129,18 @@ describe('PasswordlessAuthService', () => {
   })
 
   describe('generatePictureCode', () => {
+    beforeEach(() => {
+      // Mock the teacher authority verification to return true for tests
+      jest.spyOn(passwordlessAuthService, '_verifyTeacherAuthority').mockResolvedValue(true)
+    })
+
+    afterEach(() => {
+      jest.restoreAllMocks()
+    })
+
     test('should generate a picture code for young students', async () => {
       // Act
-      const result = await passwordlessAuthService.generatePictureCode(
-        testSchool.school_id.toString()
-      )
+      const result = await passwordlessAuthService.generatePictureCode(testUser.email, testUser.id)
 
       // Assert
       expect(result).toHaveProperty('pictureCode')

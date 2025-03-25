@@ -102,7 +102,21 @@ describe('PasswordlessAuthController', () => {
   describe('requestNumericCode', () => {
     test('should generate a numeric code when identifier is provided', async () => {
       // Arrange
-      mockReq.body = { identifier: 'S12345' }
+      const mockReq = {
+        body: {
+          email: 'S12345', // Make sure this matches how your controller extracts it
+        },
+        user: {
+          id: 'mockTeacherId', // Required by your controller
+        },
+      }
+
+      // Setup mock response
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      }
+
       passwordlessAuthService.generateNumericCode.mockResolvedValue({
         code: '123456',
         qrCode: 'data:image/png;base64,...',
@@ -112,7 +126,10 @@ describe('PasswordlessAuthController', () => {
       await PasswordlessAuthController.requestNumericCode(mockReq, mockRes)
 
       // Assert
-      expect(passwordlessAuthService.generateNumericCode).toHaveBeenCalledWith('S12345')
+      expect(passwordlessAuthService.generateNumericCode).toHaveBeenCalledWith(
+        'S12345',
+        'mockTeacherId' // Make sure to expect both parameters
+      )
       expect(mockRes.status).toHaveBeenCalledWith(200)
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -124,13 +141,17 @@ describe('PasswordlessAuthController', () => {
     })
 
     test('should return 400 when identifier is not provided', async () => {
+      // Arrange
+      mockReq.body = {} // Empty body with no email
+      mockReq.user = { id: 'someTeacherId' } // Must provide user to avoid NPE
+
       // Act
       await PasswordlessAuthController.requestNumericCode(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(400)
       expect(mockRes.json).toHaveBeenCalledWith({
-        error: { message: 'Student ID or username is required' },
+        error: { message: 'Email is required' },
       })
     })
   })
@@ -138,7 +159,9 @@ describe('PasswordlessAuthController', () => {
   describe('requestPictureCode', () => {
     test('should generate a picture code when identifier is provided', async () => {
       // Arrange
-      mockReq.body = { identifier: 'S12345' }
+      mockReq.body = { email: 'S12345' }
+      mockReq.user = { id: 'teacher123' }
+
       passwordlessAuthService.generatePictureCode.mockResolvedValue({
         pictureCode: 'apple-ball-cat',
         pictures: ['apple', 'ball', 'cat'],
@@ -148,7 +171,10 @@ describe('PasswordlessAuthController', () => {
       await PasswordlessAuthController.requestPictureCode(mockReq, mockRes)
 
       // Assert
-      expect(passwordlessAuthService.generatePictureCode).toHaveBeenCalledWith('S12345')
+      expect(passwordlessAuthService.generatePictureCode).toHaveBeenCalledWith(
+        'S12345',
+        'teacher123'
+      )
       expect(mockRes.status).toHaveBeenCalledWith(200)
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({

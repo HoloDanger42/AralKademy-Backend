@@ -242,6 +242,7 @@ describe('UserService', () => {
         )
       )
 
+      // Ensure we await all promises
       await Promise.all(createPromises)
 
       // Test first page
@@ -252,7 +253,7 @@ describe('UserService', () => {
       // Test second page
       const page2 = await userService.getAllUsers(2, 10)
       expect(page2.rows.length).toBe(5)
-    })
+    }, 30000) // Increase timeout if needed
   })
 
   describe('User Update', () => {

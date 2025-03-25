@@ -1,9 +1,14 @@
 import request from 'supertest'
 import app from '../../src/server.js'
+import { jest } from '@jest/globals'
 import { sequelize } from '../../src/config/database.js'
 import { User, AuthToken, School } from '../../src/models/index.js'
 import { hashPassword } from '../../src/utils/passwordUtils.js'
 import '../../src/models/associate.js'
+
+jest.unstable_mockModule('../../src/utils/emailUtils.js', () => ({
+  sendEmail: jest.fn().mockResolvedValue(true),
+}))
 
 describe('Passwordless Authentication API', () => {
   let server
@@ -13,6 +18,7 @@ describe('Passwordless Authentication API', () => {
   let magicLinkToken
   let numericToken
   let pictureToken
+  let teacherAuthToken
 
   beforeAll(async () => {
     await sequelize.sync({ force: true })
@@ -93,10 +99,21 @@ describe('Passwordless Authentication API', () => {
   })
 
   describe('POST /api/auth/passwordless/numeric-code', () => {
-    test('should generate a numeric code when identifier is valid', async () => {
+    test('should generate a numeric code when email is valid', async () => {
+      // First, authenticate as a teacher
+      const loginResponse = await request(server).post('/api/auth/login').send({
+        email: 'teacher@passwordlesstest.com',
+        password: 'Password123!',
+        captchaResponse: 'test-captcha-token',
+      })
+
+      // Extract the auth token
+      const authToken = loginResponse.body.token
+
       const response = await request(server)
         .post('/api/auth/passwordless/numeric-code')
-        .send({ identifier: testStudent.email })
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ email: testStudent.email })
 
       expect(response.status).toBe(200)
       expect(response.body).toHaveProperty('message', 'Login code generated successfully')
@@ -107,20 +124,38 @@ describe('Passwordless Authentication API', () => {
       numericToken = response.body.code
     })
 
-    test('should return 404 when identifier is not found', async () => {
+    test('should return 404 when email is not found', async () => {
+      const loginResponse = await request(server).post('/api/auth/login').send({
+        email: 'teacher@passwordlesstest.com',
+        password: 'Password123!',
+        captchaResponse: 'test-captcha-token',
+      })
+
+      const authToken = loginResponse.body.token
+
       const response = await request(server)
         .post('/api/auth/passwordless/numeric-code')
-        .send({ identifier: 'NONEXISTENT' })
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ email: 'NONEXISTENT' })
 
       expect(response.status).toBe(404)
     })
   })
 
   describe('POST /api/auth/passwordless/picture-code', () => {
-    test('should generate a picture code when identifier is valid', async () => {
+    test('should generate a picture code when email is valid', async () => {
+      const loginResponse = await request(server).post('/api/auth/login').send({
+        email: 'teacher@passwordlesstest.com',
+        password: 'Password123!',
+        captchaResponse: 'test-captcha-token',
+      })
+
+      const authToken = loginResponse.body.token
+
       const response = await request(server)
         .post('/api/auth/passwordless/picture-code')
-        .send({ identifier: testStudent.email })
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ email: testStudent.email })
 
       expect(response.status).toBe(200)
       expect(response.body).toHaveProperty('message', 'Picture code generated successfully')
@@ -136,6 +171,22 @@ describe('Passwordless Authentication API', () => {
 
   describe('POST /api/auth/passwordless/verify', () => {
     test('should verify magic link token and return JWT tokens', async () => {
+      await request(server)
+        .post('/api/auth/passwordless/magic-link')
+        .send({ email: 'teacher@passwordlesstest.com' })
+
+      const token = await AuthToken.findOne({
+        where: {
+          userId: testTeacher.id,
+          type: 'magic_link',
+          used: false,
+        },
+        order: [['createdAt', 'DESC']],
+      })
+
+      expect(token).toBeTruthy()
+      magicLinkToken = token.token
+
       const response = await request(server)
         .post('/api/auth/passwordless/verify')
         .send({ token: magicLinkToken })
