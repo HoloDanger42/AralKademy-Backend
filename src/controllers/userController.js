@@ -334,6 +334,31 @@ const restoreUser = async (req, res) => {
   }
 }
 
+/**
+ * Retrieves all deleted users.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+const getAllDeletedUsers = async (req, res) => {
+  try {
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 10
+
+    const users = await userService.getAllDeletedUsers(page, limit)
+
+    res.status(200).json({
+      count: users.count,
+      totalPages: Math.ceil(users.count / limit),
+      currentPage: page,
+      users: users.rows,
+    })
+    
+    log.info('Retrieved all deleted users');
+  } catch (error) {
+    return handleControllerError(error, res, 'Get all deleted users', 'Failed to retrieve deleted users')
+  }
+}
+
 export {
   createUser,
   getAllUsers,
@@ -347,4 +372,5 @@ export {
   updateUser,
   changePassword,
   restoreUser,
+  getAllDeletedUsers,
 }
