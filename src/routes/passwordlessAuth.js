@@ -3,6 +3,8 @@ import { PasswordlessAuthController } from '../controllers/passwordlessAuthContr
 import { validate } from '../middleware/validationMiddleware.js'
 import { passwordlessAuthSchemas } from '../schemas/passwordlessAuthSchemas.js'
 import { authLimiter } from '../middleware/securityMiddleware.js'
+import { authMiddleware } from '../middleware/authMiddleware.js'
+import { rbac } from '../middleware/rbacMiddleware.js'
 
 const router = express.Router()
 
@@ -55,11 +57,12 @@ router.post(
  *           schema:
  *             type: object
  *             required:
- *               - identifier
+ *               - email
  *             properties:
- *               identifier:
+ *               email:
  *                 type: string
- *                 example: S12345
+ *                 format: email
+ *                 example: student@example.com
  *     responses:
  *       200:
  *         description: Numeric code generated successfully
@@ -70,6 +73,8 @@ router.post(
  */
 router.post(
   '/numeric-code',
+  authMiddleware, // Require authentication
+  rbac.teacherAndAdmin, // Only allow teachers
   validate(passwordlessAuthSchemas.codeRequest),
   PasswordlessAuthController.requestNumericCode
 )
@@ -87,11 +92,12 @@ router.post(
  *           schema:
  *             type: object
  *             required:
- *               - identifier
+ *               - email
  *             properties:
- *               identifier:
+ *               email:
  *                 type: string
- *                 example: S12345
+ *                 format: email
+ *                 example: student@example.com
  *     responses:
  *       200:
  *         description: Picture code generated successfully
@@ -102,6 +108,8 @@ router.post(
  */
 router.post(
   '/picture-code',
+  authMiddleware, // Require authentication
+  rbac.teacherAndAdmin, // Only allow teachers
   validate(passwordlessAuthSchemas.codeRequest),
   PasswordlessAuthController.requestPictureCode
 )

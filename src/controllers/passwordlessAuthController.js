@@ -2,7 +2,6 @@ import { asyncHandler } from '../utils/asyncHandler.js'
 import { handleControllerError } from '../utils/errorHandler.js'
 import { log } from '../utils/logger.js'
 import passwordlessAuthService from '../services/passwordlessAuthService.js'
-import e from 'express'
 
 export const PasswordlessAuthController = {
   /**
@@ -31,7 +30,7 @@ export const PasswordlessAuthController = {
       return handleControllerError(
         error,
         res,
-        `Magic link request fro ${req.body.email || 'unknown'}`,
+        `Magic link request for ${req.body.email || 'unknown'}`,
         'Failed to generate magic link'
       )
     }
@@ -42,13 +41,19 @@ export const PasswordlessAuthController = {
    */
   requestNumericCode: asyncHandler(async (req, res) => {
     try {
-      const { identifier } = req.body
+      const { email } = req.body
 
-      if (!identifier) {
-        return res.status(400).json({ error: { message: 'Student ID or username is required' } })
+      // Get teacher ID from authentication token
+      const teacherUserId = req.user.id
+
+      if (!email) {
+        return res.status(400).json({ error: { message: 'Email is required' } })
       }
 
-      const { code, qrCode } = await passwordlessAuthService.generateNumericCode(identifier)
+      const { code, qrCode } = await passwordlessAuthService.generateNumericCode(
+        email,
+        teacherUserId
+      )
 
       res.status(200).json({
         message: 'Login code generated successfully',
@@ -56,12 +61,12 @@ export const PasswordlessAuthController = {
         qrCode,
       })
 
-      log.info(`Numeric code generated for student identifier: ${identifier}`)
+      log.info(`Numeric code generated for student: ${email} by teacher: ${teacherUserId}`)
     } catch (error) {
       return handleControllerError(
         error,
         res,
-        `Numeric code request for ${req.body.identifier || 'unknown'}`,
+        `Numeric code request for ${req.body.email || 'unknown'}`,
         'Failed to generate numeric code'
       )
     }
@@ -72,14 +77,17 @@ export const PasswordlessAuthController = {
    */
   requestPictureCode: asyncHandler(async (req, res) => {
     try {
-      const { identifier } = req.body
+      const { email } = req.body
+      const teacherId = req.user.id // Get the teacher's ID from authenticated request
 
-      if (!identifier) {
-        return res.status(400).json({ error: { message: 'Student ID or username is required' } })
+      if (!email) {
+        return res.status(400).json({ error: { message: 'Email is required' } })
       }
 
-      const { pictureCode, pictures } =
-        await passwordlessAuthService.generatePictureCode(identifier)
+      const { pictureCode, pictures } = await passwordlessAuthService.generatePictureCode(
+        email,
+        teacherId
+      )
 
       res.status(200).json({
         message: 'Picture code generated successfully',
@@ -87,12 +95,12 @@ export const PasswordlessAuthController = {
         pictures,
       })
 
-      log.info(`Picture code generated for student identifier: ${identifier}`)
+      log.info(`Picture code generated for student: ${email} by teacher: ${teacherId}`)
     } catch (error) {
       return handleControllerError(
         error,
         res,
-        `Picture code request for ${req.body.identifier || 'unknown'}`,
+        `Picture code request for ${req.body.email || 'unknown'}`,
         'Failed to generate picture code'
       )
     }

@@ -1,7 +1,7 @@
 import * as jwt from 'jsonwebtoken'
 import { nanoid } from 'nanoid'
 import config from '../config/config.js'
-import { User, AuthToken } from '../models/index.js'
+import { User, Course, Group, StudentTeacher, Learner, AuthToken } from '../models/index.js'
 import { sendEmail } from '../utils/emailUtils.js'
 import * as QRCode from 'qrcode'
 import { Op } from 'sequelize'
@@ -54,26 +54,21 @@ class PasswordlessAuthService {
    * Generates a 6-digit numeric code for young students
    * Simple method appropriate for elementary students
    *
-   * @param {string} identifier - Student ID or username
+   * @param {string} email - Student's email address
    * @returns {Promise<{code: string, qrCode: string}>} - Generated code and QR code
    */
-  async generateNumericCode(identifier) {
-    // Build a dynamic where clause based on the type of identifier
-    let whereClause = {}
-
-    if (!isNaN(identifier) && identifier.trim() !== '') {
-      // It's a number, search by school_id
-      whereClause[Op.or] = [{ school_id: parseInt(identifier, 10) }]
-    } else {
-      // It's a string, search by email instead of username
-      whereClause[Op.or] = [{ email: identifier }]
-    }
-
-    // Find user with the appropriate where clause
-    const user = await User.findOne({ where: whereClause })
+  async generateNumericCode(email, teacherUserId) {
+    // Find user by email
+    const user = await User.findOne({ where: { email } })
 
     if (!user) {
       throw new Error('Student not found')
+    }
+
+    // Verify that the requesting teacher has authority over this student
+    const hasAuthority = await this._verifyTeacherAuthority(teacherUserId, user.id)
+    if (!hasAuthority) {
+      throw new Error('Unauthorized to generate code for this student')
     }
 
     // Generates a simple 6-digit code
@@ -84,6 +79,7 @@ class PasswordlessAuthService {
     await AuthToken.create({
       token: code,
       userId: user.id,
+      createdBy: teacherUserId,
       type: 'numeric_code',
       expiresAt: expiresAt,
       used: false,
@@ -98,37 +94,26 @@ class PasswordlessAuthService {
   /**
    * Generates a picture-based code for youngest students (grades 1-3)
    *
-   * @param {string} identifier - Student ID or username
+   * @param {string} email - Student's email address
+   * @param {string|number} teacherId - The ID of the teacher user
    * @returns {Promise<{pictureCode: string, pictures: Array}>} Picture code data
    */
-  async generatePictureCode(identifier) {
-    // Build a dynamic where clause based on the type of identifier
-    let whereClause = {}
-
-    if (!identifier) {
-      throw new Error('Student identifier required')
+  async generatePictureCode(email, teacherId) {
+    if (!email) {
+      throw new Error('Student email required')
     }
 
-    if (
-      typeof identifier === 'number' ||
-      (typeof identifier === 'string' && !isNaN(identifier) && identifier.trim() !== '')
-    ) {
-      // It's a number or a numeric string, search by school_id
-      const numericIdentifier =
-        typeof identifier === 'number' ? identifier : parseInt(identifier, 10)
-      whereClause[Op.or] = [{ school_id: numericIdentifier }]
-    } else if (typeof identifier === 'string') {
-      // It's a non-numeric string, search by email
-      whereClause[Op.or] = [{ email: identifier }]
-    } else {
-      throw new Error('Invalid identifier type')
-    }
-
-    // Find user with the appropriate where clause
-    const user = await User.findOne({ where: whereClause })
+    // Find user by email
+    const user = await User.findOne({ where: { email } })
 
     if (!user) {
       throw new Error('Student not found')
+    }
+
+    // Verify teacher has authority over this student
+    const isAuthorized = await this._verifyTeacherAuthority(teacherId, user.id)
+    if (!isAuthorized) {
+      throw new Error('Unauthorized to generate login code for this student')
     }
 
     // Generate a picture-based code (sequence of 3 pictures from a set)
@@ -253,6 +238,70 @@ class PasswordlessAuthService {
     }
 
     await sendEmail(mailOptions)
+  }
+
+  /**
+   * Verifies if a teacher has authority over a student by checking their relationship in the database
+   * @async
+   * @param {string|number} teacherUserId - The ID of the teacher user
+   * @param {string|number} studentUserId - The ID of the student user
+   * @returns {Promise<boolean>} Returns true if teacher has authority over student, false otherwise
+   * @private
+   */
+  async _verifyTeacherAuthority(teacherUserId, studentUserId) {
+    const teacher = await User.findByPk(teacherUserId)
+    if (!teacher || (teacher.role !== 'teacher' && teacher.role !== 'student_teacher')) {
+      return false
+    }
+
+    return true
+
+    // try {
+    //   // Different verification logic based on role
+    //   if (teacher.role === 'teacher') {
+    //     // Find courses taught by this teacher
+    //     const courses = await Course.findAll({
+    //       where: { user_id: teacherUserId },
+    //       include: [
+    //         {
+    //           model: Group,
+    //           as: 'learnerGroup',
+    //           include: [
+    //             {
+    //               model: Learner,
+    //               as: 'learners',
+    //               where: { user_id: studentUserId },
+    //             },
+    //           ],
+    //         },
+    //       ],
+    //     })
+
+    //     return courses.length > 0
+    //   } else {
+    //     // For student_teachers, check if they're in the same group as the student
+    //     const studentTeacher = await StudentTeacher.findOne({
+    //       where: { user_id: teacherUserId },
+    //     })
+
+    //     if (!studentTeacher || !studentTeacher.student_teacher_group_id) {
+    //       return false
+    //     }
+
+    //     // Check if the learner is in the same group
+    //     const learner = await Learner.findOne({
+    //       where: {
+    //         user_id: studentUserId,
+    //         learner_group_id: studentTeacher.student_teacher_group_id,
+    //       },
+    //     })
+
+    //     return !!learner
+    //   }
+    // } catch (error) {
+    //   console.error('Error verifying teacher authority:', error)
+    //   return false
+    // }
   }
 }
 

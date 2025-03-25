@@ -86,8 +86,13 @@ jest.unstable_mockModule('../../../src/routes/courses.js', () => ({
   courseRouter: express.Router(),
 }))
 
+jest.unstable_mockModule('../../../src/routes/passwordlessAuth.js', () => ({
+  passwordlessAuthRouter: express.Router(),
+}))
+
 const mockUsersRoutes = await import('../../../src/routes/users.js')
 const mockCoursesRoutes = await import('../../../src/routes/courses.js')
+const mockPasswordlessAuthRoutes = await import('../../../src/routes/passwordlessAuth.js')
 const mockDatabase = await import('../../../src/config/database.js')
 
 // Import the main app

@@ -42,6 +42,8 @@ jobs:
       JWT_SECRET: ${{ secrets.JWT_SECRET || 'test-jwt-secret-for-ci' }}
       RECAPTCHA_SECRET_KEY: ${{ secrets.RECAPTCHA_SECRET_KEY || 'test-recaptcha-key' }}
       ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD || 'admin12345' }}
+      EMAIL_USER: ${{ secrets.EMAIL_USER || 'test-email-user' }}
+      EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD || 'test-email-password' }}
       # Test-specific overrides
       ENABLE_RECAPTCHA: false
       ENABLE_EMAIL_VERIFICATION: false
@@ -65,6 +67,8 @@ jobs:
           echo "JWT_SECRET=$JWT_SECRET" >> .env
           echo "RECAPTCHA_SECRET_KEY=$RECAPTCHA_SECRET_KEY" >> .env
           echo "ADMIN_PASSWORD=$ADMIN_PASSWORD" >> .env
+          echo "EMAIL_USER=$EMAIL_USER" >> .env
+          echo "EMAIL_PASSWORD=$EMAIL_PASSWORD" >> .env
           echo "ENABLE_RECAPTCHA=$ENABLE_RECAPTCHA" >> .env
           echo "ENABLE_EMAIL_VERIFICATION=$ENABLE_EMAIL_VERIFICATION" >> .env
           echo "RUN_SEEDERS=$RUN_SEEDERS" >> .env

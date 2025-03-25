@@ -9,8 +9,9 @@ export const passwordlessAuthSchemas = {
   }),
 
   codeRequest: Joi.object({
-    identifier: Joi.string().required().messages({
-      'any.required': 'Student ID or username is required',
+    email: Joi.string().email().required().messages({
+      'string.email': 'Please enter a valid email address',
+      'any.required': 'Email is required',
     }),
   }),
 
