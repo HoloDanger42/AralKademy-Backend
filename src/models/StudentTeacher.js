@@ -46,8 +46,7 @@ const StudentTeacher = sequelize.define(
         model: 'groups',
         key: 'group_id',
       },
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL',
     },
   },
   {
