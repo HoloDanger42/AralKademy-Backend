@@ -74,7 +74,7 @@ router.post(
 router.post(
   '/numeric-code',
   authMiddleware, // Require authentication
-  rbac.teacherAndAdmin, // Only allow teachers
+  rbac.studentTeacherAndAbove,
   validate(passwordlessAuthSchemas.codeRequest),
   PasswordlessAuthController.requestNumericCode
 )
@@ -109,7 +109,7 @@ router.post(
 router.post(
   '/picture-code',
   authMiddleware, // Require authentication
-  rbac.teacherAndAdmin, // Only allow teachers
+  rbac.studentTeacherAndAbove,
   validate(passwordlessAuthSchemas.codeRequest),
   PasswordlessAuthController.requestPictureCode
 )
