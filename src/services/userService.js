@@ -4,6 +4,7 @@ import nodemailer from 'nodemailer'
 import config from '../config/config.js'
 import { log } from '../utils/logger.js'
 import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize';
 
 // Configure nodemailer with proper error handling
 const transporter = (() => {
@@ -301,11 +302,19 @@ class UserService {
    * @returns {number} returns.count - Total number of users
    */
   async getAllUsers(page = 1, limit = 10) {
-    return await this.UserModel.findAndCountAll({
+    const { count, rows } = await this.UserModel.findAndCountAll({
       limit,
       offset: (page - 1) * limit,
       attributes: { exclude: ['password'] },
-    })
+    });
+  
+    const roleCounts = await this.UserModel.findAll({
+      attributes: ['role', [Sequelize.fn('COUNT', Sequelize.col('role')), 'count']],
+      group: ['role'],
+      raw: true
+    });
+  
+    return { count, rows, roleCounts };
   }
 
   /**

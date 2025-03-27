@@ -100,6 +100,7 @@ const getAllUsers = async (req, res) => {
       totalPages: Math.ceil(users.count / limit),
       currentPage: page,
       users: users.rows,
+      roleCounts: users.roleCounts
     })
     
     log.info('Retrieved all users');
