@@ -127,6 +127,11 @@ router.post('/', rbac.adminOnly, createUser)
  *           type: integer
  *           default: 10
  *         description: Items per page
+ *       - in: query
+ *         name: isLimited
+ *         schema:
+ *           type: boolean
+ *           default: true
  *     responses:
  *       200:
  *         description: List of users
@@ -165,6 +170,24 @@ router.get('/', rbac.adminOnly, getAllUsers)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Items per page
+ *       - in: query
+ *         name: isLimited
+ *         schema:
+ *           type: boolean
+ *           default: true
  *     responses:
  *       200:
  *         description: List of deleted users

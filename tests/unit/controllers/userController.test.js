@@ -66,6 +66,7 @@ describe('User Controller', () => {
       // Arrange
       const page = 1
       const limit = 10
+      const isLimited = true
 
       const mockUsers = validUsers.map((user, index) => ({
         id: index + 1,
@@ -79,13 +80,13 @@ describe('User Controller', () => {
       })
 
       // Mock request query parameters
-      mockReq.query = { page: String(page), limit: String(limit) }
+      mockReq.query = { page: String(page), limit: String(limit), isLimited: String(isLimited) }
 
       // Act
       await getAllUsers(mockReq, mockRes)
 
       // Assert
-      expect(getAllUsersSpy).toHaveBeenCalledWith(page, limit) // Ensure service is called correctly
+      expect(getAllUsersSpy).toHaveBeenCalledWith(page, limit, isLimited) // Ensure service is called correctly
       expect(mockRes.status).toHaveBeenCalledWith(200)
       expect(mockRes.json).toHaveBeenCalledWith({
         count: mockUsers.length,

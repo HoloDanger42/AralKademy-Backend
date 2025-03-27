@@ -246,12 +246,12 @@ describe('UserService', () => {
       await Promise.all(createPromises)
 
       // Test first page
-      const page1 = await userService.getAllUsers(1, 10)
+      const page1 = await userService.getAllUsers(1, 10, true)
       expect(page1.count).toBe(15)
       expect(page1.rows.length).toBe(10)
 
       // Test second page
-      const page2 = await userService.getAllUsers(2, 10)
+      const page2 = await userService.getAllUsers(2, 10, true)
       expect(page2.rows.length).toBe(5)
     }, 30000) // Increase timeout if needed
   })

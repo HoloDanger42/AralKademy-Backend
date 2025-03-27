@@ -300,12 +300,17 @@ class UserService {
    * @returns {Array} returns.rows - Array of user objects
    * @returns {number} returns.count - Total number of users
    */
-  async getAllUsers(page = 1, limit = 10) {
-    return await this.UserModel.findAndCountAll({
-      limit,
-      offset: (page - 1) * limit,
+  async getAllUsers(page = 1, limit = 10, isLimited = true) {
+    const queryOptions = {
       attributes: { exclude: ['password'] },
-    })
+    };
+  
+    if (isLimited) {
+      queryOptions.limit = limit;
+      queryOptions.offset = (page - 1) * limit;
+    }
+  
+    return await this.UserModel.findAndCountAll(queryOptions);
   }
 
   /**
@@ -725,15 +730,20 @@ class UserService {
    * @returns {number} returns.count - Total number of deleted users
    * @throws {Error} If an error occurs while retrieving deleted users
    */
-  async getAllDeletedUsers(page = 1, limit = 10) {
+  async getAllDeletedUsers(page = 1, limit = 10, isLimited = true) {
     try {
-      return await this.UserModel.findAndCountAll({
-        where: { deleted_at: { [Op.ne]: null } }, // Use Op.ne to find non-null deleted_at
-        limit,
-        offset: (page - 1) * limit,
-        paranoid: false, // Include soft-deleted records
+      const queryOptions = {
+        where: { deleted_at: { [Op.ne]: null } }, 
+        paranoid: false, 
         attributes: { exclude: ['password'] },
-      });
+      };
+  
+      if (isLimited) {
+        queryOptions.limit = limit;
+        queryOptions.offset = (page - 1) * limit;
+      }
+  
+      return await this.UserModel.findAndCountAll(queryOptions);
     } catch (error) {
       log.error('Error retrieving deleted users:', error);
       throw error;

@@ -90,23 +90,24 @@ const createUser = async (req, res) => {
  */
 const getAllUsers = async (req, res) => {
   try {
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 10
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const isLimited = req.query.isLimited === 'true'; // Convert string to boolean
 
-    const users = await userService.getAllUsers(page, limit)
+    const users = await userService.getAllUsers(page, limit, isLimited);
 
     res.status(200).json({
       count: users.count,
-      totalPages: Math.ceil(users.count / limit),
+      totalPages: isLimited ? Math.ceil(users.count / limit) : 1, // If not limited, only 1 page
       currentPage: page,
       users: users.rows,
-    })
-    
+    });
+
     log.info('Retrieved all users');
   } catch (error) {
-    return handleControllerError(error, res, 'Get all users', 'Failed to retrieve users')
+    return handleControllerError(error, res, 'Get all users', 'Failed to retrieve users');
   }
-}
+};
 
 /**
  * Retrieves a user by ID.
@@ -341,23 +342,24 @@ const restoreUser = async (req, res) => {
  */
 const getAllDeletedUsers = async (req, res) => {
   try {
-    const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 10
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const isLimited = req.query.isLimited === 'true'; // Convert string to boolean
 
-    const users = await userService.getAllDeletedUsers(page, limit)
+    const users = await userService.getAllDeletedUsers(page, limit, isLimited);
 
     res.status(200).json({
       count: users.count,
-      totalPages: Math.ceil(users.count / limit),
+      totalPages: isLimited ? Math.ceil(users.count / limit) : 1, // If not limited, only 1 page
       currentPage: page,
       users: users.rows,
-    })
-    
+    });
+
     log.info('Retrieved all deleted users');
   } catch (error) {
-    return handleControllerError(error, res, 'Get all deleted users', 'Failed to retrieve deleted users')
+    return handleControllerError(error, res, 'Get all deleted users', 'Failed to retrieve deleted users');
   }
-}
+};
 
 export {
   createUser,
