@@ -301,7 +301,7 @@ class UserService {
    * @returns {Array} returns.rows - Array of user objects
    * @returns {number} returns.count - Total number of users
    */
-  async getAllUsers(page = 1, limit = 10) {
+  async getAllUsers(page, limit) {
     const { count, rows } = await this.UserModel.findAndCountAll({
       limit,
       offset: (page - 1) * limit,
