@@ -254,54 +254,54 @@ class PasswordlessAuthService {
       return false
     }
 
-    return true
+    // return true
 
-    // try {
-    //   // Different verification logic based on role
-    //   if (teacher.role === 'teacher') {
-    //     // Find courses taught by this teacher
-    //     const courses = await Course.findAll({
-    //       where: { user_id: teacherUserId },
-    //       include: [
-    //         {
-    //           model: Group,
-    //           as: 'learnerGroup',
-    //           include: [
-    //             {
-    //               model: Learner,
-    //               as: 'learners',
-    //               where: { user_id: studentUserId },
-    //             },
-    //           ],
-    //         },
-    //       ],
-    //     })
+    try {
+      // Different verification logic based on role
+      if (teacher.role === 'teacher') {
+        // Find courses taught by this teacher
+        const courses = await Course.findAll({
+          where: { user_id: teacherUserId },
+          include: [
+            {
+              model: Group,
+              as: 'learnerGroup',
+              include: [
+                {
+                  model: Learner,
+                  as: 'learners',
+                  where: { user_id: studentUserId },
+                },
+              ],
+            },
+          ],
+        })
 
-    //     return courses.length > 0
-    //   } else {
-    //     // For student_teachers, check if they're in the same group as the student
-    //     const studentTeacher = await StudentTeacher.findOne({
-    //       where: { user_id: teacherUserId },
-    //     })
+        return courses.length > 0
+      } else {
+        // For student_teachers, check if they're in the same group as the student
+        const studentTeacher = await StudentTeacher.findOne({
+          where: { user_id: teacherUserId },
+        })
 
-    //     if (!studentTeacher || !studentTeacher.student_teacher_group_id) {
-    //       return false
-    //     }
+        if (!studentTeacher || !studentTeacher.student_teacher_group_id) {
+          return false
+        }
 
-    //     // Check if the learner is in the same group
-    //     const learner = await Learner.findOne({
-    //       where: {
-    //         user_id: studentUserId,
-    //         learner_group_id: studentTeacher.student_teacher_group_id,
-    //       },
-    //     })
+        // Check if the learner is in the same group
+        const learner = await Learner.findOne({
+          where: {
+            user_id: studentUserId,
+            learner_group_id: studentTeacher.student_teacher_group_id,
+          },
+        })
 
-    //     return !!learner
-    //   }
-    // } catch (error) {
-    //   console.error('Error verifying teacher authority:', error)
-    //   return false
-    // }
+        return !!learner
+      }
+    } catch (error) {
+      console.error('Error verifying teacher authority:', error)
+      return false
+    }
   }
 }
 
