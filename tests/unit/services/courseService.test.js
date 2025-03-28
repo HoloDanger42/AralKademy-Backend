@@ -7,6 +7,8 @@ describe('Course Service', () => {
   let mockCourseModel
   let mockUserModel
   let mockGroupModel
+  let mockLearnerModel
+  let mockStudentTeacherModel
 
   beforeEach(() => {
     mockCourseModel = {
@@ -25,7 +27,15 @@ describe('Course Service', () => {
     mockGroupModel = {
       findByPk: jest.fn(),
     }
-    courseService = new CourseService(mockCourseModel, mockUserModel, mockGroupModel)
+
+    mockLearnerModel = {
+      findOne: jest.fn(),
+    }
+
+    mockStudentTeacherModel = {
+      findOne: jest.fn(),
+    }
+    courseService = new CourseService(mockCourseModel, mockUserModel, mockGroupModel, mockLearnerModel, mockStudentTeacherModel)
   })
 
   describe('getAllCourses', () => {
@@ -598,5 +608,53 @@ describe('Course Service', () => {
       )
       expect(mockCourse.update).toHaveBeenCalledWith(updatedData)
     })
+  })
+
+  describe('getCoursesOfUser', () => {
+    test('should return courses for a learner', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 1, role: 'learner' });
+      mockLearnerModel.findOne.mockResolvedValue({ user_id: 1, group_id: 10 });
+      mockCourseModel.findAll.mockResolvedValue([{ id: 100, name: 'Course A' }]);
+  
+      const courses = await courseService.getCoursesOfUser(1);
+      expect(courses).toEqual([{ id: 100, name: 'Course A' }]);
+    });
+  
+    test('should return courses for a student teacher', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 2, role: 'student_teacher' });
+      mockStudentTeacherModel.findOne.mockResolvedValue({ user_id: 2, group_id: 20 });
+      mockCourseModel.findAll.mockResolvedValue([{ id: 200, name: 'Course B' }]);
+  
+      const courses = await courseService.getCoursesOfUser(2);
+      expect(courses).toEqual([{ id: 200, name: 'Course B' }]);
+    });
+  
+    test('should throw an error if user is not found', async () => {
+      mockUserModel.findByPk.mockResolvedValue(null);
+      
+      await expect(courseService.getCoursesOfUser(3)).rejects.toThrow('User not found');
+    });
+  
+    test('should throw an error if learner is not found', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 4, role: 'learner' });
+      mockLearnerModel.findOne.mockResolvedValue(null);
+      
+      await expect(courseService.getCoursesOfUser(4)).rejects.toThrow('Learner not found');
+    });
+  
+    test('should throw an error if student teacher is not found', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 5, role: 'student_teacher' });
+      mockStudentTeacherModel.findOne.mockResolvedValue(null);
+      
+      await expect(courseService.getCoursesOfUser(5)).rejects.toThrow('Student teacher not found');
+    });
+  
+    test('should throw a generic error if fetching courses fails', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 6, role: 'learner' });
+      mockLearnerModel.findOne.mockResolvedValue({ user_id: 6, group_id: 30 });
+      mockCourseModel.findAll.mockRejectedValue(new Error('Database error'));
+  
+      await expect(courseService.getCoursesOfUser(6)).rejects.toThrow('Failed to fetch courses of learner');
+    });
   })
 })

@@ -10,6 +10,7 @@ import {
   getCourseById,
   updateCourse,
   deleteCourse,
+  getCoursesOfUser
 } from '../../../src/controllers/courseController.js'
 import CourseService from '../../../src/services/courseService.js'
 import { log } from '../../../src/utils/logger.js'
@@ -17,6 +18,19 @@ import { log } from '../../../src/utils/logger.js'
 describe('Course Controller', () => {
   let mockReq
   let mockRes
+
+  const mockRequest = (data) => ({
+    params: data,
+    body: {},
+    user: {},
+  });
+
+  const mockResponse = () => {
+    const res = {};
+    res.status = jest.fn().mockReturnThis();
+    res.json = jest.fn();
+    return res;
+  };
 
   beforeEach(() => {
     mockReq = {
@@ -945,5 +959,19 @@ describe('Course Controller', () => {
       })
       expect(log.error).toHaveBeenCalledWith('Delete course 1 error:', expect.any(Error))
     })
+  })
+
+  describe('getCoursesOfUser', () => {
+    test('should return courses for a user', async () => {
+      const req = mockRequest({ id: 1 });
+      const res = mockResponse();
+      const mockCourses = [{ id: 101, name: 'Course A' }];
+      jest.spyOn(CourseService.prototype, 'getCoursesOfUser').mockResolvedValue(mockCourses);
+      
+      await getCoursesOfUser(req, res);
+      
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(mockCourses);
+    });
   })
 })
