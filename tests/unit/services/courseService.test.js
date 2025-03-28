@@ -628,6 +628,14 @@ describe('Course Service', () => {
       const courses = await courseService.getCoursesOfUser(2);
       expect(courses).toEqual([{ id: 200, name: 'Course B' }]);
     });
+
+    test('should return courses for a teacher', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 2, role: 'teacher' });
+      mockCourseModel.findAll.mockResolvedValue([{ id: 200, name: 'Course B' }]);
+  
+      const courses = await courseService.getCoursesOfUser(2);
+      expect(courses).toEqual([{ id: 200, name: 'Course B' }]);
+    });
   
     test('should throw an error if user is not found', async () => {
       mockUserModel.findByPk.mockResolvedValue(null);
