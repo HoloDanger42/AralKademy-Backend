@@ -461,6 +461,12 @@ class CourseService {
         })
 
         return courses
+      } else if (user.role === 'teacher') {
+        const courses = await this.courseModel.findAll({
+          where: { user_id: user.id },
+        })
+
+        return courses
       }
     } catch (error) {
       log.error(`Error getting courses of learner with ID ${id}:`, error)
