@@ -1,10 +1,10 @@
 import CourseService from '../services/courseService.js'
-import { Course, User, Group } from '../models/index.js'
+import { Course, User, Group, Learner, StudentTeacher } from '../models/index.js'
 import { log } from '../utils/logger.js'
 import { handleControllerError } from '../utils/errorHandler.js'
 
 // Instantiate course service
-const courseService = new CourseService(Course, User, Group)
+const courseService = new CourseService(Course, User, Group, Learner, StudentTeacher)
 
 /**
  * Retrieves all courses.
@@ -316,6 +316,22 @@ const assignStudentTeacherGroupCourse = async (req, res) => {
   }
 }
 
+const getCoursesOfUser = async (req, res) => {
+  try {
+    const { id } = req.params
+    const courses = await courseService.getCoursesOfUser(id)
+    res.status(200).json(courses)
+    log.info(`Retrieved courses of user ${id}`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Get courses of user ${req.params.id}`,
+      'Error fetching courses of user'
+    )
+  }
+}
+
 export {
   getAllCourses,
   createCourse,
@@ -326,4 +342,5 @@ export {
   assignTeacherCourse,
   assignLearnerGroupCourse,
   assignStudentTeacherGroupCourse,
+  getCoursesOfUser,
 }
