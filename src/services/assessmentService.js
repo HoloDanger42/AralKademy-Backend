@@ -402,14 +402,25 @@ class AssessmentService {
   }
 
   /**
-   * Gets submissions for an assessment
-   * @param {number} assessmentId - ID of the assessment
-   * @returns {Promise<Array>} The submissions
-   */
-  async getSubmissionsForAssessment(assessmentId) {
+ * Gets submissions for an assessment
+ * @param {number} assessmentId - ID of the assessment
+ * @param {number|null} userId - (Optional) ID of the learner
+ * @returns {Promise<Array>} The submissions
+ */
+  async getSubmissionsForAssessment(assessmentId, userId = null) {
     try {
+      const whereClause = { assessment_id: assessmentId };
+
+      if (userId) {
+        const user = await this.UserModel.findByPk(userId);
+        if (!user) {
+          throw new Error('User not found');
+        }
+        whereClause.user_id = userId;
+      }
+
       return await this.SubmissionModel.findAll({
-        where: { assessment_id: assessmentId },
+        where: whereClause,
         include: [
           {
             model: this.UserModel,
@@ -417,12 +428,13 @@ class AssessmentService {
             attributes: ['id', 'first_name', 'last_name', 'email'],
           },
         ],
-      })
+      });
     } catch (error) {
-      log.error('Get submissions error:', error)
-      throw error
+      log.error('Get submissions error:', error);
+      throw error;
     }
   }
+
 
   /**
    * Gets a student's submission for an assessment

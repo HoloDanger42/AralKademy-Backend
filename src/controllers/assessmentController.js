@@ -121,8 +121,8 @@ export const submitAssessment = async (req, res) => {
 
 export const getSubmissionsForAssessment = async (req, res) => {
   try {
-    const { assessmentId } = req.params
-    const submissions = await assessmentService.getSubmissionsForAssessment(assessmentId)
+    const { assessmentId, userId } = req.params
+    const submissions = await assessmentService.getSubmissionsForAssessment(assessmentId, userId)
     res.status(200).json({
       success: true,
       submissions,
