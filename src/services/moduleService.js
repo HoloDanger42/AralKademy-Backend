@@ -12,6 +12,7 @@ import { log } from '../utils/logger.js'
  * - Updating contents
  * - Deleting contents
  * - Retrieving contents by module association
+ * - Retrieving module grade of a user
  *
  * @class ModuleService
  * @requires log - A logging utility for error reporting
@@ -22,6 +23,11 @@ class ModuleService {
    *
    * @param {Object} moduleModel - The model representing modules.
    * @param {Object} courseModel - The model representing courses.
+   * @param {Object} contentModel - The model representing contents.
+   * @param {Object} assessmentModel - The model representing assessments.
+   * @param {Object} submissionModel - The model representing submissions.
+   * @param {Object} moduleGradeModel - The model representing modulegrades.
+   * @param {Object} userModel - The model representing users.
    */
   constructor(moduleModel, courseModel, contentModel, assessmentModel, submissionModel, moduleGradeModel, userModel) {
     this.moduleModel = moduleModel
@@ -388,6 +394,19 @@ class ModuleService {
     }
   }
 
+  /**
+   * Retrieves the module grade of a user based on their highest graded submissions.
+   *
+   * @async
+   * @param {number|string} id - The ID of the user.
+   * @param {number|string} moduleId - The ID of the module.
+   * @returns {Promise<Object>} An object containing:
+   *   - `allGraded` {boolean} - Whether all assessments in the module have graded submissions.
+   *   - `allPassed` {boolean} - Whether the user passed all assessments in the module.
+   *   - `averageScore` {number} - The user's average score for the module.
+   * @throws {Error} When the user or module is not found.
+   * @throws {Error} When an unexpected error occurs.
+   */
   async getModuleGradeOfUser(id, moduleId) {
     try {
       const user = await this.userModel.findByPk(id);
@@ -462,7 +481,6 @@ class ModuleService {
       throw new Error('Failed to get module grade');
     }
   }
-  
 }
 
 export default ModuleService

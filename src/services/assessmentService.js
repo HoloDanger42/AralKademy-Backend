@@ -211,6 +211,14 @@ class AssessmentService {
         throw new Error('Assessment not found')
       }
 
+      const submissionCount = await this.SubmissionModel.count({
+        where: { assessment_id: assessmentId, user_id: userId }
+      });
+
+      if (submissionCount === assessment.allowed_attempts) {
+        throw new Error('Invalid attempt')
+      }
+
       // Create new submission
       return await this.SubmissionModel.create({
         assessment_id: assessmentId,

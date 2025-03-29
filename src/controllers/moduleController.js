@@ -187,6 +187,11 @@ const getContentsByModuleId = async (req, res) => {
   }
 }
 
+/**
+ * Retrieves a module grade of a user.
+ * @param {Object} req - The request object containing the user ID and module ID in req.params.
+ * @param {Object} res - The response object.
+ */
 const getModuleGradeOfUser = async (req, res) => {
   try {
     const { id, moduleId } = req.params

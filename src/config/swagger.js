@@ -215,16 +215,6 @@ const options = {
             grade: { type: 'float' },
           },
         },
-
-        CourseGrade: {
-          type: 'object',
-          properties: {
-            course_grade_id: { type: 'integer' },
-            course_id: { type: 'integer' },
-            user_id: { type: 'integer' },
-            grade: { type: 'float' },
-          },
-        },
       },
     },
     security: [{ bearerAuth: [] }],

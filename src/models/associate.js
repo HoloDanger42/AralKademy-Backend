@@ -16,7 +16,6 @@ import {
   Submission,
   AnswerResponse,
   ModuleGrade,
-  CourseGrade,
   AuthToken,
 } from './index.js'
 
@@ -223,27 +222,6 @@ User.hasMany(ModuleGrade, {
   as: 'modulegrades',
 })
 
-// CourseGrade associations
-CourseGrade.belongsTo(Course, {
-  foreignKey: 'course_id',
-  as: 'course',
-})
-
-CourseGrade.belongsTo(User, {
-  foreignKey: 'user_id',
-  as: 'user',
-})
-
-Course.hasMany(CourseGrade, {
-  foreignKey: 'course_id',
-  as: 'coursegrades',
-})
-
-User.hasMany(CourseGrade, {
-  foreignKey: 'user_id',
-  as: 'coursegrades',
-})
-
 export {
   User,
   Teacher,
@@ -262,6 +240,5 @@ export {
   Submission,
   AnswerResponse,
   ModuleGrade,
-  CourseGrade,
   AuthToken,
 }

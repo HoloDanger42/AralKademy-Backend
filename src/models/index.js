@@ -16,7 +16,6 @@ import { QuestionOption } from './QuestionOption.js'
 import { Submission } from './Submission.js'
 import { AnswerResponse } from './AnswerResponse.js'
 import { ModuleGrade } from './ModuleGrade.js'
-import { CourseGrade } from './CourseGrade.js'
 import { AuthToken } from './AuthToken.js'
 
 export {
@@ -38,6 +37,5 @@ export {
   Submission,
   AnswerResponse,
   ModuleGrade,
-  CourseGrade,
   AuthToken,
 }

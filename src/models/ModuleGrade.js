@@ -41,6 +41,12 @@ const ModuleGrade = sequelize.define(
         timestamps: true,
         underscored: true,
         paranoid: true,
+        indexes: [
+            {
+                unique: true,
+                fields: ['user_id', 'module_id'],
+            },
+        ],
     }
 )  
 

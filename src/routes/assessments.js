@@ -1005,7 +1005,7 @@ router.get(
  * @swagger
  * /assessments/{assessmentId}/my-submissions:
  *   get:
- *     summary: Get the current user's submissions for an assessment
+ *     summary: Get the current user's all submissions for an assessment
  *     tags: [Assessments]
  *     security:
  *       - bearerAuth: []
@@ -1062,6 +1062,7 @@ router.get(
 router.get(
   '/:assessmentId/my-submissions',
   rbac.allAuthenticated,
+  validateRequest(assessmentSchemas.getStudentSubmissions),
   getStudentSubmissions
 )
 
@@ -1069,7 +1070,7 @@ router.get(
  * @swagger
  * /assessments/{assessmentId}/my-submission:
  *   get:
- *     summary: Get the current user's submission for an assessment
+ *     summary: Get the current user's latest submission for an assessment
  *     tags: [Assessments]
  *     security:
  *       - bearerAuth: []
