@@ -2,7 +2,7 @@ import { jest } from '@jest/globals'
 import {
   createAssessment,
   getAssessmentById,
-  getAssessmentsForCourse,
+  getAssessmentsForModule,
   addQuestion,
   startSubmission,
   saveAnswer,
@@ -143,28 +143,28 @@ describe('Assessment Controller', () => {
     })
   })
 
-  describe('getAssessmentsForCourse', () => {
-    test('should get all assessments for a course successfully', async () => {
+  describe('getAssessmentsForModule', () => {
+    test('should get all assessments for a module successfully', async () => {
       // Arrange
-      const courseId = '1'
-      mockReq.params.courseId = courseId
+      const moduleId = '1'
+      mockReq.params.moduleId = moduleId
       mockReq.query.includeQuestions = 'true'
 
       const mockAssessments = [
-        { id: 1, title: 'Quiz 1', course_id: 1 },
-        { id: 2, title: 'Assignment 1', course_id: 1 },
+        { id: 1, title: 'Quiz 1', module_id: 1 },
+        { id: 2, title: 'Assignment 1', module_id: 1 },
       ]
 
       jest
-        .spyOn(AssessmentService.prototype, 'getAssessmentsForCourse')
+        .spyOn(AssessmentService.prototype, 'getAssessmentsForModule')
         .mockResolvedValue(mockAssessments)
 
       // Act
-      await getAssessmentsForCourse(mockReq, mockRes)
+      await getAssessmentsForModule(mockReq, mockRes)
 
       // Assert
-      expect(AssessmentService.prototype.getAssessmentsForCourse).toHaveBeenCalledWith(
-        courseId,
+      expect(AssessmentService.prototype.getAssessmentsForModule).toHaveBeenCalledWith(
+        moduleId,
         true
       )
       expect(mockRes.status).toHaveBeenCalledWith(200)
@@ -174,22 +174,22 @@ describe('Assessment Controller', () => {
       })
     })
 
-    test('should handle course not found', async () => {
+    test('should handle module not found', async () => {
       // Arrange
-      mockReq.params.courseId = '999'
+      mockReq.params.moduleId = '999'
 
-      const error = new Error('Course not found')
-      jest.spyOn(AssessmentService.prototype, 'getAssessmentsForCourse').mockRejectedValue(error)
+      const error = new Error('Module not found')
+      jest.spyOn(AssessmentService.prototype, 'getAssessmentsForModule').mockRejectedValue(error)
 
       // Act
-      await getAssessmentsForCourse(mockReq, mockRes)
+      await getAssessmentsForModule(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
       expect(mockRes.json).toHaveBeenCalledWith({
         error: {
           code: 'NOT_FOUND',
-          message: 'Course not found',
+          message: 'Module not found',
         },
       })
       expect(log.error).toHaveBeenCalled()

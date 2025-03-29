@@ -417,5 +417,65 @@ describe('Module Service', () => {
       await expect(moduleService.updateModuleContent(1, 'Updated Content', 'http://valid-link.com'))
         .rejects.toThrow('Failed to update content');
     });
-  });  
+  });
+
+  describe('getModuleGradeOfUser', () => {
+    const userId = 1;
+    const moduleId = 10;
+    
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+  
+    test('should return an error if the user is not found', async () => {
+      User.findByPk.mockResolvedValue(null);
+      
+      await expect(getModuleGradeOfUser(userId, moduleId)).rejects.toThrow('User not found');
+    });
+  
+    test('should return an error if the module is not found', async () => {
+      User.findByPk.mockResolvedValue({ id: userId });
+      Module.findByPk.mockResolvedValue(null);
+      
+      await expect(getModuleGradeOfUser(userId, moduleId)).rejects.toThrow('Module not found');
+    });
+  
+    test('should return { allGraded: false, allPassed: false, averageScore: 0 } if no assessments exist', async () => {
+      User.findByPk.mockResolvedValue({ id: userId });
+      Module.findByPk.mockResolvedValue({ id: moduleId });
+      Assessment.findAll.mockResolvedValue([]);
+      
+      const result = await getModuleGradeOfUser(userId, moduleId);
+      expect(result).toEqual({ allGraded: false, allPassed: false, averageScore: 0 });
+    });
+  
+    test('should return correct grade summary when assessments exist but no submissions', async () => {
+      User.findByPk.mockResolvedValue({ id: userId });
+      Module.findByPk.mockResolvedValue({ id: moduleId });
+      Assessment.findAll.mockResolvedValue([{ id: 1 }, { id: 2 }]);
+      Submission.findAll.mockResolvedValue([]);
+      
+      const result = await getModuleGradeOfUser(userId, moduleId);
+      expect(result).toEqual({ allGraded: false, allPassed: false, averageScore: 0 });
+    });
+  
+    test('should return correct grade summary when assessments and submissions exist', async () => {
+      User.findByPk.mockResolvedValue({ id: userId });
+      Module.findByPk.mockResolvedValue({ id: moduleId });
+      Assessment.findAll.mockResolvedValue([{ id: 1 }, { id: 2 }]);
+      Submission.findAll.mockResolvedValue([
+        { assessmentId: 1, grade: 80 },
+        { assessmentId: 2, grade: 90 }
+      ]);
+      
+      const result = await getModuleGradeOfUser(userId, moduleId);
+      expect(result).toEqual({ allGraded: true, allPassed: true, averageScore: 85 });
+    });
+  
+    test('should handle database errors gracefully', async () => {
+      User.findByPk.mockRejectedValue(new Error('Database error'));
+      
+      await expect(getModuleGradeOfUser(userId, moduleId)).rejects.toThrow('Database error');
+    });
+  });
 });

@@ -8,7 +8,7 @@ describe('Assessment Service', () => {
   let mockQuestionOptionModel
   let mockSubmissionModel
   let mockAnswerResponseModel
-  let mockCourseModel
+  let mockModuleModel
   let mockUserModel
 
   beforeEach(() => {
@@ -48,7 +48,7 @@ describe('Assessment Service', () => {
       count: jest.fn(),
     }
 
-    mockCourseModel = {
+    mockModuleModel = {
       findByPk: jest.fn(),
     }
 
@@ -60,7 +60,7 @@ describe('Assessment Service', () => {
       mockQuestionOptionModel,
       mockSubmissionModel,
       mockAnswerResponseModel,
-      mockCourseModel,
+      mockModuleModel,
       mockUserModel
     )
   })
@@ -71,39 +71,39 @@ describe('Assessment Service', () => {
       const assessmentData = {
         title: 'Test Assessment',
         description: 'Test description',
-        course_id: 1,
+        module_id: 1,
         type: 'quiz',
       }
 
       const expectedAssessment = { id: 1, ...assessmentData }
-      mockCourseModel.findByPk.mockResolvedValue({ id: 1 })
+      mockModuleModel.findByPk.mockResolvedValue({ id: 1 })
       mockAssessmentModel.create.mockResolvedValue(expectedAssessment)
 
       // Act
       const result = await assessmentService.createAssessment(assessmentData)
 
       // Assert
-      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(1)
+      expect(mockModuleModel.findByPk).toHaveBeenCalledWith(1)
       expect(mockAssessmentModel.create).toHaveBeenCalledWith(assessmentData)
       expect(result).toEqual(expectedAssessment)
     })
 
-    test('should throw error if course does not exist', async () => {
+    test('should throw error if module does not exist', async () => {
       // Arrange
       const assessmentData = {
         title: 'Test Assessment',
         description: 'Test description',
-        course_id: 999, // Non-existent course
+        module_id: 999, 
         type: 'quiz',
       }
 
-      mockCourseModel.findByPk.mockResolvedValue(null)
+      mockModuleModel.findByPk.mockResolvedValue(null)
 
       // Act & Assert
       await expect(assessmentService.createAssessment(assessmentData)).rejects.toThrow(
-        'Course not found'
+        'Module not found'
       )
-      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(999)
+      expect(mockModuleModel.findByPk).toHaveBeenCalledWith(999)
       expect(mockAssessmentModel.create).not.toHaveBeenCalled()
     })
   })
@@ -213,24 +213,24 @@ describe('Assessment Service', () => {
     })
   })
 
-  describe('getAssessmentsForCourse', () => {
+  describe('getAssessmentsForModule', () => {
     test('should get assessments without questions', async () => {
       // Arrange
-      const courseId = 1
+      const moduleId = 1
       const mockAssessments = [
-        { id: 1, title: 'Quiz 1', course_id: courseId },
-        { id: 2, title: 'Assignment 1', course_id: courseId },
+        { id: 1, title: 'Quiz 1', module_id: moduleId },
+        { id: 2, title: 'Assignment 1', module_id: moduleId },
       ]
 
-      mockCourseModel.findByPk.mockResolvedValue({ id: courseId, name: 'Test Course' })
+      mockModuleModel.findByPk.mockResolvedValue({ id: moduleId, name: 'Test Module' })
       mockAssessmentModel.findAll.mockResolvedValue(mockAssessments)
 
       // Act
-      const result = await assessmentService.getAssessmentsForCourse(courseId, false)
+      const result = await assessmentService.getAssessmentsForModule(moduleId, false)
 
       // Assert
       expect(mockAssessmentModel.findAll).toHaveBeenCalledWith({
-        where: { course_id: courseId },
+        where: { module_id: moduleId },
         include: [],
       })
       expect(result).toEqual(mockAssessments)
@@ -238,25 +238,25 @@ describe('Assessment Service', () => {
 
     test('should get assessments with questions', async () => {
       // Arrange
-      const courseId = 1
+      const moduleId = 1
       const mockAssessments = [
         {
           id: 1,
           title: 'Quiz 1',
-          course_id: courseId,
+          module_id: moduleId,
           questions: [{ id: 1, question_text: 'Question 1', options: [] }],
         },
       ]
 
-      mockCourseModel.findByPk.mockResolvedValue({ id: courseId, name: 'Test Course' })
+      mockModuleModel.findByPk.mockResolvedValue({ id: moduleId, name: 'Test Module' })
       mockAssessmentModel.findAll.mockResolvedValue(mockAssessments)
 
       // Act
-      const result = await assessmentService.getAssessmentsForCourse(courseId, true)
+      const result = await assessmentService.getAssessmentsForModule(moduleId, true)
 
       // Assert
       expect(mockAssessmentModel.findAll).toHaveBeenCalledWith({
-        where: { course_id: courseId },
+        where: { module_id: moduleId },
         include: [
           expect.objectContaining({
             model: mockQuestionModel,
@@ -355,16 +355,19 @@ describe('Assessment Service', () => {
       // Arrange
       const assessmentId = 1
       const userId = 2
-
+    
       mockSubmissionModel.findOne.mockResolvedValue(null)
-
+    
       const mockAssessment = {
         id: assessmentId,
         title: 'Test Assessment',
         max_score: 100,
+        allowed_attempts: 3, // Ensure allowed_attempts is defined
       }
       mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
-
+    
+      mockSubmissionModel.count = jest.fn().mockResolvedValue(0) // Mock submission count
+    
       const mockSubmission = {
         id: 1,
         assessment_id: assessmentId,
@@ -373,10 +376,10 @@ describe('Assessment Service', () => {
         status: 'in_progress',
       }
       mockSubmissionModel.create.mockResolvedValue(mockSubmission)
-
+    
       // Act
       const result = await assessmentService.startSubmission(assessmentId, userId)
-
+    
       // Assert
       expect(mockSubmissionModel.findOne).toHaveBeenCalledWith({
         where: {
@@ -386,6 +389,12 @@ describe('Assessment Service', () => {
         },
       })
       expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId)
+      expect(mockSubmissionModel.count).toHaveBeenCalledWith({
+        where: {
+          assessment_id: assessmentId,
+          user_id: userId,
+        },
+      })
       expect(mockSubmissionModel.create).toHaveBeenCalledWith({
         assessment_id: assessmentId,
         user_id: userId,
@@ -393,7 +402,7 @@ describe('Assessment Service', () => {
         status: 'in_progress',
       })
       expect(result).toEqual(mockSubmission)
-    })
+    })    
 
     test('should return existing submission if one exists', async () => {
       // Arrange
