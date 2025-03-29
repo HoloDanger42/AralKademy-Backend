@@ -10,7 +10,7 @@ class AssessmentService {
    * @param {Object} QuestionOptionModel - The model for question options
    * @param {Object} SubmissionModel - The model for submissions
    * @param {Object} AnswerResponseModel - The model for answer responses
-   * @param {Object} CourseModel - The model for courses
+   * @param {Object} ModuleModel - The model for modules
    * @param {Object} UserModel - The model for users
    */
   constructor(
@@ -19,7 +19,7 @@ class AssessmentService {
     QuestionOptionModel,
     SubmissionModel,
     AnswerResponseModel,
-    CourseModel,
+    ModuleModel,
     UserModel
   ) {
     this.AssessmentModel = AssessmentModel
@@ -27,7 +27,7 @@ class AssessmentService {
     this.QuestionOptionModel = QuestionOptionModel
     this.SubmissionModel = SubmissionModel
     this.AnswerResponseModel = AnswerResponseModel
-    this.CourseModel = CourseModel
+    this.ModuleModel = ModuleModel
     this.UserModel = UserModel
   }
 
@@ -38,14 +38,18 @@ class AssessmentService {
    */
   async createAssessment(assessmentData) {
     try {
-      // Verify that the course exists
-      const course = await this.CourseModel.findByPk(assessmentData.course_id)
-      if (!course) {
-        throw new Error('Course not found')
+      // Verify that the module exists
+      const module = await this.ModuleModel.findByPk(assessmentData.module_id)
+      if (!module) {
+        throw new Error('Module not found')
       }
 
       if (assessmentData.passing_score && assessmentData.passing_score > assessmentData.max_score) {
         throw new Error('Passing score cannot exceed maximum score')
+      }
+
+      if (assessmentData.allowed_attempts && assessmentData.allowed_attempts <= 0) {
+        throw new Error('Invalid allowed attemps')
       }
 
       return await this.AssessmentModel.create(assessmentData)
@@ -98,16 +102,16 @@ class AssessmentService {
   }
 
   /**
-   * Gets assessments for a course
-   * @param {number} courseId - ID of the course
+   * Gets assessments for a module
+   * @param {number} moduleId - ID of the module
    * @param {boolean} includeQuestions - Whether to include questions
-   * @returns {Promise<Array>} The assessments for the course
+   * @returns {Promise<Array>} The assessments for the module
    */
-  async getAssessmentsForCourse(courseId, includeQuestions = false) {
+  async getAssessmentsForModule(moduleId, includeQuestions = false) {
     try {
-      const course = await this.CourseModel.findByPk(courseId)
-      if (!course) {
-        throw new Error('Course not found')
+      const module = await this.ModuleModel.findByPk(moduleId)
+      if (!module) {
+        throw new Error('Module not found')
       }
 
       const include = []
@@ -128,7 +132,7 @@ class AssessmentService {
       }
 
       return await this.AssessmentModel.findAll({
-        where: { course_id: courseId },
+        where: { module_id: moduleId },
         include,
       })
     } catch (error) {
@@ -196,13 +200,12 @@ class AssessmentService {
           user_id: userId,
           status: 'in_progress',
         },
-      })
+      }) 
 
       if (existingSubmission) {
         return existingSubmission
-      }
+      } 
 
-      // Get the assessment to check if it exists and get max score
       const assessment = await this.AssessmentModel.findByPk(assessmentId)
       if (!assessment) {
         throw new Error('Assessment not found')
@@ -589,11 +592,11 @@ class AssessmentService {
         throw new Error('Assessment not found')
       }
 
-      // If course_id is being updated, verify the course exists
-      if (assessmentData.course_id && assessmentData.course_id !== assessment.course_id) {
-        const course = await this.CourseModel.findByPk(assessmentData.course_id)
-        if (!course) {
-          throw new Error('Course not found')
+      // If module_id is being updated, verify the module exists
+      if (assessmentData.module_id && assessmentData.module_id !== assessment.module_id) {
+        const module = await this.ModuleModel.findByPk(assessmentData.module_id)
+        if (!module) {
+          throw new Error('Module not found')
         }
       }
 
@@ -604,6 +607,10 @@ class AssessmentService {
         (assessmentData.max_score && assessmentData.passing_score > assessmentData.max_score)
       ) {
         throw new Error('Passing score cannot exceed maximum score')
+      }
+
+      if (assessmentData.allowed_attempts && assessmentData.allowed_attempts <= 0) {
+        throw new Error('Invalid allowed attemps')
       }
 
       // Update the assessment

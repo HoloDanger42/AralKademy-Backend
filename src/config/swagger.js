@@ -1,5 +1,6 @@
 import swaggerJSDoc from 'swagger-jsdoc'
 import config from './config.js'
+import { ModuleGrade } from '../models/associate.js'
 
 const options = {
   definition: {
@@ -202,6 +203,26 @@ const options = {
             feedback: { type: 'string' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        ModuleGrade: {
+          type: 'object',
+          properties: {
+            module_grade_id: { type: 'integer' },
+            module_id: { type: 'integer' },
+            user_id: { type: 'integer' },
+            grade: { type: 'float' },
+          },
+        },
+
+        CourseGrade: {
+          type: 'object',
+          properties: {
+            course_grade_id: { type: 'integer' },
+            course_id: { type: 'integer' },
+            user_id: { type: 'integer' },
+            grade: { type: 'float' },
           },
         },
       },

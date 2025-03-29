@@ -1,10 +1,10 @@
 import ModuleService from '../services/moduleService.js'
-import { Module, Course, Content } from '../models/index.js'
+import { Module, Course, Content, Assessment, Submission, ModuleGrade, User } from '../models/index.js'
 import { log } from '../utils/logger.js'
 import { handleControllerError } from '../utils/errorHandler.js'
 
 // Instantiate module service
-const moduleService = new ModuleService(Module, Course, Content)
+const moduleService = new ModuleService(Module, Course, Content, Assessment, Submission, ModuleGrade, User)
 
 /**
  * Creates a new module.
@@ -183,8 +183,19 @@ const getContentsByModuleId = async (req, res) => {
     res.status(200).json(contents)
     log.info(`Contents retrieved successfully`)
   } catch (error) {
-        return handleControllerError(error, res, 'Get contents by module ID', 'Error fetching contents')
+    return handleControllerError(error, res, 'Get contents by module ID', 'Error fetching contents')
+  }
 }
+
+const getModuleGradeOfUser = async (req, res) => {
+  try {
+    const { id, moduleId } = req.params
+    const moduleGrade = await moduleService.getModuleGradeOfUser(id, moduleId)
+    res.status(200).json(moduleGrade)
+    log.info('Module grade retreived successfully')
+  } catch (error) {
+    return handleControllerError(error, res, 'Get module grade of user', 'Error fetching module grade')
+  }
 }
 
 export {
@@ -196,5 +207,6 @@ export {
     addModuleContent,
     updateModuleContent,
     deleteModuleContent,
-    getContentsByModuleId
+    getContentsByModuleId,
+    getModuleGradeOfUser,
 }

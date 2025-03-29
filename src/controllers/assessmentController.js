@@ -6,7 +6,7 @@ import {
   QuestionOption,
   Submission,
   AnswerResponse,
-  Course,
+  Module,
   User,
 } from '../models/index.js'
 
@@ -16,7 +16,7 @@ const assessmentService = new AssessmentService(
   QuestionOption,
   Submission,
   AnswerResponse,
-  Course,
+  Module,
   User
 )
 
@@ -51,17 +51,17 @@ export const getAssessmentById = async (req, res) => {
   }
 }
 
-export const getAssessmentsForCourse = async (req, res) => {
+export const getAssessmentsForModule = async (req, res) => {
   try {
-    const { courseId } = req.params
+    const { moduleId } = req.params
     const includeQuestions = req.query.includeQuestions === 'true'
-    const assessments = await assessmentService.getAssessmentsForCourse(courseId, includeQuestions)
+    const assessments = await assessmentService.getAssessmentsForModule(moduleId, includeQuestions)
     res.status(200).json({
       success: true,
       assessments,
     })
   } catch (error) {
-    handleControllerError(error, res, 'Get assessments for course', 'Error getting assessments')
+    handleControllerError(error, res, 'Get assessments for module', 'Error getting assessments')
   }
 }
 

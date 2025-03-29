@@ -23,10 +23,14 @@ class ModuleService {
    * @param {Object} moduleModel - The model representing modules.
    * @param {Object} courseModel - The model representing courses.
    */
-  constructor(moduleModel, courseModel, contentModel) {
+  constructor(moduleModel, courseModel, contentModel, assessmentModel, submissionModel, moduleGradeModel, userModel) {
     this.moduleModel = moduleModel
     this.courseModel = courseModel
     this.contentModel = contentModel
+    this.assessmentModel = assessmentModel
+    this.submissionModel = submissionModel
+    this.moduleGradeModel = moduleGradeModel
+    this.userModel = userModel
   }
 
   /**
@@ -383,6 +387,82 @@ class ModuleService {
       throw new Error('Failed to get contents')
     }
   }
+
+  async getModuleGradeOfUser(id, moduleId) {
+    try {
+      const user = await this.userModel.findByPk(id);
+      if (!user) {
+        throw new Error('User not found');
+      }
+  
+      const module = await this.moduleModel.findByPk(moduleId);
+      if (!module) {
+        throw new Error('Module not found');
+      }
+  
+      const assessments = await this.assessmentModel.findAll({
+        where: { module_id: moduleId },
+        attributes: ['id', 'passing_score']
+      });
+  
+      if (assessments.length === 0) {
+        return { allGraded: false, allPassed: false, averageScore: 0 };
+      }
+  
+      const highestScoreSubmissions = await Promise.all(
+        assessments.map(async (assessment) => {
+          const highestSubmission = await this.submissionModel.findOne({
+            where: { 
+              user_id: id, 
+              assessment_id: assessment.id, 
+              status: 'graded'
+            },
+            order: [['score', 'DESC']]
+          });
+  
+          return highestSubmission
+            ? {
+                score: highestSubmission.score,
+                passed: highestSubmission.score >= assessment.passing_score
+              }
+            : null;
+        })
+      );
+  
+      const validSubmissions = highestScoreSubmissions.filter(submission => submission !== null);
+  
+      const allGraded = validSubmissions.length === assessments.length;
+  
+      const allPassed = allGraded && validSubmissions.every(submission => submission.passed);
+  
+      const totalScore = validSubmissions.reduce((sum, submission) => sum + submission.score, 0);
+      const averageScore = validSubmissions.length > 0 
+        ? parseFloat((totalScore / validSubmissions.length).toFixed(2)) 
+        : 0;
+  
+      await this.moduleGradeModel.upsert({
+        user_id: id,
+        module_id: moduleId,
+        grade: averageScore,
+      });
+  
+      return { allGraded, allPassed, averageScore };
+  
+    } catch (error) {
+      log.error('Error getting contents:', error)
+
+      if (error.message === 'User not found') {
+        throw error
+      }
+
+      if (error.message === 'Module not found') {
+        throw error
+      }
+
+      throw new Error('Failed to get module grade');
+    }
+  }
+  
 }
 
 export default ModuleService
