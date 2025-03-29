@@ -121,14 +121,33 @@ export const submitAssessment = async (req, res) => {
 
 export const getSubmissionsForAssessment = async (req, res) => {
   try {
-    const { assessmentId, userId } = req.params
-    const submissions = await assessmentService.getSubmissionsForAssessment(assessmentId, userId)
+    const { assessmentId } = req.params
+    const submissions = await assessmentService.getSubmissionsForAssessment(assessmentId)
     res.status(200).json({
       success: true,
       submissions,
     })
   } catch (error) {
     handleControllerError(error, res, 'Get submissions for assessment', 'Error getting submissions')
+  }
+}
+
+export const getStudentSubmissions = async (req, res) => {
+  try {
+    const { assessmentId } = req.params
+    const userId = req.user.id
+    const includeAnswers = req.query.includeAnswers === 'true'
+    const submissions = await assessmentService.getStudentSubmission(
+      assessmentId,
+      userId,
+      includeAnswers
+    )
+    res.status(200).json({
+      success: true,
+      submissions,
+    })
+  } catch (error) {
+    handleControllerError(error, res, 'Get student submissions', 'Error getting student submissions')
   }
 }
 

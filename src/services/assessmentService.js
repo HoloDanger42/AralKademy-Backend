@@ -402,25 +402,14 @@ class AssessmentService {
   }
 
   /**
- * Gets submissions for an assessment
- * @param {number} assessmentId - ID of the assessment
- * @param {number|null} userId - (Optional) ID of the learner
- * @returns {Promise<Array>} The submissions
- */
-  async getSubmissionsForAssessment(assessmentId, userId = null) {
+   * Gets submissions for an assessment
+   * @param {number} assessmentId - ID of the assessment
+   * @returns {Promise<Array>} The submissions
+   */
+  async getSubmissionsForAssessment(assessmentId) {
     try {
-      const whereClause = { assessment_id: assessmentId };
-
-      if (userId) {
-        const user = await this.UserModel.findByPk(userId);
-        if (!user) {
-          throw new Error('User not found');
-        }
-        whereClause.user_id = userId;
-      }
-
       return await this.SubmissionModel.findAll({
-        where: whereClause,
+        where: { assessment_id: assessmentId },
         include: [
           {
             model: this.UserModel,
@@ -428,13 +417,55 @@ class AssessmentService {
             attributes: ['id', 'first_name', 'last_name', 'email'],
           },
         ],
-      });
+      })
     } catch (error) {
-      log.error('Get submissions error:', error);
-      throw error;
+      log.error('Get submissions error:', error)
+      throw error
     }
   }
 
+  /**
+ * Gets all of a student's submissions for an assessment
+ * @param {number} assessmentId - ID of the assessment
+ * @param {number} userId - ID of the user
+ * @param {boolean} includeAnswers - Whether to include answers
+ * @returns {Promise<Array>} The submissions
+ */
+  async getStudentSubmissions(assessmentId, userId, includeAnswers = false) {
+    try {
+      const where = {
+        assessment_id: assessmentId,
+        user_id: userId,
+      };
+
+      const include = [];
+
+      if (includeAnswers) {
+        include.push({
+          model: this.AnswerResponseModel,
+          as: 'answers',
+          include: [
+            {
+              model: this.QuestionModel,
+              as: 'question',
+            },
+            {
+              model: this.QuestionOptionModel,
+              as: 'selected_option',
+            },
+          ],
+        });
+      }
+
+      return await this.SubmissionModel.findAll({
+        where,
+        include,
+      });
+    } catch (error) {
+      log.error('Get student submissions error:', error);
+      throw error;
+    }
+  }
 
   /**
    * Gets a student's submission for an assessment
