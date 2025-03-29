@@ -41,6 +41,7 @@ const router = express.Router()
  *               - title
  *               - module_id
  *               - type
+ *               - allowed_attempts
  *             properties:
  *               title:
  *                 type: string
@@ -74,6 +75,9 @@ const router = express.Router()
  *               instructions:
  *                 type: string
  *                 example: "Answer all questions. You may use a calculator."
+ *               allowed_attempts:
+ *                 type: integer
+ *                 example: 2
  *     responses:
  *       201:
  *         description: Assessment created successfully
