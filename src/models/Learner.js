@@ -49,7 +49,7 @@ const Learner = sequelize.define(
         model: 'groups',
         key: 'group_id',
       },
-      onDelete: 'CASCADE',
+      onDelete: 'SET NULL',
     },
   },
   {

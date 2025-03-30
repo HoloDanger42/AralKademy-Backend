@@ -40,11 +40,15 @@ class CourseService {
    * @param {Object} courseModel - The model representing courses.
    * @param {Object} userModel - The model representing users.
    * @param {Object} groupModel - The model representing groups.
+   * @param {Object} learnerModel - The model representing learners.
+   * @param {Object} studentTeacherModel - The model representing student-teachers.
    */
-  constructor(courseModel, userModel, groupModel) {
+  constructor(courseModel, userModel, groupModel, learnerModel, studentTeacherModel) {
     this.courseModel = courseModel
     this.userModel = userModel
     this.groupModel = groupModel
+    this.learnerModel = learnerModel
+    this.studentTeacherModel = studentTeacherModel
   }
 
   /**
@@ -418,6 +422,60 @@ class CourseService {
 
       // Wrap all other errors with a generic message
       throw new Error('Failed to assign student teacher group to course')
+    }
+  }
+
+  /**
+   * Retrieves all courses of a user (learner or student teacher) by user ID.
+   * @async
+   * @param {number|string} userId - The ID of the user to retrieve courses for.
+   * @returns {Promise<Array<Object>>} An array of course objects associated with the user.
+   * @throws {Error} Throws an error if the user is not found or if the learner or student teacher is not found.
+   */
+  async getCoursesOfUser(id) {
+    try {
+      const user = await this.userModel.findByPk(id)
+      if (!user) {
+        throw new Error('User not found')
+      }
+
+      if (user.role === 'learner') {
+        const learner = await this.learnerModel.findOne({ where: { user_id: id } })
+        if (!learner) {
+          throw new Error('Learner not found')
+        }
+  
+        const courses = await this.courseModel.findAll({
+          where: { learner_group_id: learner.group_id },
+        })
+       
+        return courses
+      } else if (user.role === 'student_teacher') {
+        const studentTeacher = await this.studentTeacherModel.findOne({ where: { user_id: id } })
+        if (!studentTeacher) {
+          throw new Error('Student teacher not found')
+        }
+  
+        const courses = await this.courseModel.findAll({
+          where: { student_teacher_group_id: studentTeacher.group_id },
+        })
+
+        return courses
+      } else if (user.role === 'teacher') {
+        const courses = await this.courseModel.findAll({
+          where: { user_id: user.id },
+        })
+
+        return courses
+      }
+    } catch (error) {
+      log.error(`Error getting courses of learner with ID ${id}:`, error)
+      if (error.message === 'User not found' 
+        || error.message === 'Learner not found'
+        || error.message === 'Student teacher not found') {
+        throw error
+      }
+      throw new Error('Failed to fetch courses of learner')
     }
   }
 }

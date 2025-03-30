@@ -15,6 +15,7 @@ import {
   QuestionOption,
   Submission,
   AnswerResponse,
+  ModuleGrade,
   AuthToken,
 } from './index.js'
 
@@ -123,14 +124,14 @@ Module.hasMany(Content, { foreignKey: 'module_id', as: 'contents' })
 Content.belongsTo(Module, { foreignKey: 'module_id', as: 'module' })
 
 // Assessment associations
-Course.hasMany(Assessment, {
-  foreignKey: 'course_id',
+Module.hasMany(Assessment, {
+  foreignKey: 'module_id',
   as: 'assessments',
   onDelete: 'CASCADE',
 })
-Assessment.belongsTo(Course, {
-  foreignKey: 'course_id',
-  as: 'course',
+Assessment.belongsTo(Module, {
+  foreignKey: 'module_id',
+  as: 'module',
 })
 
 // Question associations
@@ -200,6 +201,27 @@ AnswerResponse.belongsTo(QuestionOption, {
   as: 'selected_option',
 })
 
+// ModuleGrade associations
+ModuleGrade.belongsTo(Module, {
+  foreignKey: 'module_id',
+  as: 'module',
+})
+
+ModuleGrade.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+})
+
+Module.hasMany(ModuleGrade, {
+  foreignKey: 'module_id',
+  as: 'modulegrades',
+})
+
+User.hasMany(ModuleGrade, {
+  foreignKey: 'user_id',
+  as: 'modulegrades',
+})
+
 export {
   User,
   Teacher,
@@ -217,5 +239,6 @@ export {
   QuestionOption,
   Submission,
   AnswerResponse,
+  ModuleGrade,
   AuthToken,
 }

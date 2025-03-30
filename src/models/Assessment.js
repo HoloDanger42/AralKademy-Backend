@@ -22,12 +22,12 @@ export const Assessment = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    course_id: {
+    module_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'courses',
-        key: 'id',
+        model: 'modules',
+        key: 'module_id',
       },
     },
     type: {
@@ -73,6 +73,16 @@ export const Assessment = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
       comment: 'Instructions for students taking the assessment',
+    },
+    allowed_attempts: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      validate: {
+        min: {
+          args: [1],
+          msg: 'Allowed attemps must be at least one',
+        },
+      },
     },
   },
   {

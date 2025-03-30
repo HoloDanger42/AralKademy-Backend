@@ -100,6 +100,7 @@ const getAllUsers = async (req, res) => {
       totalPages: Math.ceil(users.count / limit),
       currentPage: page,
       users: users.rows,
+      roleCounts: users.roleCounts
     })
     
     log.info('Retrieved all users');
@@ -156,6 +157,28 @@ const deleteUser = async (req, res) => {
       res,
       `Delete user ${req.params.id}`,
       'Failed to delete user'
+    )
+  }
+}
+
+/**
+ * Changes the password of the user.
+ * @param {Object} req - The request object containing the user ID and new password.
+ * @param {Object} res - The response object.
+ */
+const changePassword = async (req, res) => {
+  try {
+    const { userId } = req.params
+    const { oldPassword, newPassword, confirmPassword } = req.body
+    await userService.changePassword(userId, oldPassword, newPassword, confirmPassword)
+    res.status(200).json({ message: 'Password changed successfully' })
+    log.info(`Password changed for user with ID ${userId}`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Change password for user with ID ${req.params.userId}`,
+      'Failed to change password'
     )
   }
 }
@@ -296,6 +319,47 @@ const updateUser = async (req, res) => {
   }
 }
 
+/**
+ * Restores a user that has been soft-deleted.
+ * @param {Object} req - The request object containing the user ID.
+ * @param {Object} res - The response object.
+ */
+const restoreUser = async (req, res) => {
+  try {
+    const { id } = req.params
+    const user = await userService.restoreUser(id)
+    res.status(200).json({ message: 'User restored successfully ', user })
+    log.info(`User with ID ${id} restored successfully`)
+  } catch (error) {
+    return handleControllerError(error, res, 'Restore user', 'Failed to restore user')
+  }
+}
+
+/**
+ * Retrieves all deleted users.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+const getAllDeletedUsers = async (req, res) => {
+  try {
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 10
+
+    const users = await userService.getAllDeletedUsers(page, limit)
+
+    res.status(200).json({
+      count: users.count,
+      totalPages: Math.ceil(users.count / limit),
+      currentPage: page,
+      users: users.rows,
+    })
+    
+    log.info('Retrieved all deleted users');
+  } catch (error) {
+    return handleControllerError(error, res, 'Get all deleted users', 'Failed to retrieve deleted users')
+  }
+}
+
 export {
   createUser,
   getAllUsers,
@@ -307,4 +371,7 @@ export {
   getAvailableLearners,
   getAvailableStudentTeachers,
   updateUser,
+  changePassword,
+  restoreUser,
+  getAllDeletedUsers,
 }

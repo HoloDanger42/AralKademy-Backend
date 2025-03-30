@@ -8,7 +8,8 @@ import {
     addModuleContent,
     updateModuleContent,
     deleteModuleContent,
-    getContentsByModuleId
+    getContentsByModuleId,
+    getModuleGradeOfUser
 } from '../controllers/moduleController.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
 
@@ -520,5 +521,59 @@ moduleRouter.delete('/content/:contentId', rbac.studentTeacherAndAbove, deleteMo
  *               $ref: '#/components/schemas/Error'
  */
 moduleRouter.get('/:moduleId/contents', rbac.allAuthenticated, getContentsByModuleId)
+
+/**
+ * @swagger
+ * /modules/{moduleId}/{id}/module-grade:
+ *   get:
+ *     summary: Get the module grade of a user
+ *     tags: [Modules]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: moduleId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID of the module
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID of the user
+ *     responses:
+ *       200:
+ *         description: User's module grade information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 allGraded:
+ *                   type: boolean
+ *                   example: true
+ *                 allPassed:
+ *                   type: boolean
+ *                   example: false
+ *                 averageScore:
+ *                   type: number
+ *                   format: float
+ *                   example: 85.5
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User or module not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+moduleRouter.get('/:moduleId/:id/module-grade', rbac.allAuthenticated, getModuleGradeOfUser)
 
 export { moduleRouter }

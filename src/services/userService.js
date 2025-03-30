@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken'
 import nodemailer from 'nodemailer'
 import config from '../config/config.js'
 import { log } from '../utils/logger.js'
+import { Op } from 'sequelize';
+import { Sequelize } from 'sequelize';
 
 // Configure nodemailer with proper error handling
 const transporter = (() => {
@@ -300,11 +302,19 @@ class UserService {
    * @returns {number} returns.count - Total number of users
    */
   async getAllUsers(page = 1, limit = 10) {
-    return await this.UserModel.findAndCountAll({
+    const { count, rows } = await this.UserModel.findAndCountAll({
       limit,
       offset: (page - 1) * limit,
       attributes: { exclude: ['password'] },
-    })
+    });
+  
+    const roleCounts = await this.UserModel.findAll({
+      attributes: ['role', [Sequelize.fn('COUNT', Sequelize.col('role')), 'count']],
+      group: ['role'],
+      raw: true
+    });
+  
+    return { count, rows, roleCounts };
   }
 
   /**
@@ -320,7 +330,7 @@ class UserService {
           model: this.LearnerModel,
           as: 'learner',
           where: { group_id: null },
-          required: false,
+          required: true,
         },
       ],
       attributes: { exclude: ['password'] },
@@ -340,7 +350,7 @@ class UserService {
           model: this.StudentTeacherModel,
           as: 'studentTeacher',
           where: { group_id: null },
-          required: false,
+          required: true,
         },
       ],
       attributes: { exclude: ['password'] },
@@ -502,12 +512,12 @@ class UserService {
    * @param {string|number} userId - The ID of the user
    * @param {string} oldPassword - The current password of the user
    * @param {string} newPassword - The new password to set
+   * @param {string} confirmPassword - The new password to confirm
    * @returns {Promise<boolean>} Returns true if password was changed successfully
    * @throws {Error} When user is not found
    * @throws {Error} When old password is invalid
    */
-  async changePassword(userId, oldPassword, newPassword) {
-    const transaction = await this.UserModel.sequelize.transaction()
+  async changePassword(userId, oldPassword, newPassword, confirmPassword) {
     try {
       const user = await this.UserModel.findByPk(userId)
       if (!user) throw new Error('User not found')
@@ -515,13 +525,18 @@ class UserService {
       const isValid = await bcrypt.compare(oldPassword, user.password)
       if (!isValid) throw new Error('Invalid password')
 
+      if (newPassword !== confirmPassword) {
+        throw new Error('newPassword and confirmPassword must be the same')
+      }
+  
       const hashedPassword = await bcrypt.hash(newPassword, 10)
-      await user.update({ password: hashedPassword }, { transaction })
+      this.validatePassword(newPassword)
 
-      await transaction.commit()
+      user.password = hashedPassword
+      await user.save()
       return true
     } catch (error) {
-      await transaction.rollback()
+      console.error('Change password error:', error)
       throw error
     }
   }
@@ -679,6 +694,7 @@ class UserService {
    * @async
    * @param {string} email - The email address of the user
    * @param {string} newPassword - The new password to set
+   * @param {string} confirmPassword - The new password to confirm
    * @throws {Error} When user is not found
    * @throws {Error} When password validation fails
    * @returns {Promise<boolean>} Returns true if password was reset successfully
@@ -705,6 +721,53 @@ class UserService {
     } catch (error) {
       log.error('Reset password error:', error)
       throw error
+    }
+  }
+
+  /**
+   * Retrieves all soft-deleted users from the database.
+   * @async
+   * @param {number} [page=1] - The page number to retrieve (defaults to 1)
+   * @param {number} [limit=10] - The number of users per page (defaults to 10)
+   * @returns {Promise<Object>} An object containing the deleted users and count
+   * @returns {Array} returns.rows - Array of deleted user objects
+   * @returns {number} returns.count - Total number of deleted users
+   * @throws {Error} If an error occurs while retrieving deleted users
+   */
+  async getAllDeletedUsers(page = 1, limit = 10) {
+    try {
+      return await this.UserModel.findAndCountAll({
+        where: { deleted_at: { [Op.ne]: null } }, // Use Op.ne to find non-null deleted_at
+        limit,
+        offset: (page - 1) * limit,
+        paranoid: false, // Include soft-deleted records
+        attributes: { exclude: ['password'] },
+      });
+    } catch (error) {
+      log.error('Error retrieving deleted users:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Soft deletes a user by their ID.
+   * @param {number} userId - The ID of the user to delete.
+   * @returns {Promise<Object>} The deleted user object.
+   */
+  async restoreUser(userId) {
+    const transaction = await this.UserModel.sequelize.transaction();
+    try {
+      const user = await this.UserModel.findByPk(userId, { paranoid: false, transaction });
+      if (!user) throw new Error('User not found');
+  
+      await user.restore({ transaction }); 
+  
+      await transaction.commit(); 
+      return user;
+    } catch (error) {
+      await transaction.rollback(); 
+      log.error('Restore user error:', error);
+      throw error;
     }
   }
 }

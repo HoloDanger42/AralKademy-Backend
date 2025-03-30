@@ -1,4 +1,4 @@
-import { Assessment, Question, Course } from '../../../src/models/index.js'
+import { Assessment, Question, Course, Module } from '../../../src/models/index.js'
 import { sequelize } from '../../../src/config/database.js'
 
 describe('Question Model', () => {
@@ -14,13 +14,20 @@ describe('Question Model', () => {
       status: 'active',
     })
 
+    const module = await Module.create({
+      name: 'Test Module',
+      course_id: course.id,
+      description: 'This is a test module',
+    })
+
     testAssessment = await Assessment.create({
       title: 'Test Assessment',
       description: 'Test Description',
-      course_id: course.id,
+      module_id: module.module_id,
       type: 'quiz',
       max_score: 100,
       passing_score: 60,
+      allowed_attempts: 2
     })
   })
 

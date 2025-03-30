@@ -4,7 +4,7 @@ import {
   getAssessmentById,
   updateAssessment,
   deleteAssessment,
-  getAssessmentsForCourse,
+  getAssessmentsForModule,
   addQuestion,
   updateQuestion,
   deleteQuestion,
@@ -12,6 +12,7 @@ import {
   saveAnswer,
   submitAssessment,
   getSubmissionsForAssessment,
+  getStudentSubmissions,
   getStudentSubmission,
   gradeSubmission,
   getSubmissionById,
@@ -38,8 +39,9 @@ const router = express.Router()
  *             type: object
  *             required:
  *               - title
- *               - course_id
+ *               - module_id
  *               - type
+ *               - allowed_attempts
  *             properties:
  *               title:
  *                 type: string
@@ -47,7 +49,7 @@ const router = express.Router()
  *               description:
  *                 type: string
  *                 example: "Comprehensive midterm covering chapters 1-5"
- *               course_id:
+ *               module_id:
  *                 type: integer
  *                 example: 1
  *               type:
@@ -73,6 +75,9 @@ const router = express.Router()
  *               instructions:
  *                 type: string
  *                 example: "Answer all questions. You may use a calculator."
+ *               allowed_attempts:
+ *                 type: integer
+ *                 example: 2
  *     responses:
  *       201:
  *         description: Assessment created successfully
@@ -117,19 +122,19 @@ router.post(
 
 /**
  * @swagger
- * /assessments/course/{courseId}:
+ * /assessments/module/{moduleId}:
  *   get:
- *     summary: Get all assessments for a course
+ *     summary: Get all assessments for a module
  *     tags: [Assessments]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: courseId
+ *         name: moduleId
  *         required: true
  *         schema:
  *           type: integer
- *         description: Course ID
+ *         description: Module ID
  *       - in: query
  *         name: includeQuestions
  *         schema:
@@ -153,7 +158,7 @@ router.post(
  *         description: Number of items per page
  *     responses:
  *       200:
- *         description: List of assessments for the course
+ *         description: List of assessments for the module
  *         content:
  *           application/json:
  *             schema:
@@ -188,17 +193,17 @@ router.post(
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       404:
- *         description: Course not found
+ *         description: Module not found
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
 router.get(
-  '/course/:courseId',
+  '/module/:moduleId',
   rbac.allAuthenticated,
-  validateRequest(assessmentSchemas.getAssessmentsForCourse),
-  getAssessmentsForCourse
+  validateRequest(assessmentSchemas.getAssessmentsForModule),
+  getAssessmentsForModule
 )
 
 /**
@@ -954,7 +959,7 @@ router.post(
  *                       - type: object
  *                         properties:
  *                           user:
- *                             $ref: '#/components/schemas/User'
+ *                             $ref: '#/components/schemas/User'     
  *                 pagination:
  *                   type: object
  *                   properties:
@@ -969,7 +974,7 @@ router.post(
  *                       example: 1
  *                     limit:
  *                       type: integer
- *                       example: 20
+ *                       example: 20 
  *       401:
  *         description: Unauthorized
  *         content:
@@ -998,9 +1003,74 @@ router.get(
 
 /**
  * @swagger
+ * /assessments/{assessmentId}/my-submissions:
+ *   get:
+ *     summary: Get the current user's all submissions for an assessment
+ *     tags: [Assessments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: assessmentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Assessment ID
+ *       - in: query
+ *         name: includeAnswers
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Whether to include user's answers
+ *     responses:
+ *       200:
+ *         description: User's submissions for the assessment
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 submissions:
+ *                   type: array
+ *                   items:
+ *                     allOf:
+ *                       - $ref: '#/components/schemas/Submission'
+ *                       - type: object
+ *                         properties:
+ *                           answers:
+ *                             type: array
+ *                             items:
+ *                               $ref: '#/components/schemas/AnswerResponse'
+ *                 assessment:
+ *                   $ref: '#/components/schemas/Assessment'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Assessment or submission not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get(
+  '/:assessmentId/my-submissions',
+  rbac.allAuthenticated,
+  validateRequest(assessmentSchemas.getStudentSubmissions),
+  getStudentSubmissions
+)
+
+/**
+ * @swagger
  * /assessments/{assessmentId}/my-submission:
  *   get:
- *     summary: Get the current user's submission for an assessment
+ *     summary: Get the current user's latest submission for an assessment
  *     tags: [Assessments]
  *     security:
  *       - bearerAuth: []

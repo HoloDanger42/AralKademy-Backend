@@ -9,6 +9,7 @@ import {
   assignTeacherCourse,
   assignLearnerGroupCourse,
   assignStudentTeacherGroupCourse,
+  getCoursesOfUser
 } from '../controllers/courseController.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
 
@@ -106,6 +107,51 @@ courseRouter.get('/', rbac.allAuthenticated, getAllCourses)
  *               $ref: '#/components/schemas/Error'
  */
 courseRouter.get('/:id', rbac.allAuthenticated, getCourseById)
+
+/**
+ * @swagger
+ * /courses/user/{id}:
+ *   get:
+ *     summary: Get all courses of a user
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: List of courses
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 courses:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Course'
+ *                 totalItems:
+ *                   type: integer
+ *                   example: 25
+ *                 totalPages:
+ *                   type: integer
+ *                   example: 3
+ *                 currentPage:
+ *                   type: integer
+ *                   example: 1
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+courseRouter.get('/user/:id', rbac.allAuthenticated, getCoursesOfUser)
 
 /**
  * @swagger

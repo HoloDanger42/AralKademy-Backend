@@ -204,6 +204,16 @@ const options = {
             updatedAt: { type: 'string', format: 'date-time' },
           },
         },
+
+        ModuleGrade: {
+          type: 'object',
+          properties: {
+            module_grade_id: { type: 'integer' },
+            module_id: { type: 'integer' },
+            user_id: { type: 'integer' },
+            grade: { type: 'float' },
+          },
+        },
       },
     },
     security: [{ bearerAuth: [] }],

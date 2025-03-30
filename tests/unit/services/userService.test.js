@@ -270,39 +270,38 @@ describe('UserService', () => {
 
   describe('Password Management', () => {
     it('should change password with valid credentials', async () => {
-      const user = await userService.createUser(
-        'test@example.com',
-        'password123',
-        'Test',
-        'User',
-        new Date('1990-01-01'),
-        '09123456789',
-        school.school_id,
-        'teacher'
-      )
+        const user = await userService.createUser(
+            'test@example.com',
+            'password123',
+            'Test',
+            'User',
+            new Date('1990-01-01'),
+            '09123456789',
+            school.school_id,
+            'teacher'
+        );
 
-      await expect(
-        userService.changePassword(user.id, 'password123', 'newpassword123')
-      ).resolves.toBe(true)
-    })
+        await expect(
+            userService.changePassword(user.id, 'password123', 'newpassword123', 'newpassword123')
+        ).resolves.toBe(true);
+    });
 
     it('should fail password change with invalid old password', async () => {
-      const user = await userService.createUser(
-        'test@example.com',
-        'password123',
-        'Test',
-        'User',
-        new Date('1990-01-01'),
-        '09123456789',
-        school.school_id,
-        'teacher'
-      )
-
-      await expect(
-        userService.changePassword(user.id, 'wrongpassword', 'newpassword123')
-      ).rejects.toThrow('Invalid password')
-    })
-  })
+        const user = await userService.createUser(
+            'test@example.com',
+            'password123',
+            'Test',
+            'User',
+            new Date('1990-01-01'),
+            '09123456789',
+            school.school_id,
+            'teacher'
+        );
+        await expect(
+            userService.changePassword(user.id, 'wrongpassword', 'newpassword123', 'newpassword123')
+        ).rejects.toThrow('Invalid password');
+    });
+  });
 
   describe('User Deletion', () => {
     let testUser
