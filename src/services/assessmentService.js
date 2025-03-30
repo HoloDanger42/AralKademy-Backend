@@ -1,5 +1,6 @@
 import { log } from '../utils/logger.js'
 import { Op } from 'sequelize'
+import ModuleService from './moduleService.js';
 
 class AssessmentService {
   /**
@@ -20,7 +21,10 @@ class AssessmentService {
     SubmissionModel,
     AnswerResponseModel,
     ModuleModel,
-    UserModel
+    UserModel,
+    CourseModel, 
+    ContentModel,
+    ModuleGradeModel
   ) {
     this.AssessmentModel = AssessmentModel
     this.QuestionModel = QuestionModel
@@ -29,6 +33,16 @@ class AssessmentService {
     this.AnswerResponseModel = AnswerResponseModel
     this.ModuleModel = ModuleModel
     this.UserModel = UserModel
+
+    this.moduleService = new ModuleService(
+      ModuleModel, 
+      CourseModel,
+      ContentModel,
+      AssessmentModel,
+      SubmissionModel,
+      ModuleGradeModel,
+      UserModel
+    );
   }
 
   /**
@@ -209,6 +223,21 @@ class AssessmentService {
       const assessment = await this.AssessmentModel.findByPk(assessmentId)
       if (!assessment) {
         throw new Error('Assessment not found')
+      }
+
+      const currentModule = await this.moduleService.getModuleById(assessment.module_id)
+
+      const courseModules = await this.moduleService.getModulesByCourseId(currentModule.course_id)
+
+      const currentModuleIndex = courseModules.findIndex(m => m.module_id === currentModule.module_id);
+
+      if (currentModuleIndex > 0) {
+        const prevModule = courseModules[currentModuleIndex - 1];
+        const prevModuleGrade = await this.moduleService.getModuleGradeOfUser(userId, prevModule.module_id);
+  
+        if (prevModuleGrade?.allPassed !== true) {
+          throw new Error(`Invalid attempt`);
+        }
       }
 
       const submissionCount = await this.SubmissionModel.count({

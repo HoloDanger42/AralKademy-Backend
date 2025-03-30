@@ -8,6 +8,9 @@ import {
   AnswerResponse,
   Module,
   User,
+  Course,
+  Content,
+  ModuleGrade,
 } from '../models/index.js'
 
 const assessmentService = new AssessmentService(
@@ -17,8 +20,11 @@ const assessmentService = new AssessmentService(
   Submission,
   AnswerResponse,
   Module,
-  User
-)
+  User,
+  Course,
+  Content,
+  ModuleGrade
+);
 
 export const createAssessment = async (req, res) => {
   try {

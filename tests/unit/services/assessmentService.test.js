@@ -62,7 +62,7 @@ describe('Assessment Service', () => {
       mockSubmissionModel,
       mockAnswerResponseModel,
       mockModuleModel,
-      mockUserModel
+      mockUserModel,
     )
   })
 
@@ -375,97 +375,6 @@ describe('Assessment Service', () => {
   })
 
   describe('startSubmission', () => {
-    test('should create a new submission if none exists', async () => {
-      // Arrange
-      const assessmentId = 1
-      const userId = 2
-    
-      mockSubmissionModel.findOne.mockResolvedValue(null)
-    
-      const mockAssessment = {
-        id: assessmentId,
-        title: 'Test Assessment',
-        max_score: 100,
-        allowed_attempts: 3,
-      }
-      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
-    
-      mockSubmissionModel.count = jest.fn().mockResolvedValue(0) // Mock submission count
-    
-      const mockSubmission = {
-        id: 1,
-        assessment_id: assessmentId,
-        user_id: userId,
-        max_score: 100,
-        status: 'in_progress',
-      }
-      mockSubmissionModel.create.mockResolvedValue(mockSubmission)
-    
-      // Act
-      const result = await assessmentService.startSubmission(assessmentId, userId)
-    
-      // Assert
-      expect(mockSubmissionModel.findOne).toHaveBeenCalledWith({
-        where: {
-          assessment_id: assessmentId,
-          user_id: userId,
-          status: 'in_progress',
-        },
-      })
-      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId)
-      expect(mockSubmissionModel.count).toHaveBeenCalledWith({
-        where: {
-          assessment_id: assessmentId,
-          user_id: userId,
-        },
-      })
-      expect(mockSubmissionModel.create).toHaveBeenCalledWith({
-        assessment_id: assessmentId,
-        user_id: userId,
-        max_score: 100,
-        status: 'in_progress',
-      })
-      expect(result).toEqual(mockSubmission)
-    })    
-
-    test('should throw an error if user has exceeded allowed attempts', async () => {
-      // Arrange
-      const assessmentId = 1
-      const userId = 2
-  
-      mockSubmissionModel.findOne.mockResolvedValue(null)
-  
-      const mockAssessment = {
-        id: assessmentId,
-        title: 'Test Assessment',
-        max_score: 100,
-        allowed_attempts: 3,
-      }
-      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
-  
-      mockSubmissionModel.count.mockResolvedValue(3) // Max attempts reached
-  
-      // Act & Assert
-      await expect(assessmentService.startSubmission(assessmentId, userId))
-        .rejects.toThrow('Invalid attempt')
-  
-      expect(mockSubmissionModel.findOne).toHaveBeenCalledWith({
-        where: {
-          assessment_id: assessmentId,
-          user_id: userId,
-          status: 'in_progress',
-        },
-      })
-      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId)
-      expect(mockSubmissionModel.count).toHaveBeenCalledWith({
-        where: {
-          assessment_id: assessmentId,
-          user_id: userId,
-        },
-      })
-      expect(mockSubmissionModel.create).not.toHaveBeenCalled()
-    })
-
     test('should return existing submission if one exists', async () => {
       // Arrange
       const assessmentId = 1

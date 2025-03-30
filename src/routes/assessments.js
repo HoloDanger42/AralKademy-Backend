@@ -328,6 +328,9 @@ router.get(
  *                 type: boolean
  *               instructions:
  *                 type: string
+ *               allowed_attempts:
+ *                 type: integer
+ *                 example: 2
  *     responses:
  *       200:
  *         description: Assessment updated successfully
