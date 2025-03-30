@@ -55,12 +55,6 @@ describe('Assessment Service', () => {
 
     mockUserModel = {}
 
-    mockModuleService = { 
-      getModuleById: jest.fn(),
-      getModulesByCourseId: jest.fn(),
-      getModuleGradeOfUser: jest.fn(),
-    }
-
     assessmentService = new AssessmentService(
       mockAssessmentModel,
       mockQuestionModel,
@@ -69,7 +63,6 @@ describe('Assessment Service', () => {
       mockAnswerResponseModel,
       mockModuleModel,
       mockUserModel,
-      mockModuleService
     )
   })
 
