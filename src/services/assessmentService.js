@@ -48,9 +48,9 @@ class AssessmentService {
         throw new Error('Passing score cannot exceed maximum score')
       }
 
-      if (assessmentData.allowed_attempts && assessmentData.allowed_attempts <= 0) {
-        throw new Error('Invalid allowed attemps')
-      }
+      if (assessmentData.allowed_attempts == null || assessmentData.allowed_attempts <= 0) {
+        throw new Error('Invalid allowed attempts')
+    }
 
       return await this.AssessmentModel.create(assessmentData)
     } catch (error) {
@@ -660,9 +660,9 @@ class AssessmentService {
         throw new Error('Passing score cannot exceed maximum score')
       }
 
-      if (assessmentData.allowed_attempts && assessmentData.allowed_attempts <= 0) {
-        throw new Error('Invalid allowed attemps')
-      }
+      if (assessmentData.allowed_attempts == null || assessmentData.allowed_attempts <= 0) {
+        throw new Error('Invalid allowed attempts')
+    }
 
       // Update the assessment
       await assessment.update(assessmentData)

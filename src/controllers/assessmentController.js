@@ -137,7 +137,7 @@ export const getStudentSubmissions = async (req, res) => {
     const { assessmentId } = req.params
     const userId = req.user.id
     const includeAnswers = req.query.includeAnswers === 'true'
-    const submissions = await assessmentService.getStudentSubmission(
+    const submissions = await assessmentService.getStudentSubmissions(
       assessmentId,
       userId,
       includeAnswers

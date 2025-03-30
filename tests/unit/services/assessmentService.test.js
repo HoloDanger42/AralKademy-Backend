@@ -16,6 +16,7 @@ describe('Assessment Service', () => {
       create: jest.fn(),
       findAll: jest.fn(),
       findByPk: jest.fn(),
+      update: jest.fn(),
     }
 
     mockQuestionModel = {
@@ -73,6 +74,7 @@ describe('Assessment Service', () => {
         description: 'Test description',
         module_id: 1,
         type: 'quiz',
+        allowed_attempts: 2
       }
 
       const expectedAssessment = { id: 1, ...assessmentData }
@@ -95,6 +97,7 @@ describe('Assessment Service', () => {
         description: 'Test description',
         module_id: 999, 
         type: 'quiz',
+        allowed_attempts: 2
       }
 
       mockModuleModel.findByPk.mockResolvedValue(null)
@@ -104,6 +107,27 @@ describe('Assessment Service', () => {
         'Module not found'
       )
       expect(mockModuleModel.findByPk).toHaveBeenCalledWith(999)
+      expect(mockAssessmentModel.create).not.toHaveBeenCalled()
+    })
+
+    test('should throw an error if allowed_attempts is 0 or negative', async () => {
+      // Arrange
+      const assessmentData = {
+        title: 'Invalid Assessment',
+        description: 'Should fail',
+        module_id: 1,
+        type: 'quiz',
+        allowed_attempts: 0
+      }
+  
+      mockModuleModel.findByPk.mockResolvedValue({ id: 1 })
+  
+      // Act & Assert
+      await expect(assessmentService.createAssessment(assessmentData)).rejects.toThrow(
+        'Invalid allowed attempts'
+      )
+  
+      expect(mockModuleModel.findByPk).toHaveBeenCalledWith(1)
       expect(mockAssessmentModel.create).not.toHaveBeenCalled()
     })
   })
@@ -362,7 +386,7 @@ describe('Assessment Service', () => {
         id: assessmentId,
         title: 'Test Assessment',
         max_score: 100,
-        allowed_attempts: 3, // Ensure allowed_attempts is defined
+        allowed_attempts: 3,
       }
       mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
     
@@ -403,6 +427,44 @@ describe('Assessment Service', () => {
       })
       expect(result).toEqual(mockSubmission)
     })    
+
+    test('should throw an error if user has exceeded allowed attempts', async () => {
+      // Arrange
+      const assessmentId = 1
+      const userId = 2
+  
+      mockSubmissionModel.findOne.mockResolvedValue(null)
+  
+      const mockAssessment = {
+        id: assessmentId,
+        title: 'Test Assessment',
+        max_score: 100,
+        allowed_attempts: 3,
+      }
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
+  
+      mockSubmissionModel.count.mockResolvedValue(3) // Max attempts reached
+  
+      // Act & Assert
+      await expect(assessmentService.startSubmission(assessmentId, userId))
+        .rejects.toThrow('Invalid attempt')
+  
+      expect(mockSubmissionModel.findOne).toHaveBeenCalledWith({
+        where: {
+          assessment_id: assessmentId,
+          user_id: userId,
+          status: 'in_progress',
+        },
+      })
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId)
+      expect(mockSubmissionModel.count).toHaveBeenCalledWith({
+        where: {
+          assessment_id: assessmentId,
+          user_id: userId,
+        },
+      })
+      expect(mockSubmissionModel.create).not.toHaveBeenCalled()
+    })
 
     test('should return existing submission if one exists', async () => {
       // Arrange
@@ -907,6 +969,91 @@ describe('Assessment Service', () => {
     })
   })
 
+  describe('getStudentSubmissions', () => {
+    test('should get student submissions with answers', async () => {
+      // Arrange
+      const assessmentId = 1
+      const userId = 2
+
+      const mockSubmission = {
+        id: 3,
+        assessment_id: assessmentId,
+        user_id: userId,
+        status: 'submitted',
+        answers: [{ id: 1, question_id: 5, text_response: 'Test answer' }],
+      }
+      mockSubmissionModel.findAll.mockResolvedValue(mockSubmission)
+
+      // Act
+      const results = await assessmentService.getStudentSubmissions(assessmentId, userId, true)
+
+      // Assert
+      expect(mockSubmissionModel.findAll).toHaveBeenCalledWith({
+        where: {
+          assessment_id: assessmentId,
+          user_id: userId,
+        },
+        include: [
+          {
+            model: mockAnswerResponseModel,
+            as: 'answers',
+            include: [
+              {
+                model: mockQuestionModel,
+                as: 'question',
+              },
+              {
+                model: mockQuestionOptionModel,
+                as: 'selected_option',
+              },
+            ],
+          },
+        ],
+      })
+      expect(results).toEqual(mockSubmission)
+    })
+
+    test('should get student submissions without answers', async () => {
+      // Arrange
+      const assessmentId = 1
+      const userId = 2
+
+      const mockSubmission = {
+        id: 3,
+        assessment_id: assessmentId,
+        user_id: userId,
+        status: 'submitted',
+      }
+      mockSubmissionModel.findAll.mockResolvedValue(mockSubmission)
+
+      // Act
+      const results = await assessmentService.getStudentSubmissions(assessmentId, userId, false)
+
+      // Assert
+      expect(mockSubmissionModel.findAll).toHaveBeenCalledWith({
+        where: {
+          assessment_id: assessmentId,
+          user_id: userId,
+        },
+        include: [],
+      })
+      expect(results).toEqual(mockSubmission)
+    })
+
+    test('should return null if student has no submission', async () => {
+      // Arrange
+      const assessmentId = 1
+      const userId = 2
+      mockSubmissionModel.findAll.mockResolvedValue(null)
+
+      // Act
+      const results = await assessmentService.getStudentSubmissions(assessmentId, userId)
+
+      // Assert
+      expect(results).toBeNull()
+    })
+  })
+
   describe('gradeSubmission', () => {
     test('should grade a submission successfully', async () => {
       // Arrange
@@ -1048,6 +1195,7 @@ describe('Assessment Service', () => {
         title: 'Updated Assessment Title',
         description: 'Updated description',
         duration_minutes: 60,
+        allowed_attempts: 2
       }
 
       const mockAssessment = {
@@ -1055,6 +1203,7 @@ describe('Assessment Service', () => {
         title: 'Original Title',
         description: 'Original description',
         duration_minutes: 45,
+        allowed_attempts: 2,
         save: jest.fn().mockResolvedValue(true),
         update: jest.fn().mockImplementation(function (data) {
           // Update the mock assessment properties
@@ -1090,6 +1239,32 @@ describe('Assessment Service', () => {
       )
       expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId)
     })
+
+    test('should throw an error if allowed_attempts is 0 or negative', async () => {
+      // Arrange
+      const assessmentId = 1; // Provide a valid assessment ID
+      const assessmentData = {
+        title: 'Invalid Assessment',
+        description: 'Should fail',
+        type: 'quiz',
+        allowed_attempts: 0 // Invalid value
+      };
+    
+      // Mock that the assessment exists (to avoid "Assessment not found" error)
+      mockAssessmentModel.findByPk.mockResolvedValue({
+        id: assessmentId,
+        title: 'Existing Assessment',
+        description: 'Some description',
+        type: 'quiz',
+        allowed_attempts: 3, // Existing valid attempts
+      });
+    
+      // Act & Assert
+      await expect(assessmentService.updateAssessment(assessmentId, assessmentData))
+        .rejects.toThrow('Invalid allowed attempts');
+    
+        expect(mockAssessmentModel.update).not.toHaveBeenCalled()
+    });
   })
 
   describe('deleteAssessment', () => {

@@ -197,7 +197,7 @@ const getModuleGradeOfUser = async (req, res) => {
     const { id, moduleId } = req.params
     const moduleGrade = await moduleService.getModuleGradeOfUser(id, moduleId)
     res.status(200).json(moduleGrade)
-    log.info('Module grade retreived successfully')
+    log.info('Module grade retrieved successfully')
   } catch (error) {
     return handleControllerError(error, res, 'Get module grade of user', 'Error fetching module grade')
   }

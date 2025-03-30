@@ -8,6 +8,7 @@ import {
   saveAnswer,
   submitAssessment,
   getSubmissionsForAssessment,
+  getStudentSubmissions,
   getStudentSubmission,
   gradeSubmission,
 } from '../../../src/controllers/assessmentController.js'
@@ -466,6 +467,59 @@ describe('Assessment Controller', () => {
         },
       })
       expect(log.error).toHaveBeenCalled()
+    })
+  })
+
+  describe('getStudentSubmissions', () => {
+    test('should get a student submissions successfully', async () => {
+      // Arrange
+      const assessmentId = '1'
+      mockReq.params.assessmentId = assessmentId
+      mockReq.user.id = 1
+      mockReq.query.includeAnswers = 'true'
+
+      const mockSubmission = {
+        id: 1,
+        assessment_id: 1,
+        user_id: 1,
+        status: 'graded',
+        answers: [{ id: 1, question_id: 1, selected_option_id: 2 }],
+      }
+      jest
+        .spyOn(AssessmentService.prototype, 'getStudentSubmissions')
+        .mockResolvedValue([mockSubmission])
+
+      // Act
+      await getStudentSubmissions(mockReq, mockRes)
+
+      // Assert
+      expect(AssessmentService.prototype.getStudentSubmissions).toHaveBeenCalledWith(
+        assessmentId,
+        mockReq.user.id,
+        true
+      )
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: true,
+        submissions: [mockSubmission],
+      })
+    })
+
+    test('should return null if student has no submissions', async () => {
+      // Arrange
+      mockReq.params.assessmentId = '1'
+      mockReq.user.id = 999
+
+      jest.spyOn(AssessmentService.prototype, 'getStudentSubmissions').mockResolvedValue(null)
+
+      // Act
+      await getStudentSubmissions(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: true,
+        submissions: null,
+      })
     })
   })
 
