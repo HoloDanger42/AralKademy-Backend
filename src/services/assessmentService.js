@@ -229,11 +229,11 @@ class AssessmentService {
 
       const courseModules = await this.moduleService.getModulesByCourseId(currentModule.course_id)
 
-      const currentModuleIndex = courseModules.findIndex(m => m.id === currentModule.id);
+      const currentModuleIndex = courseModules.findIndex(m => m.module_id === currentModule.module_id);
 
       if (currentModuleIndex > 0) {
         const prevModule = courseModules[currentModuleIndex - 1];
-        const prevModuleGrade = await this.moduleService.getModuleGradeOfUser(userId, prevModule.id);
+        const prevModuleGrade = await this.moduleService.getModuleGradeOfUser(userId, prevModule.module_id);
   
         if (prevModuleGrade?.allPassed !== true) {
           throw new Error(`Invalid attempt`);
