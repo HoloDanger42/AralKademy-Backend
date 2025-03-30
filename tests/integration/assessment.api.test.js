@@ -1,7 +1,7 @@
 import request from 'supertest'
 import app from '../../src/server.js'
 import { sequelize } from '../../src/config/database.js'
-import { Course, User, Assessment, School, Teacher } from '../../src/models/index.js'
+import { Course, User, Assessment, School, Teacher, Module } from '../../src/models/index.js'
 import bcrypt from 'bcryptjs'
 import '../../src/models/associate.js'
 
@@ -11,6 +11,7 @@ describe('Assessment API Endpoints (Integration Tests)', () => {
   let learnerToken
   let testCourse
   let testAssessment
+  let testModule
 
   beforeAll(async () => {
     await sequelize.sync({ force: true })
@@ -60,6 +61,12 @@ describe('Assessment API Endpoints (Integration Tests)', () => {
       status: 'active',
     })
 
+    testModule = await Module.create({
+      name: 'Test Module',
+      course_id: testCourse.id,
+      description: 'This is a test module',
+    })
+
     // Get teacher token
     const teacherLoginResponse = await request(server).post('/api/auth/login').send({
       email: 'teacher@assessmenttest.com',
@@ -82,10 +89,11 @@ describe('Assessment API Endpoints (Integration Tests)', () => {
     testAssessment = await Assessment.create({
       title: 'Integration Test Quiz',
       description: 'A quiz for integration testing',
-      course_id: testCourse.id,
+      module_id: testModule.module_id,
       type: 'quiz',
       max_score: 100,
       passing_score: 70,
+      allowed_attempts: 2
     })
   })
 
@@ -99,7 +107,8 @@ describe('Assessment API Endpoints (Integration Tests)', () => {
       const assessmentData = {
         title: 'New Test Assessment',
         description: 'Created via integration test',
-        course_id: testCourse.id,
+        module_id: testModule.module_id,
+        allowed_attempts: 2,
         type: 'quiz',
         max_score: 100,
         passing_score: 60,
@@ -120,7 +129,8 @@ describe('Assessment API Endpoints (Integration Tests)', () => {
     test('should return 401 when no auth token is provided', async () => {
       const assessmentData = {
         title: 'Unauthorized Assessment',
-        course_id: testCourse.id,
+        module_id: testModule.module_id,
+        allowed_attempts: 2,
         type: 'quiz',
       }
 
@@ -132,7 +142,8 @@ describe('Assessment API Endpoints (Integration Tests)', () => {
     test('should return 403 when learner tries to create assessment', async () => {
       const assessmentData = {
         title: 'Forbidden Assessment',
-        course_id: testCourse.id,
+        module_id: testModule.module_id,
+        allowed_attempts: 2,
         type: 'quiz',
       }
 
@@ -145,10 +156,10 @@ describe('Assessment API Endpoints (Integration Tests)', () => {
     })
   })
 
-  describe('GET /api/assessments/course/:courseId', () => {
-    test('should get all assessments for a course when authenticated', async () => {
+  describe('GET /api/assessments/module/:moduleId', () => {
+    test('should get all assessments for a module when authenticated', async () => {
       const response = await request(server)
-        .get(`/api/assessments/course/${testCourse.id}`)
+        .get(`/api/assessments/module/${testModule.module_id}`)
         .set('Authorization', `Bearer ${teacherToken}`)
 
       expect(response.status).toBe(200)
@@ -158,14 +169,14 @@ describe('Assessment API Endpoints (Integration Tests)', () => {
     })
 
     test('should return 401 when no auth token is provided', async () => {
-      const response = await request(server).get(`/api/assessments/course/${testCourse.id}`)
+      const response = await request(server).get(`/api/assessments/module/${testModule.module_id}`)
 
       expect(response.status).toBe(401)
     })
 
-    test('should return 404 for non-existent course', async () => {
+    test('should return 404 for non-existent module', async () => {
       const response = await request(server)
-        .get('/api/assessments/course/9999')
+        .get('/api/assessments/module/9999')
         .set('Authorization', `Bearer ${teacherToken}`)
 
       expect(response.status).toBe(404)
