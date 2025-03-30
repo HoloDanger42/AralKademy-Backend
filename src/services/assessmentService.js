@@ -1,6 +1,6 @@
 import { log } from '../utils/logger.js'
 import { Op } from 'sequelize'
-import ModuleService from '../../../src/services/moduleService';
+import ModuleService from './moduleService.js';
 
 class AssessmentService {
   /**
