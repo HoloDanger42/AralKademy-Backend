@@ -68,12 +68,9 @@ describe('PasswordlessAuthService', () => {
 
       // Assert
       expect(magicLink).toContain('/auth/verify?token=')
-      expect(mockSendEmail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          to: 'passwordless-test@example.com',
-          subject: 'Your AralKademy Login Link',
-        })
-      )
+
+      // In test environment, sendEmail should NOT be called due to the NODE_ENV condition
+      expect(mockSendEmail).not.toHaveBeenCalled()
 
       // Check if token was stored in DB
       const authToken = await AuthToken.findOne({
