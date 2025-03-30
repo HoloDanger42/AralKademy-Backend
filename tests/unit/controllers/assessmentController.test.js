@@ -2,12 +2,13 @@ import { jest } from '@jest/globals'
 import {
   createAssessment,
   getAssessmentById,
-  getAssessmentsForCourse,
+  getAssessmentsForModule,
   addQuestion,
   startSubmission,
   saveAnswer,
   submitAssessment,
   getSubmissionsForAssessment,
+  getStudentSubmissions,
   getStudentSubmission,
   gradeSubmission,
 } from '../../../src/controllers/assessmentController.js'
@@ -143,28 +144,28 @@ describe('Assessment Controller', () => {
     })
   })
 
-  describe('getAssessmentsForCourse', () => {
-    test('should get all assessments for a course successfully', async () => {
+  describe('getAssessmentsForModule', () => {
+    test('should get all assessments for a module successfully', async () => {
       // Arrange
-      const courseId = '1'
-      mockReq.params.courseId = courseId
+      const moduleId = '1'
+      mockReq.params.moduleId = moduleId
       mockReq.query.includeQuestions = 'true'
 
       const mockAssessments = [
-        { id: 1, title: 'Quiz 1', course_id: 1 },
-        { id: 2, title: 'Assignment 1', course_id: 1 },
+        { id: 1, title: 'Quiz 1', module_id: 1 },
+        { id: 2, title: 'Assignment 1', module_id: 1 },
       ]
 
       jest
-        .spyOn(AssessmentService.prototype, 'getAssessmentsForCourse')
+        .spyOn(AssessmentService.prototype, 'getAssessmentsForModule')
         .mockResolvedValue(mockAssessments)
 
       // Act
-      await getAssessmentsForCourse(mockReq, mockRes)
+      await getAssessmentsForModule(mockReq, mockRes)
 
       // Assert
-      expect(AssessmentService.prototype.getAssessmentsForCourse).toHaveBeenCalledWith(
-        courseId,
+      expect(AssessmentService.prototype.getAssessmentsForModule).toHaveBeenCalledWith(
+        moduleId,
         true
       )
       expect(mockRes.status).toHaveBeenCalledWith(200)
@@ -174,22 +175,22 @@ describe('Assessment Controller', () => {
       })
     })
 
-    test('should handle course not found', async () => {
+    test('should handle module not found', async () => {
       // Arrange
-      mockReq.params.courseId = '999'
+      mockReq.params.moduleId = '999'
 
-      const error = new Error('Course not found')
-      jest.spyOn(AssessmentService.prototype, 'getAssessmentsForCourse').mockRejectedValue(error)
+      const error = new Error('Module not found')
+      jest.spyOn(AssessmentService.prototype, 'getAssessmentsForModule').mockRejectedValue(error)
 
       // Act
-      await getAssessmentsForCourse(mockReq, mockRes)
+      await getAssessmentsForModule(mockReq, mockRes)
 
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(404)
       expect(mockRes.json).toHaveBeenCalledWith({
         error: {
           code: 'NOT_FOUND',
-          message: 'Course not found',
+          message: 'Module not found',
         },
       })
       expect(log.error).toHaveBeenCalled()
@@ -466,6 +467,59 @@ describe('Assessment Controller', () => {
         },
       })
       expect(log.error).toHaveBeenCalled()
+    })
+  })
+
+  describe('getStudentSubmissions', () => {
+    test('should get a student submissions successfully', async () => {
+      // Arrange
+      const assessmentId = '1'
+      mockReq.params.assessmentId = assessmentId
+      mockReq.user.id = 1
+      mockReq.query.includeAnswers = 'true'
+
+      const mockSubmission = {
+        id: 1,
+        assessment_id: 1,
+        user_id: 1,
+        status: 'graded',
+        answers: [{ id: 1, question_id: 1, selected_option_id: 2 }],
+      }
+      jest
+        .spyOn(AssessmentService.prototype, 'getStudentSubmissions')
+        .mockResolvedValue([mockSubmission])
+
+      // Act
+      await getStudentSubmissions(mockReq, mockRes)
+
+      // Assert
+      expect(AssessmentService.prototype.getStudentSubmissions).toHaveBeenCalledWith(
+        assessmentId,
+        mockReq.user.id,
+        true
+      )
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: true,
+        submissions: [mockSubmission],
+      })
+    })
+
+    test('should return null if student has no submissions', async () => {
+      // Arrange
+      mockReq.params.assessmentId = '1'
+      mockReq.user.id = 999
+
+      jest.spyOn(AssessmentService.prototype, 'getStudentSubmissions').mockResolvedValue(null)
+
+      // Act
+      await getStudentSubmissions(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        success: true,
+        submissions: null,
+      })
     })
   })
 

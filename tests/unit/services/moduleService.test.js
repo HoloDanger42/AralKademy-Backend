@@ -6,6 +6,10 @@ describe('Module Service', () => {
   let mockModuleModel;
   let mockCourseModel;
   let mockContentModel;
+  let mockAssessmentModel;
+  let mockSubmissionModel;
+  let mockModuleGradeModel;
+  let mockUserModel;
 
   beforeEach(() => {
     mockModuleModel = {
@@ -26,7 +30,23 @@ describe('Module Service', () => {
       create: jest.fn(), 
       findAll: jest.fn(),
     };
-    moduleService = new ModuleService(mockModuleModel, mockCourseModel, mockContentModel);
+
+    mockUserModel = {
+      findByPk: jest.fn(),
+    };
+
+    mockAssessmentModel = {
+      findAll: jest.fn(),
+    };
+
+    mockSubmissionModel = {
+      findOne: jest.fn(),
+    };
+
+    mockModuleGradeModel = {
+      upsert: jest.fn(),
+    };
+    moduleService = new ModuleService(mockModuleModel, mockCourseModel, mockContentModel, mockAssessmentModel, mockSubmissionModel, mockModuleGradeModel, mockUserModel);
   });
 
   describe('createModule', () => {
@@ -417,5 +437,129 @@ describe('Module Service', () => {
       await expect(moduleService.updateModuleContent(1, 'Updated Content', 'http://valid-link.com'))
         .rejects.toThrow('Failed to update content');
     });
-  });  
+  });
+
+  describe('getModuleGradeOfUser', () => {
+    it('should throw error when user not found', async () => {
+      mockUserModel.findByPk.mockResolvedValue(null);
+  
+      await expect(moduleService.getModuleGradeOfUser(1, 1))
+        .rejects.toThrow('User not found');
+    });
+  
+    it('should throw error when module not found', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 1 });
+      mockModuleModel.findByPk.mockResolvedValue(null);
+  
+      await expect(moduleService.getModuleGradeOfUser(1, 1))
+        .rejects.toThrow('Module not found');
+    });
+  
+    it('should return default values when no assessments exist', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 1 });
+      mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
+      mockAssessmentModel.findAll.mockResolvedValue([]);
+  
+      const result = await moduleService.getModuleGradeOfUser(1, 1);
+  
+      expect(result).toEqual({
+        allGraded: false,
+        allPassed: false,
+        averageScore: 0
+      });
+    });
+  
+    it('should return correct values when some submissions are missing', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 1 });
+      mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
+      mockAssessmentModel.findAll.mockResolvedValue([
+        { id: 1, passing_score: 70 },
+        { id: 2, passing_score: 80 }
+      ]);
+  
+      
+      mockSubmissionModel.findOne.mockResolvedValueOnce({
+        score: 75,
+        status: 'graded'
+      });
+      
+      mockSubmissionModel.findOne.mockResolvedValueOnce(null);
+  
+      const result = await moduleService.getModuleGradeOfUser(1, 1);
+  
+      expect(result).toEqual({
+        allGraded: false,
+        allPassed: false,
+        averageScore: 75
+      });
+    });
+  
+    it('should return correct values when all submissions exist and passed', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 1 });
+      mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
+      mockAssessmentModel.findAll.mockResolvedValue([
+        { id: 1, passing_score: 70 },
+        { id: 2, passing_score: 80 }
+      ]);
+  
+      mockSubmissionModel.findOne
+        .mockResolvedValueOnce({ score: 85, status: 'graded' }) 
+        .mockResolvedValueOnce({ score: 90, status: 'graded' }); 
+  
+      const result = await moduleService.getModuleGradeOfUser(1, 1);
+  
+      expect(result).toEqual({
+        allGraded: true,
+        allPassed: true,
+        averageScore: 87.5
+      });
+    });
+  
+    it('should return correct values when all submissions exist but some failed', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 1 });
+      mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
+      mockAssessmentModel.findAll.mockResolvedValue([
+        { id: 1, passing_score: 70 },
+        { id: 2, passing_score: 80 }
+      ]);
+  
+      mockSubmissionModel.findOne
+        .mockResolvedValueOnce({ score: 85, status: 'graded' }) 
+        .mockResolvedValueOnce({ score: 75, status: 'graded' }); 
+  
+      const result = await moduleService.getModuleGradeOfUser(1, 1);
+  
+      expect(result).toEqual({
+        allGraded: true,
+        allPassed: false,
+        averageScore: 80
+      });
+    });
+  
+    it('should upsert the module grade with the calculated average', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 1 });
+      mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
+      mockAssessmentModel.findAll.mockResolvedValue([
+        { id: 1, passing_score: 70 }
+      ]);
+      mockSubmissionModel.findOne.mockResolvedValue({ score: 85, status: 'graded' });
+  
+      await moduleService.getModuleGradeOfUser(1, 1);
+  
+      expect(mockModuleGradeModel.upsert).toHaveBeenCalledWith({
+        user_id: 1,
+        module_id: 1,
+        grade: 85
+      });
+    });
+  
+    it('should throw generic error when unexpected error occurs', async () => {
+      mockUserModel.findByPk.mockResolvedValue({ id: 1 });
+      mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
+      mockAssessmentModel.findAll.mockRejectedValue(new Error('Database error'));
+  
+      await expect(moduleService.getModuleGradeOfUser(1, 1))
+        .rejects.toThrow('Failed to get module grade');
+    });
+  });
 });

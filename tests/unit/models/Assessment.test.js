@@ -1,4 +1,4 @@
-import { Assessment, Course } from '../../../src/models/index.js'
+import { Assessment, Course, Module } from '../../../src/models/index.js'
 import { sequelize } from '../../../src/config/database.js'
 
 describe('Assessment Model', () => {
@@ -12,6 +12,7 @@ describe('Assessment Model', () => {
 
   beforeEach(async () => {
     await Assessment.destroy({ where: {}, force: true })
+    await Module.destroy({ where: {}, force: true })
     await Course.destroy({ where: {}, force: true })
   })
 
@@ -23,23 +24,30 @@ describe('Assessment Model', () => {
       status: 'active',
     })
 
+    const module = await Module.create({
+      name: 'Test Module',
+      course_id: course.id,
+      description: 'This is a test module',
+    })
+
     const assessmentData = {
       title: 'Midterm Exam',
       description: 'Midterm examination for Test Course',
-      course_id: course.id,
+      module_id: module.module_id,
       type: 'exam',
       max_score: 100,
       passing_score: 60,
       duration_minutes: 90,
       due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
       is_published: false,
+      allowed_attempts: 2
     }
 
     const assessment = await Assessment.create(assessmentData)
 
     expect(assessment).toHaveProperty('id')
     expect(assessment.title).toBe('Midterm Exam')
-    expect(assessment.course_id).toBe(course.id)
+    expect(assessment.module_id).toBe(module.module_id)
     expect(assessment.type).toBe('exam')
   })
 
@@ -58,12 +66,19 @@ describe('Assessment Model', () => {
       status: 'active',
     })
 
+    const module = await Module.create({
+      name: 'Test Module',
+      course_id: course.id,
+      description: 'This is a test module',
+    })
+
     const invalidType = {
       title: 'Invalid Type Test',
       description: 'Test with invalid type',
-      course_id: course.id,
+      module_id: module.module_id,
       type: 'invalid_type', // not in enum
       max_score: 100,
+      allowed_attempts: 2
     }
 
     await expect(Assessment.create(invalidType)).rejects.toThrow()

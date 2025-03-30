@@ -9,6 +9,7 @@ import {
   updateModuleContent,
   deleteModuleContent,
   getContentsByModuleId,
+  getModuleGradeOfUser
 } from '../../../src/controllers/moduleController.js'
 import ModuleService from '../../../src/services/moduleService.js'
 import { log } from '../../../src/utils/logger.js'
@@ -322,5 +323,96 @@ describe('Module Controller', () => {
       })
       expect(log.error).toHaveBeenCalledWith('Get modules by course ID error:', expect.any(Error))
     })
-  })  
+  });
+
+  describe('getModuleGradeOfUser', () => {
+    test('should retrieve module grade successfully', async () => {
+      mockReq.params = { id: '1', moduleId: '1' }
+      const mockGrade = {
+        allGraded: true,
+        allPassed: true,
+        averageScore: 90
+      }
+      jest.spyOn(ModuleService.prototype, 'getModuleGradeOfUser').mockResolvedValue(mockGrade)
+  
+      await getModuleGradeOfUser(mockReq, mockRes)
+  
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith(mockGrade)
+      expect(log.info).toHaveBeenCalledWith('Module grade retrieved successfully')
+    })
+  
+    test('should handle user not found error', async () => {
+      mockReq.params = { id: '1', moduleId: '1' }
+      const error = new Error('User not found')
+      jest.spyOn(ModuleService.prototype, 'getModuleGradeOfUser').mockRejectedValue(error)
+  
+      await getModuleGradeOfUser(mockReq, mockRes)
+  
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'User not found',
+          code: 'NOT_FOUND'
+        }
+      })
+      expect(log.error).toHaveBeenCalledWith('Get module grade of user error:', expect.any(Error))
+    })
+  
+    test('should handle module not found error', async () => {
+      mockReq.params = { id: '1', moduleId: '1' }
+      const error = new Error('Module not found')
+      jest.spyOn(ModuleService.prototype, 'getModuleGradeOfUser').mockRejectedValue(error)
+  
+      await getModuleGradeOfUser(mockReq, mockRes)
+  
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Module not found',
+          code: 'NOT_FOUND'
+        }
+      })
+      expect(log.error).toHaveBeenCalledWith('Get module grade of user error:', expect.any(Error))
+    })
+  
+    test('should handle generic errors', async () => {
+      mockReq.params = { id: '1', moduleId: '1' }
+      const error = new Error('Database error')
+      jest.spyOn(ModuleService.prototype, 'getModuleGradeOfUser').mockRejectedValue(error)
+  
+      await getModuleGradeOfUser(mockReq, mockRes)
+  
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Error fetching module grade',
+          code: 'INTERNAL_ERROR'
+        }
+      })
+      expect(log.error).toHaveBeenCalledWith('Get module grade of user error:', expect.any(Error))
+    })
+  
+    test('should handle missing parameters', async () => {
+      mockReq.params = {} // Missing both id and moduleId
+      const error = new Error('Missing required parameters')
+      jest.spyOn(ModuleService.prototype, 'getModuleGradeOfUser').mockRejectedValue(error)
+  
+      await getModuleGradeOfUser(mockReq, mockRes)
+  
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          message: 'Missing required parameters',
+          code: 'VALIDATION_ERROR'
+        }
+      })
+      expect(log.error).toHaveBeenCalledWith(
+        'Get module grade of user error:',
+        expect.objectContaining({
+          message: 'Missing required parameters'
+        })
+      )
+    })
+  });
 })

@@ -5,7 +5,7 @@ export const assessmentSchemas = {
     body: Joi.object({
       title: Joi.string().required(),
       description: Joi.string().allow('', null),
-      course_id: Joi.number().integer().required(),
+      module_id: Joi.number().integer().required(),
       type: Joi.string().valid('quiz', 'assignment', 'exam').required(),
       max_score: Joi.number().integer().min(0).default(100),
       passing_score: Joi.number().integer().min(0).allow(null),
@@ -13,6 +13,7 @@ export const assessmentSchemas = {
       due_date: Joi.date().iso().allow(null),
       is_published: Joi.boolean().default(false),
       instructions: Joi.string().allow('', null),
+      allowed_attempts: Joi.number().integer().required(),
     }).custom((value, helpers) => {
       // Check passing_score <= max_score
       if (value.passing_score !== null && value.passing_score > value.max_score) {
@@ -36,6 +37,7 @@ export const assessmentSchemas = {
       due_date: Joi.date().iso().allow(null),
       is_published: Joi.boolean(),
       instructions: Joi.string().allow('', null),
+      allowed_attempts: Joi.number().integer().required(),
     })
       .custom((value, helpers) => {
         if (
@@ -213,12 +215,23 @@ export const assessmentSchemas = {
     }),
   },
 
-  getAssessmentsForCourse: {
+  getAssessmentsForModule: {
     params: Joi.object({
-      courseId: Joi.number().integer().required(),
+      moduleId: Joi.number().integer().required(),
     }),
     query: Joi.object({
       includeQuestions: Joi.boolean().default(false),
+      page: Joi.number().integer().min(1).default(1),
+      limit: Joi.number().integer().min(1).max(100).default(20),
+    }),
+  },
+
+  getStudentSubmissions: {
+    params: Joi.object({
+      assessmentId: Joi.number().integer().required(),
+    }),
+    query: Joi.object({
+      includeAnswers: Joi.boolean().default(false),
       page: Joi.number().integer().min(1).default(1),
       limit: Joi.number().integer().min(1).max(100).default(20),
     }),
