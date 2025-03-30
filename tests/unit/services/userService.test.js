@@ -150,17 +150,6 @@ describe('UserService', () => {
         role: 'teacher',
       }
 
-      const createdUser = await userService.createUser(
-        userData.email,
-        userData.password,
-        userData.first_name,
-        userData.last_name,
-        userData.birth_date,
-        userData.contact_no,
-        school.school_id,
-        userData.role
-      )
-
       const result = await userService.loginUser(userData.email, userData.password)
 
       expect(result.user).toBeDefined()
