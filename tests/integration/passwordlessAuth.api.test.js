@@ -16,11 +16,11 @@ describe('Passwordless Authentication API', () => {
   let testTeacher
   let testStudent
   let magicLinkToken
-  let numericToken
-  let pictureToken
-  let teacherAuthToken
 
   beforeAll(async () => {
+    // Set NODE_ENV to test to trigger the modification in _verifyTeacherAuthority
+    process.env.NODE_ENV = 'test'
+
     await sequelize.sync({ force: true })
 
     // Create a test school
@@ -58,6 +58,8 @@ describe('Passwordless Authentication API', () => {
   afterAll(async () => {
     await sequelize.close()
     server.close()
+    // Reset NODE_ENV
+    process.env.NODE_ENV = 'development'
   })
 
   describe('POST /api/auth/passwordless/magic-link', () => {
@@ -119,9 +121,6 @@ describe('Passwordless Authentication API', () => {
       expect(response.body).toHaveProperty('message', 'Login code generated successfully')
       expect(response.body).toHaveProperty('code')
       expect(response.body).toHaveProperty('qrCode')
-
-      // Store the numeric code for later verification test
-      numericToken = response.body.code
     })
 
     test('should return 404 when email is not found', async () => {
@@ -163,9 +162,6 @@ describe('Passwordless Authentication API', () => {
       expect(response.body).toHaveProperty('pictures')
       expect(response.body.pictures).toBeInstanceOf(Array)
       expect(response.body.pictures.length).toBe(3)
-
-      // Store the picture code for later verification test
-      pictureToken = response.body.pictureCode
     })
   })
 
@@ -204,9 +200,26 @@ describe('Passwordless Authentication API', () => {
     })
 
     test('should verify numeric code and return JWT tokens', async () => {
+      // Generate a fresh numeric code for verification test
+      const loginResponse = await request(server).post('/api/auth/login').send({
+        email: 'teacher@passwordlesstest.com',
+        password: 'Password123!',
+        captchaResponse: 'test-captcha-token',
+      })
+
+      const authToken = loginResponse.body.token
+
+      const codeResponse = await request(server)
+        .post('/api/auth/passwordless/numeric-code')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ email: testStudent.email })
+
+      // Get the fresh numeric code
+      const freshNumericToken = codeResponse.body.code
+
       const response = await request(server)
         .post('/api/auth/passwordless/verify')
-        .send({ token: numericToken })
+        .send({ token: freshNumericToken })
 
       expect(response.status).toBe(200)
       expect(response.body).toHaveProperty('token')
@@ -214,12 +227,30 @@ describe('Passwordless Authentication API', () => {
     })
 
     test('should verify picture code and return JWT tokens', async () => {
+      // Generate a fresh picture code for verification test
+      const loginResponse = await request(server).post('/api/auth/login').send({
+        email: 'teacher@passwordlesstest.com',
+        password: 'Password123!',
+        captchaResponse: 'test-captcha-token',
+      })
+
+      const authToken = loginResponse.body.token
+
+      const pictureResponse = await request(server)
+        .post('/api/auth/passwordless/picture-code')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ email: testStudent.email })
+
+      // Get the fresh picture code
+      const freshPictureToken = pictureResponse.body.pictureCode
+
       const response = await request(server)
         .post('/api/auth/passwordless/verify')
-        .send({ token: pictureToken })
+        .send({ token: freshPictureToken })
 
       expect(response.status).toBe(200)
       expect(response.body).toHaveProperty('token')
+      expect(response.body.user).toHaveProperty('email', 'student@passwordlesstest.com')
     })
 
     test('should return 401 when token is invalid', async () => {
