@@ -77,8 +77,13 @@ describe('Assessment Service', () => {
         allowed_attempts: 2
       }
 
+      const moduleData = {
+        module_id: 1,
+        course_id: 2
+      }
+
       const expectedAssessment = { id: 1, ...assessmentData }
-      mockModuleModel.findByPk.mockResolvedValue({ id: 1 })
+      mockModuleModel.findByPk.mockResolvedValue({ id: 1, course_id: 2 })
       mockAssessmentModel.create.mockResolvedValue(expectedAssessment)
 
       // Act
@@ -87,7 +92,10 @@ describe('Assessment Service', () => {
       // Assert
       expect(mockModuleModel.findByPk).toHaveBeenCalledWith(1)
       expect(mockAssessmentModel.create).toHaveBeenCalledWith(assessmentData)
-      expect(result).toEqual(expectedAssessment)
+      expect(result).toEqual({
+        assessment: expectedAssessment,
+        course_id: moduleData.course_id,
+      })
     })
 
     test('should throw error if module does not exist', async () => {
@@ -240,47 +248,55 @@ describe('Assessment Service', () => {
   describe('getAssessmentsForModule', () => {
     test('should get assessments without questions', async () => {
       // Arrange
-      const moduleId = 1
       const mockAssessments = [
-        { id: 1, title: 'Quiz 1', module_id: moduleId },
-        { id: 2, title: 'Assignment 1', module_id: moduleId },
+        { id: 1, title: 'Quiz 1', module_id: 1 },
+        { id: 2, title: 'Assignment 1', module_id: 1 },
       ]
 
-      mockModuleModel.findByPk.mockResolvedValue({ id: moduleId, name: 'Test Module' })
+      const moduleData = {
+        module_id: 1,
+        course_id: 2
+      }
+
+      mockModuleModel.findByPk.mockResolvedValue({ id: moduleData.module_id, name: 'Test Module', course_id: moduleData.course_id })
       mockAssessmentModel.findAll.mockResolvedValue(mockAssessments)
 
       // Act
-      const result = await assessmentService.getAssessmentsForModule(moduleId, false)
+      const result = await assessmentService.getAssessmentsForModule(moduleData.module_id, false)
 
       // Assert
       expect(mockAssessmentModel.findAll).toHaveBeenCalledWith({
-        where: { module_id: moduleId },
+        where: { module_id: moduleData.module_id },
         include: [],
       })
-      expect(result).toEqual(mockAssessments)
+      expect(result.assessments).toEqual(mockAssessments)
     })
 
     test('should get assessments with questions', async () => {
       // Arrange
-      const moduleId = 1
       const mockAssessments = [
         {
           id: 1,
           title: 'Quiz 1',
-          module_id: moduleId,
+          module_id: 1,
           questions: [{ id: 1, question_text: 'Question 1', options: [] }],
         },
       ]
 
-      mockModuleModel.findByPk.mockResolvedValue({ id: moduleId, name: 'Test Module' })
+      const moduleData = {
+        module_id: 1,
+        course_id: 2
+      }
+
+      mockModuleModel.findByPk.mockResolvedValue({ id: moduleData.module_id, name: 'Test Module', course_id: moduleData.course_id })
       mockAssessmentModel.findAll.mockResolvedValue(mockAssessments)
 
       // Act
-      const result = await assessmentService.getAssessmentsForModule(moduleId, true)
+      const result = await assessmentService.getAssessmentsForModule(moduleData.module_id, true)
 
       // Assert
       expect(mockAssessmentModel.findAll).toHaveBeenCalledWith({
-        where: { module_id: moduleId },
+        where: { module_id: moduleData.module_id },
         include: [
           expect.objectContaining({
             model: mockQuestionModel,
@@ -288,7 +304,7 @@ describe('Assessment Service', () => {
           }),
         ],
       })
-      expect(result).toEqual(mockAssessments)
+      expect(result.assessments).toEqual(mockAssessments)
     })
   })
 

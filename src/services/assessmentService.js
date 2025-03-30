@@ -64,9 +64,10 @@ class AssessmentService {
 
       if (assessmentData.allowed_attempts == null || assessmentData.allowed_attempts <= 0) {
         throw new Error('Invalid allowed attempts')
-    }
+      }
 
-      return await this.AssessmentModel.create(assessmentData)
+      const assessment = await this.AssessmentModel.create(assessmentData)
+      return { assessment, course_id: module.course_id }
     } catch (error) {
       log.error('Create assessment error:', error)
       throw error
@@ -145,10 +146,12 @@ class AssessmentService {
         })
       }
 
-      return await this.AssessmentModel.findAll({
+      const assessments = await this.AssessmentModel.findAll({
         where: { module_id: moduleId },
         include,
       })
+
+      return { assessments, course_id: module.course_id }
     } catch (error) {
       log.error('Get assessments error:', error)
       throw error
