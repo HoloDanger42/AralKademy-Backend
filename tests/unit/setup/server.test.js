@@ -17,6 +17,7 @@ jest.unstable_mockModule('../../../src/config/database.js', () => {
     update: jest.fn(),
     destroy: jest.fn(),
     hasMany: jest.fn(),
+    hasOne: jest.fn(),
     belongsTo: jest.fn(),
     belongsToMany: jest.fn(),
     comparePassword: jest.fn().mockResolvedValue(true),
