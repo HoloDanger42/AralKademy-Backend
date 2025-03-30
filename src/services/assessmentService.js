@@ -22,7 +22,9 @@ class AssessmentService {
     AnswerResponseModel,
     ModuleModel,
     UserModel,
-    moduleServiceDependencies
+    CourseModel, 
+    ContentModel,
+    ModuleGradeModel
   ) {
     this.AssessmentModel = AssessmentModel
     this.QuestionModel = QuestionModel
@@ -33,13 +35,13 @@ class AssessmentService {
     this.UserModel = UserModel
 
     this.moduleService = new ModuleService(
-      moduleServiceDependencies.ModuleModel,
-      moduleServiceDependencies.CourseModel,
-      moduleServiceDependencies.ContentModel,
-      moduleServiceDependencies.AssessmentModel,
-      moduleServiceDependencies.SubmissionModel,
-      moduleServiceDependencies.ModuleGradeModel,
-      moduleServiceDependencies.UserModel
+      ModuleModel, 
+      CourseModel,
+      ContentModel,
+      AssessmentModel,
+      SubmissionModel,
+      ModuleGradeModel,
+      UserModel
     );
   }
 

@@ -21,16 +21,10 @@ const assessmentService = new AssessmentService(
   AnswerResponse,
   Module,
   User,
-  {
-    Module,   
-    Course, 
-    Content,
-    Assessment,
-    Submission,  
-    ModuleGrade,
-    User,
-  }
-)
+  Course,
+  Content,
+  ModuleGrade
+);
 
 export const createAssessment = async (req, res) => {
   try {
