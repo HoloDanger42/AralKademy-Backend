@@ -215,7 +215,7 @@ class AssessmentService {
         where: { assessment_id: assessmentId, user_id: userId }
       });
 
-      if (submissionCount === assessment.allowed_attempts) {
+      if (submissionCount >= assessment.allowed_attempts) {
         throw new Error('Invalid attempt')
       }
 
