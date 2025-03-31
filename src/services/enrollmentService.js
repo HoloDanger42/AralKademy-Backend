@@ -53,6 +53,16 @@ class EnrollmentService {
    */
   async createEnrollment(enrollmentData) {
     try {
+      const existingUser = await this.UserModel.findOne({
+        where: {
+          email: enrollmentData.email
+        },
+      });
+  
+      if (existingUser) {
+        throw new Error('Email already exists');
+      }
+
       // 1. Hash the password (using bcrypt)
       const hashedPassword = await bcrypt.hash(enrollmentData.password, 12)
 
@@ -66,13 +76,19 @@ class EnrollmentService {
 
       // 4. Create the enrollment record (no try-catch for Sequelize errors here)
       const newEnrollment = await this.EnrollmentModel.create(enrollmentData)
+
       return newEnrollment
     } catch (error) {
       log.error('Error creating enrollment in service:', error)
+
+      if (error.message === 'Email already exists') {
+        throw error
+      }
       // Handle unique constraint errors (e.g., duplicate email)
       if (error.name === 'SequelizeUniqueConstraintError') {
         throw error
       }
+      
       if (error.name === 'SequelizeValidationError') {
         throw error
       }
@@ -325,15 +341,29 @@ class EnrollmentService {
         throw new Error('Enrollment not found')
       }
 
+      const existingUser = await this.UserModel.findOne({
+        where: {
+          email: updatedData.email
+        },
+      });
+  
+      if (existingUser) {
+        throw new Error('Email already exists');
+      }
+
       // *** IMPORTANT: Prevent password updates through this route ***
       delete updatedData.password
       delete updatedData.confirm_password
 
       const updatedEnrollment = await enrollment.update(updatedData)
+
       return updatedEnrollment
     } catch (error) {
       log.error('Error updating enrollment in service:', error)
       if (error.message === 'Enrollment not found') {
+        throw error
+      }
+      if (error.message === 'Email already exists') {
         throw error
       }
       if (error.name === 'SequelizeValidationError') {

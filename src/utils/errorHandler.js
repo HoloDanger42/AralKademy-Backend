@@ -119,6 +119,16 @@ export const handleControllerError = (
     })
   }
 
+  if (error.message === 'Email already exists') {
+    return res.status(409).json({
+      error: {
+        message: 'Resource already exists',
+        code: 'CONFLICT',
+        details: 'Email already exists',
+      },
+    })
+  }
+
   // Handle custom validation errors from services
   if (
     error.message.toLowerCase().includes('required') ||
