@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 import { log } from '../utils/logger.js'
+import { Sequelize } from 'sequelize';
 
 /**
  * Service class that manages enrollment operations in the system.
