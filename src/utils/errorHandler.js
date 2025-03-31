@@ -53,17 +53,23 @@ export const handleControllerError = (
 
   // Handle unique constaint violations
   if (error.name === 'SequelizeUniqueConstraintError') {
-    const errors = {}
-    error.errors.forEach((err) => {
-      errors[err.path] = `${err.path.charAt(0).toUpperCase() + err.path.slice(1)} already exists.`
-    })
+    // Convert all errors into a single string
+    const errorMessages = error.errors.map(err => 
+      `${err.path.charAt(0).toUpperCase() + err.path.slice(1)} already exists`
+    ).join(', ');
     return res.status(409).json({
       error: {
-        message: 'Resource already exists',
+        message: errorMessages, // Single combined string
         code: 'CONFLICT',
-        details: errors,
-      },
-    })
+        details: {
+          // Still include individual errors if needed
+          ...error.errors.reduce((acc, err) => {
+            acc[err.path] = `${err.path} already exists`;
+            return acc;
+          }, {})
+        }
+      }
+    });
   }
 
   // Handle specific known error messages
@@ -122,9 +128,8 @@ export const handleControllerError = (
   if (error.message === 'Email already exists') {
     return res.status(409).json({
       error: {
-        message: 'Resource already exists',
+        message: 'Email already exists',
         code: 'CONFLICT',
-        details: 'Email already exists',
       },
     })
   }
