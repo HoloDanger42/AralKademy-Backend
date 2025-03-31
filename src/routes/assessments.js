@@ -480,6 +480,16 @@ router.delete(
  *                   { text: "Berlin", is_correct: false },
  *                   { text: "Madrid", is_correct: false }
  *                 ]
+ *             true_false:
+ *               summary: True or false question
+ *               value:
+ *                 question_text: "Durex"
+ *                 question_type: "true_false"
+ *                 points: 5
+ *                 options: [
+ *                   { text: "True", is_correct: true },
+ *                   { text: "False", is_correct: false },
+ *                 ]
  *             short_answer:
  *               summary: Short answer question
  *               value:
