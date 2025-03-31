@@ -92,6 +92,10 @@ class GroupService {
         where: { user_id: userIds },
       })
 
+      if (studentTeachers.length !== userIds.length) {
+        throw new Error('All must be existing student teachers')
+      }
+
       for (const studentTeacher of studentTeachers) {
         studentTeacher.group_id = groupId
         await studentTeacher.save()
@@ -100,6 +104,9 @@ class GroupService {
       return studentTeachers
     } catch (error) {
       if (error.message === 'All fields are required') {
+        throw error
+      }
+      if (error.message === 'All must be existing student teachers') {
         throw error
       }
       throw new Error('Failed to assign student teacher members')
@@ -121,6 +128,10 @@ class GroupService {
     try {
       const learners = await this.LearnerModel.findAll({ where: { user_id: userIds }, })
 
+      if (learners.length !== userIds.length) {
+        throw new Error('All must be existing learners')
+      }
+
       for (const learner of learners) {
         learner.group_id = groupId
         await learner.save()
@@ -129,6 +140,9 @@ class GroupService {
       return learners
     } catch (error) {
       if (error.message === 'All fields are required') {
+        throw error
+      }
+      if (error.message === 'All must be existing learners') {
         throw error
       }
       throw new Error('Failed to assign learner members')

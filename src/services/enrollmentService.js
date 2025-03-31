@@ -71,7 +71,7 @@ class EnrollmentService {
       log.error('Error creating enrollment in service:', error)
       // Handle unique constraint errors (e.g., duplicate email)
       if (error.name === 'SequelizeUniqueConstraintError') {
-        throw new Error('Email already exists')
+        throw error
       }
       if (error.name === 'SequelizeValidationError') {
         throw error
@@ -184,9 +184,11 @@ class EnrollmentService {
    * @description Fetches all enrollment records from the database, excluding password fields
    * and including the associated school information for each enrollment
    */
-  async getAllEnrollments(status) {
+  async getAllEnrollments(status, page = 1, limit = 10) {
     try {
       const queryOptions = {
+        limit,
+        offset: (page - 1) * limit,
         attributes: { exclude: ['password'] }, // Exclude password
         include: [{ model: this.SchoolModel, as: 'school' }], // Include associated school
       }
@@ -196,8 +198,15 @@ class EnrollmentService {
         queryOptions.where = { status }
       }
 
-      const enrollments = await this.EnrollmentModel.findAll(queryOptions)
-      return enrollments
+      const { count, rows } = await this.EnrollmentModel.findAndCountAll(queryOptions);
+
+      const statusCounts = await this.EnrollmentModel.findAll({
+            attributes: ['status', [Sequelize.fn('COUNT', Sequelize.col('status')), 'count']],
+            group: ['status'],
+            raw: true
+      });
+
+      return { count, rows, statusCounts };
     } catch (error) {
       log.error('Error fetching all enrollments:', error)
       throw new Error('Failed to fetch enrollments')
@@ -331,7 +340,7 @@ class EnrollmentService {
         throw error
       }
       if (error.name === 'SequelizeUniqueConstraintError') {
-        throw new Error('Email already exists')
+        throw error
       }
       throw new Error('Failed to update enrollment')
     }

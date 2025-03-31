@@ -180,8 +180,8 @@ class CourseService {
       }
 
       // Handle unique constraint violation (course name)
-      if (error.name === 'SequelizeUniqueConstraintError' && error.errors[0].path === 'name') {
-        throw new Error('Course name already exists') // Specific, user-friendly error
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        throw error
       }
 
       throw new Error('Failed to create course') // Generic error for other issues
@@ -219,10 +219,9 @@ class CourseService {
         throw error // Re-throw for controller
       }
 
-      if (error.name === 'SequelizeUniqueConstraintError' && error.errors[0].path === 'name') {
-        throw new Error('Course name already exists')
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        throw error
       }
-
       throw new Error('Failed to update course')
     }
   }

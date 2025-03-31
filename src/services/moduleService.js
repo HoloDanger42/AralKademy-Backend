@@ -440,8 +440,10 @@ class ModuleService {
           });
   
           return highestSubmission
-            ? {
+            ? { 
+                assessment_id: highestSubmission.assessment_id,
                 score: highestSubmission.score,
+                max_score: highestSubmission.max_score,
                 passed: highestSubmission.score >= assessment.passing_score
               }
             : null;
@@ -465,7 +467,7 @@ class ModuleService {
         grade: averageScore,
       });
   
-      return { allGraded, allPassed, averageScore };
+      return { allGraded, allPassed, averageScore, submissions: validSubmissions };
   
     } catch (error) {
       log.error('Error getting contents:', error)
