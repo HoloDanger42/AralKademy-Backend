@@ -10,6 +10,7 @@ class PasswordlessAuthService {
   constructor() {
     this.tokenExpiry = 15 * 60 * 1000 // 15 minutes
     this.jwtSecret = config.jwt.accessTokenSecret
+    this.failedAttemptsCache = new Map() // Track failed attempts
   }
 
   /**
@@ -165,17 +166,31 @@ class PasswordlessAuthService {
    * @returns {Promise<Object>} User data and JWT tokens if valid
    */
   async verifyToken(token) {
+    // Check if token has had too many failed attempts (basic rate limiting)
+    const failedAttempts = this.failedAttemptsCache.get(token) || 0
+    if (failedAttempts >= 3) {
+      throw new Error('Too many failed attempts with this token. Please request a new code.')
+    }
+
     const authToken = await AuthToken.findOne({
       where: {
         token,
-        used: false,
         expiresAt: { [Op.gt]: new Date() },
       },
       include: [{ model: User, as: 'user' }],
     })
 
     if (!authToken) {
+      // Track failed attempts
+      this.failedAttemptsCache.set(token, failedAttempts + 1)
+      // Automatically clean up cache after 10 minutes
+      setTimeout(() => this.failedAttemptsCache.delete(token), 10 * 60 * 1000)
       throw new Error('Invalid or expired token')
+    }
+
+    // If token is already used, provide a clear error
+    if (authToken.used) {
+      throw new Error('This code has already been used. Please request a new code.')
     }
 
     // Mark token as used after successful verification
@@ -202,6 +217,9 @@ class PasswordlessAuthService {
 
     // Updates user's refresh token
     await User.update({ refreshToken }, { where: { id: user.id } })
+
+    // Clear any failed attempts for this token
+    this.failedAttemptsCache.delete(token)
 
     return {
       user: {
