@@ -41,9 +41,19 @@ export const Assessment = sequelize.define(
         },
       },
     },
+    max_score: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      validate: {
+        min: {
+          args: [0],
+          msg: 'Max score must be a positive number',
+        },
+      },
+    },
     passing_score: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
       validate: {
         min: {
           args: [0],

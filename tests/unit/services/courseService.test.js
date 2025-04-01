@@ -157,7 +157,7 @@ describe('Course Service', () => {
     test('should throw user-friendly error when course name already exists (unique constraint)', async () => {
       // Arrange
       const courseData = validCourses[0]
-      const uniqueConstraintError = new Error('Unique constraint error')
+      const uniqueConstraintError = new Error('Course name already exists')
       uniqueConstraintError.name = 'SequelizeUniqueConstraintError'
       uniqueConstraintError.errors = [{ path: 'name' }]
     
@@ -555,10 +555,12 @@ describe('Course Service', () => {
       }
       const mockCourse = {
         id: courseId,
-        update: jest.fn().mockRejectedValue({
-          name: 'SequelizeUniqueConstraintError',
-          errors: [{ path: 'name' }],
-        }),
+        update: jest.fn().mockRejectedValue(
+          Object.assign(new Error('Course name already exists'), {
+            name: 'SequelizeUniqueConstraintError',
+            errors: [{ path: 'name' }],
+          })
+        ),
       }
       mockCourseModel.findByPk = jest.fn().mockResolvedValue(mockCourse)
 

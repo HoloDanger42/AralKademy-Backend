@@ -40,7 +40,13 @@ export const Submission = sequelize.define(
     },
     max_score: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
+      validate: {
+        min: {
+          args: [0],
+          msg: 'Max score must be a positive number',
+        },
+      },
     },
     status: {
       type: DataTypes.ENUM('in_progress', 'submitted', 'graded'),
