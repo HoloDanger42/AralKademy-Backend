@@ -235,16 +235,16 @@ describe('User Controller', () => {
   describe('resetPassword', () => {
     test('should reset password successfully', async () => {
       // Arrange
-      mockReq.body = { 
-        email: validUsers[0].email, 
-        newPassword: 'NewPass123', 
-        confirmPassword: 'NewPass123' 
+      mockReq.body = {
+        email: validUsers[0].email,
+        newPassword: 'NewPass123',
+        confirmPassword: 'NewPass123',
       }
       jest.spyOn(UserServiceModule.default.prototype, 'resetPassword').mockResolvedValue()
-    
+
       // Act
       await userControllerModule.resetPassword(mockReq, mockRes)
-    
+
       // Assert
       expect(mockRes.status).toHaveBeenCalledWith(200)
       expect(mockRes.json).toHaveBeenCalledWith({ message: 'Password reset successfully' })
@@ -733,7 +733,7 @@ describe('User Controller', () => {
       expect(log.error).toHaveBeenCalled()
     })
   })
-  describe('changePassword', () => { 
+  describe('changePassword', () => {
     test('should change the password of the user', async () => {
       // Arrange
       const userId = '123'
@@ -782,6 +782,177 @@ describe('User Controller', () => {
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Invalid password',
+        },
+      })
+      expect(log.error).toHaveBeenCalled()
+    })
+  })
+
+  describe('restoreUser', () => {
+    test('should restore a user successfully', async () => {
+      // Arrange
+      const userId = '123'
+      const restoredUser = {
+        id: userId,
+        first_name: 'Restored',
+        last_name: 'User',
+        email: 'restored@example.com',
+      }
+
+      mockReq.params = { id: userId }
+
+      jest.spyOn(UserServiceModule.default.prototype, 'restoreUser').mockResolvedValue(restoredUser)
+
+      // Act
+      await userControllerModule.restoreUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'User restored successfully ',
+        user: restoredUser,
+      })
+      expect(log.info).toHaveBeenCalledWith(`User with ID ${userId} restored successfully`)
+    })
+
+    test('should return 404 if user to restore is not found', async () => {
+      // Arrange
+      const userId = '999'
+      mockReq.params = { id: userId }
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'restoreUser')
+        .mockRejectedValue(new Error('User not found'))
+
+      // Act
+      await userControllerModule.restoreUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(404)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        },
+      })
+      expect(log.error).toHaveBeenCalled()
+    })
+
+    test('should return 500 if an error occurs during restoration', async () => {
+      // Arrange
+      const userId = '123'
+      mockReq.params = { id: userId }
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'restoreUser')
+        .mockRejectedValue(new Error('Database error'))
+
+      // Act
+      await userControllerModule.restoreUser(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to restore user',
+        },
+      })
+      expect(log.error).toHaveBeenCalled()
+    })
+  })
+
+  describe('getAllDeletedUsers', () => {
+    test('should return all deleted users with pagination', async () => {
+      // Arrange
+      const page = 2
+      const limit = 5
+
+      const deletedUsers = {
+        count: 12,
+        rows: [
+          { id: 1, first_name: 'Deleted', last_name: 'User1', email: 'deleted1@example.com' },
+          { id: 2, first_name: 'Deleted', last_name: 'User2', email: 'deleted2@example.com' },
+          { id: 3, first_name: 'Deleted', last_name: 'User3', email: 'deleted3@example.com' },
+          { id: 4, first_name: 'Deleted', last_name: 'User4', email: 'deleted4@example.com' },
+          { id: 5, first_name: 'Deleted', last_name: 'User5', email: 'deleted5@example.com' },
+        ],
+      }
+
+      mockReq.query = { page: String(page), limit: String(limit) }
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'getAllDeletedUsers')
+        .mockResolvedValue(deletedUsers)
+
+      // Act
+      await userControllerModule.getAllDeletedUsers(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        count: deletedUsers.count,
+        totalPages: Math.ceil(deletedUsers.count / limit),
+        currentPage: page,
+        users: deletedUsers.rows,
+      })
+      expect(log.info).toHaveBeenCalledWith('Retrieved all deleted users')
+    })
+
+    test('should use default pagination if not provided', async () => {
+      // Arrange
+      const defaultPage = 1
+      const defaultLimit = 10
+
+      const deletedUsers = {
+        count: 3,
+        rows: [
+          { id: 1, first_name: 'Deleted', last_name: 'User1', email: 'deleted1@example.com' },
+          { id: 2, first_name: 'Deleted', last_name: 'User2', email: 'deleted2@example.com' },
+          { id: 3, first_name: 'Deleted', last_name: 'User3', email: 'deleted3@example.com' },
+        ],
+      }
+
+      mockReq.query = {} // No pagination params
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'getAllDeletedUsers')
+        .mockResolvedValue(deletedUsers)
+
+      // Act
+      await userControllerModule.getAllDeletedUsers(mockReq, mockRes)
+
+      // Assert
+      expect(UserServiceModule.default.prototype.getAllDeletedUsers).toHaveBeenCalledWith(
+        defaultPage,
+        defaultLimit
+      )
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        count: deletedUsers.count,
+        totalPages: Math.ceil(deletedUsers.count / defaultLimit),
+        currentPage: defaultPage,
+        users: deletedUsers.rows,
+      })
+    })
+
+    test('should return 500 if an error occurs during retrieval', async () => {
+      // Arrange
+      mockReq.query = { page: '1', limit: '10' }
+
+      jest
+        .spyOn(UserServiceModule.default.prototype, 'getAllDeletedUsers')
+        .mockRejectedValue(new Error('Database error'))
+
+      // Act
+      await userControllerModule.getAllDeletedUsers(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to retrieve deleted users',
         },
       })
       expect(log.error).toHaveBeenCalled()

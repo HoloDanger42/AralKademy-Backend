@@ -70,6 +70,41 @@ describe('Group Controller', () => {
       })
       expect(log.error).toHaveBeenCalledWith('Get all groups error:', expect.any(Error))
     })
+
+    test('should filter groups by valid group_type', async () => {
+      // Arrange
+      mockReq.query = { group_type: 'learner' }
+      const learnerGroups = [
+        { id: 1, name: 'Learner Group 1', group_type: 'learner' },
+        { id: 2, name: 'Learner Group 2', group_type: 'learner' },
+      ]
+
+      jest.spyOn(GroupService.prototype, 'getAllGroups').mockResolvedValue(learnerGroups)
+
+      // Act
+      await getAllGroups(mockReq, mockRes)
+
+      // Assert
+      expect(GroupService.prototype.getAllGroups).toHaveBeenCalledWith({ group_type: 'learner' })
+      expect(mockRes.status).toHaveBeenCalledWith(200)
+      expect(mockRes.json).toHaveBeenCalledWith(learnerGroups)
+      expect(log.info).toHaveBeenCalledWith('Retrieved all groups')
+    })
+
+    test('should return 400 for invalid group_type', async () => {
+      // Arrange
+      mockReq.query = { group_type: 'invalid_type' }
+
+      // Act
+      await getAllGroups(mockReq, mockRes)
+
+      // Assert
+      expect(GroupService.prototype.getAllGroups).not.toHaveBeenCalled()
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Invalid group_type',
+      })
+    })
   })
 
   describe('createGroup', () => {
@@ -428,20 +463,20 @@ describe('Group Controller', () => {
     })
   })
 
- describe('removeMember', () => {
+  describe('removeMember', () => {
     test('should remove a member from a group successfully', async () => {
       // Arrange
       mockReq.params.groupId = '1'
       mockReq.params.userId = '10'
-  
+
       const removedMember = { userId: 10, groupId: 1 }
-  
+
       // Mocking the removeMember method to resolve successfully
       GroupService.prototype.removeMember = jest.fn().mockResolvedValue(removedMember)
-  
+
       // Act
       await removeMember(mockReq, mockRes)
-  
+
       // Assert
       expect(GroupService.prototype.removeMember).toHaveBeenCalledWith('1', '10')
       expect(mockRes.status).toHaveBeenCalledWith(200)
@@ -451,18 +486,18 @@ describe('Group Controller', () => {
       })
       expect(log.info).toHaveBeenCalledWith('Member with id 10 removed from group with id 1')
     })
-  
+
     test('should handle member not found when trying to remove (remove member)', async () => {
       // Arrange
       mockReq.params.groupId = '1'
       mockReq.params.userId = '999'
-  
+
       const error = new Error('Member not found')
       GroupService.prototype.removeMember = jest.fn().mockRejectedValue(error)
-  
+
       // Act
       await removeMember(mockReq, mockRes)
-  
+
       // Assert
       expect(GroupService.prototype.removeMember).toHaveBeenCalledWith('1', '999')
       expect(mockRes.status).toHaveBeenCalledWith(404)
@@ -477,18 +512,18 @@ describe('Group Controller', () => {
         expect.any(Error)
       )
     })
-  
+
     test('should handle errors when removing a member (remove member)', async () => {
       // Arrange
       mockReq.params.groupId = '1'
       mockReq.params.userId = '10'
-  
+
       const error = new Error('Internal Server Error')
       GroupService.prototype.removeMember = jest.fn().mockRejectedValue(error)
-  
+
       // Act
       await removeMember(mockReq, mockRes)
-  
+
       // Assert
       expect(GroupService.prototype.removeMember).toHaveBeenCalledWith('1', '10')
       expect(mockRes.status).toHaveBeenCalledWith(500)
@@ -503,5 +538,5 @@ describe('Group Controller', () => {
         expect.any(Error)
       )
     })
-  }) 
+  })
 })

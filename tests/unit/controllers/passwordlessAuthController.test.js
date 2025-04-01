@@ -184,6 +184,52 @@ describe('PasswordlessAuthController', () => {
         })
       )
     })
+
+    test('should return 400 when email is not provided', async () => {
+      // Arrange
+      mockReq.body = {} // Empty body with no email
+      mockReq.user = { id: 'teacher123' } // Must provide user to avoid NPE
+
+      // Act
+      await PasswordlessAuthController.requestPictureCode(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(400)
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: { message: 'Email is required' },
+      })
+      expect(passwordlessAuthService.generatePictureCode).not.toHaveBeenCalled()
+    })
+
+    test('should handle errors from service when generating picture code', async () => {
+      // Arrange
+      mockReq.body = { email: 'S12345' }
+      mockReq.user = { id: 'teacher123' }
+
+      const errorMessage = 'User not found'
+      passwordlessAuthService.generatePictureCode.mockRejectedValue(new Error(errorMessage))
+
+      // Act
+      await PasswordlessAuthController.requestPictureCode(mockReq, mockRes)
+
+      // Assert
+      expect(passwordlessAuthService.generatePictureCode).toHaveBeenCalledWith(
+        'S12345',
+        'teacher123'
+      )
+      expect(mockRes.status).toHaveBeenCalledWith(404) // Assuming error handler maps "not found" to 404
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({
+            message: errorMessage,
+          }),
+        })
+      )
+      expect(log.error).toHaveBeenCalledWith(
+        expect.stringContaining('Picture code request for S12345'),
+        expect.any(Error)
+      )
+    })
   })
 
   describe('verifyToken', () => {
