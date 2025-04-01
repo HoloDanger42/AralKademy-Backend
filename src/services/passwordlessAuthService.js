@@ -178,9 +178,8 @@ class PasswordlessAuthService {
       throw new Error('Invalid or expired token')
     }
 
-    // Mark token as used
-    authToken.used = true
-    await authToken.save()
+    // Mark token as used after successful verification
+    await authToken.update({ used: true })
 
     const user = authToken.user
 
