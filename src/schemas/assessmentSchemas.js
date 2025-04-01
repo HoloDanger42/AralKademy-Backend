@@ -181,21 +181,17 @@ export const assessmentSchemas = {
 
   gradeSubmission: {
     body: Joi.object({
-      grades: Joi.array()
-        .items(
-          Joi.object({
-            questionId: Joi.number().integer().required(),
-            points: Joi.number().integer().min(0).required(),
-            feedback: Joi.string().allow('', null),
-          })
-        )
-        .required(),
+      grade: Joi.object({
+        questionId: Joi.number().integer().required(),
+        points: Joi.number().integer().min(0).required(),
+        feedback: Joi.string().allow('', null),
+      }).required(),
       feedback: Joi.string().allow('', null),
     }),
     params: Joi.object({
       submissionId: Joi.number().integer().required(),
     }),
-  },
+  },  
 
   getAssessmentById: {
     params: Joi.object({

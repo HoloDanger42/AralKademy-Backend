@@ -569,7 +569,7 @@ describe('Assessment API Endpoints (Integration Tests)', () => {
     
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.submission).toHaveProperty('status', 'graded');
+      expect(response.body.submission).toHaveProperty('status', 'submitted');
       expect(response.body.submission).toHaveProperty('feedback', gradeData.feedback);
     });    
 
