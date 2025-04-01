@@ -227,7 +227,7 @@ describe('PasswordlessAuthService', () => {
 
       // Act & Assert
       await expect(passwordlessAuthService.verifyToken(usedToken)).rejects.toThrow(
-        'Invalid or expired token'
+        'This code has already been used. Please request a new code.'
       )
     })
   })
