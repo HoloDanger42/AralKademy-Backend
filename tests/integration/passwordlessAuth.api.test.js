@@ -268,7 +268,7 @@ describe('Passwordless Authentication API', () => {
         .post('/api/auth/passwordless/verify')
         .send({ token: magicLinkToken })
 
-      expect(response.status).toBe(401)
+      expect(response.status).toBe(403)
     })
   })
 

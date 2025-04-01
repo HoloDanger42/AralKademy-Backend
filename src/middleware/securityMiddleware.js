@@ -13,9 +13,11 @@ const STRICT_POLICY = true
 const standardLimiter = rateLimit({
   windowMs: FIFTEEN_MINUTES,
   max: MAX_REQUESTS,
+  skipSuccessfulRequests: true,
   handler: (_req, res) => {
     res.status(429).json({
-      message: 'Too many requests from this IP',
+      message: 'Too many authentication attempts, please try again later',
+      retryAfter: Math.ceil(FIFTEEN_MINUTES / 60000),
     })
   },
   standardHeaders: true,

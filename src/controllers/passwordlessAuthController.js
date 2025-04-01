@@ -128,6 +128,25 @@ export const PasswordlessAuthController = {
 
       log.info(`User ${authResult.user.email} logged in with passwordless auth`)
     } catch (error) {
+      // Handle different types of errors with appropriate status codes
+      if (error.message === 'This code has already been used. Please request a new code.') {
+        return res.status(403).json({
+          error: {
+            code: 'CODE_ALREADY_USED',
+            message: error.message,
+          },
+        })
+      } else if (
+        error.message === 'Too many failed attempts with this token. Please request a new code.'
+      ) {
+        return res.status(429).json({
+          error: {
+            code: 'RATE_LIMITED',
+            message: error.message,
+          },
+        })
+      }
+
       return handleControllerError(
         error,
         res,
