@@ -123,6 +123,8 @@ describe('Assessment API Endpoints (Integration Tests)', () => {
       expect(response.status).toBe(201)
       expect(response.body.success).toBe(true)
       expect(response.body).toHaveProperty('assessment')
+      console.log('RESPONSE BODY:', JSON.stringify(response.body, null, 2))
+      expect(response.body.assessment).toHaveProperty('id')
       expect(response.body.assessment.title).toBe(assessmentData.title)
     })
 
