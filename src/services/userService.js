@@ -231,9 +231,7 @@ class UserService {
       }
 
       if (error.name === 'SequelizeUniqueConstraintError') {
-        if (error.errors[0].path === 'email') {
-          throw new Error('Email already exists')
-        }
+        throw error
       }
 
       throw error
@@ -295,18 +293,25 @@ class UserService {
   /**
    * Retrieves a paginated list of all users from the database, excluding their passwords
    * @async
+   * @param {string} [role] - The users to retrieve based on role
    * @param {number} [page=1] - The page number to retrieve (defaults to 1)
    * @param {number} [limit=10] - The number of users per page (defaults to 10)
    * @returns {Promise<Object>} A promise that resolves to an object containing the users and count
    * @returns {Array} returns.rows - Array of user objects
    * @returns {number} returns.count - Total number of users
    */
-  async getAllUsers(page = 1, limit = 10) {
-    const { count, rows } = await this.UserModel.findAndCountAll({
+  async getAllUsers(role, page = 1, limit = 10) {
+    const queryOptions = {
       limit,
       offset: (page - 1) * limit,
       attributes: { exclude: ['password'] },
-    });
+    }
+
+    if (role && ['learner', 'student_teacher', 'admin', 'teacher'].includes(role)) {
+      queryOptions.where = { role }
+    }
+    
+    const { count, rows } = await this.UserModel.findAndCountAll(queryOptions);
   
     const roleCounts = await this.UserModel.findAll({
       attributes: ['role', [Sequelize.fn('COUNT', Sequelize.col('role')), 'count']],
@@ -468,6 +473,9 @@ class UserService {
       return user
     } catch (error) {
       await transaction.rollback()
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        throw error
+      }
       throw error
     }
   }

@@ -165,11 +165,11 @@ describe('Course Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(409)
       expect(mockRes.json).toHaveBeenCalledWith({
         error: {
+          message: 'Name already exists',
           code: 'CONFLICT',
           details: {
-            name: 'Name already exists.',
+            name: 'name already exists',
           },
-          message: 'Resource already exists',
         },
       })
     })
@@ -840,11 +840,11 @@ describe('Course Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(409)
       expect(mockRes.json).toHaveBeenCalledWith({
         error: {
+          message: 'Name already exists',
           code: 'CONFLICT',
           details: {
-            name: 'Name already exists.',
+            name: 'name already exists',
           },
-          message: 'Resource already exists',
         },
       })
     })

@@ -187,11 +187,11 @@ describe('Enrollment Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(409)
       expect(mockRes.json).toHaveBeenCalledWith({
         error: {
+          message: 'Email already exists',
           code: 'CONFLICT',
           details: {
-            email: 'Email already exists.',
+            email: 'email already exists',
           },
-          message: 'Resource already exists',
         },
       })
       expect(log.error).toHaveBeenCalled()
@@ -420,20 +420,39 @@ describe('Enrollment Controller', () => {
   describe('getAllEnrollments', () => {
     test('should retrieve all enrollments successfully', async () => {
       // Arrange
-      const mockEnrollments = validEnrollments.map((enrollment, index) => ({
-        id: index + 1,
-        ...enrollment,
-      }))
-      getAllEnrollmentsSpy.mockResolvedValue(mockEnrollments)
-
+      const mockData = {
+        count: validEnrollments.length,
+        rows: validEnrollments.map((enrollment, index) => ({
+          id: index + 1,
+          ...enrollment,
+        })),
+        statusCounts: [
+          { status: 'approved', count: '1' },
+          { status: 'pending', count: '1' }
+        ]
+      };
+      
+      // Mock query parameters
+      mockReq.query = {
+        page: '1',
+        limit: '10'
+      };
+      
+      getAllEnrollmentsSpy.mockResolvedValue(mockData);
+    
       // Act
-      await getAllEnrollments(mockReq, mockRes)
-
+      await getAllEnrollments(mockReq, mockRes);
+    
       // Assert
-      expect(mockRes.status).toHaveBeenCalledWith(200)
-      expect(mockRes.json).toHaveBeenCalledWith(mockEnrollments)
-      expect(log.info).toHaveBeenCalled()
-    })
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        enrollments: mockData.rows,
+        count: mockData.count,
+        totalPages: 1, // Math.ceil(2 / 10)
+        currentPage: 1,
+        statusCounts: mockData.statusCounts
+      });
+    });
 
     test('should handle unexpected server errors during retrieving all enrollments', async () => {
       // Arrange
@@ -669,11 +688,11 @@ describe('Enrollment Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(409) // Expect 409 Conflict
       expect(mockRes.json).toHaveBeenCalledWith({
         error: {
+          message: 'Email already exists',
           code: 'CONFLICT',
           details: {
-            email: 'Email already exists.',
+            email: 'email already exists',
           },
-          message: 'Resource already exists',
         },
       })
       expect(log.error).toHaveBeenCalled()

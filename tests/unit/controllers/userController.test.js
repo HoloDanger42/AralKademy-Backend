@@ -64,6 +64,7 @@ describe('User Controller', () => {
   describe('getAllUsers', () => {
     test('should return all users successfully', async () => {
       // Arrange
+      const role = null;
       const page = 1
       const limit = 10
 
@@ -79,13 +80,13 @@ describe('User Controller', () => {
       })
 
       // Mock request query parameters
-      mockReq.query = { page: String(page), limit: String(limit) }
+      mockReq.query = { role: null, page: String(page), limit: String(limit) }
 
       // Act
       await getAllUsers(mockReq, mockRes)
 
       // Assert
-      expect(getAllUsersSpy).toHaveBeenCalledWith(page, limit) // Ensure service is called correctly
+      expect(getAllUsersSpy).toHaveBeenCalledWith(role, page, limit) // Ensure service is called correctly
       expect(mockRes.status).toHaveBeenCalledWith(200)
       expect(mockRes.json).toHaveBeenCalledWith({
         count: mockUsers.length,
@@ -93,7 +94,7 @@ describe('User Controller', () => {
         currentPage: page,
         users: mockUsers, // Directly returned since passwords are excluded in the service
       })
-      expect(log.info).toHaveBeenCalledWith('Retrieved all users')
+      expect(log.info).toHaveBeenCalledWith('Retrieved users')
     })
   })
 
@@ -467,9 +468,9 @@ describe('User Controller', () => {
         error: {
           code: 'CONFLICT',
           details: {
-            email: 'Email already exists.',
+            email: 'email already exists',
           },
-          message: 'Resource already exists',
+          message: 'Email already exists',
         },
       })
       expect(log.error).toHaveBeenCalled()

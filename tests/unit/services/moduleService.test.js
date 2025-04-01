@@ -490,7 +490,15 @@ describe('Module Service', () => {
       expect(result).toEqual({
         allGraded: false,
         allPassed: false,
-        averageScore: 75
+        averageScore: 75,
+        submissions: [
+          {
+            assessment_id: undefined,
+            max_score: undefined,
+            passed: true,
+            score: 75,
+          },
+        ],
       });
     });
   
@@ -511,7 +519,11 @@ describe('Module Service', () => {
       expect(result).toEqual({
         allGraded: true,
         allPassed: true,
-        averageScore: 87.5
+        averageScore: 87.5,
+        submissions: [
+          { assessment_id: undefined, max_score: undefined, passed: true, score: 85 },
+          { assessment_id: undefined, max_score: undefined, passed: true, score: 90 },
+        ],
       });
     });
   
@@ -532,7 +544,11 @@ describe('Module Service', () => {
       expect(result).toEqual({
         allGraded: true,
         allPassed: false,
-        averageScore: 80
+        averageScore: 80,
+        submissions: [
+          { assessment_id: undefined, max_score: undefined, passed: true, score: 85 },
+          { assessment_id: undefined, max_score: undefined, passed: false, score: 75 },
+        ],
       });
     });
   

@@ -174,9 +174,19 @@ const getEnrollmentById = async (req, res) => {
 const getAllEnrollments = async (req, res) => {
   try {
     const { status } = req.query
-    const enrollments = await enrollmentService.getAllEnrollments(status)
+    const page = Number(req.query.page) || 1
+    const limit = Number(req.query.limit) || 10
 
-    res.status(200).json(enrollments)
+    const enrollments = await enrollmentService.getAllEnrollments(status, page, limit)
+
+    res.status(200).json({
+      count: enrollments.count,
+      totalPages: Math.ceil(enrollments.count / limit),
+      currentPage: page,
+      enrollments: enrollments.rows,
+      statusCounts: enrollments.statusCounts
+    })
+    
     log.info(`Retrieved enrollments${status ? ` with status: ${status}` : ''}`)
   } catch (error) {
     return handleControllerError(

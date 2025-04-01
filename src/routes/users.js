@@ -116,6 +116,12 @@ router.post('/', rbac.adminOnly, createUser)
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *           enum: [teacher, student_teacher, admin, learner]
+ *         description: Filter by user role
+ *       - in: query
  *         name: page
  *         schema:
  *           type: integer

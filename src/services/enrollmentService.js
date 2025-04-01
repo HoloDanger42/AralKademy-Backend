@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 import { log } from '../utils/logger.js'
+import { Sequelize } from 'sequelize';
 
 /**
  * Service class that manages enrollment operations in the system.
@@ -53,6 +54,16 @@ class EnrollmentService {
    */
   async createEnrollment(enrollmentData) {
     try {
+      const existingUser = await this.UserModel.findOne({
+        where: {
+          email: enrollmentData.email
+        },
+      });
+  
+      if (existingUser) {
+        throw new Error('Email already exists');
+      }
+
       // 1. Hash the password (using bcrypt)
       const hashedPassword = await bcrypt.hash(enrollmentData.password, 12)
 
@@ -66,13 +77,19 @@ class EnrollmentService {
 
       // 4. Create the enrollment record (no try-catch for Sequelize errors here)
       const newEnrollment = await this.EnrollmentModel.create(enrollmentData)
+
       return newEnrollment
     } catch (error) {
       log.error('Error creating enrollment in service:', error)
+
+      if (error.message === 'Email already exists') {
+        throw error
+      }
       // Handle unique constraint errors (e.g., duplicate email)
       if (error.name === 'SequelizeUniqueConstraintError') {
-        throw new Error('Email already exists')
+        throw error
       }
+      
       if (error.name === 'SequelizeValidationError') {
         throw error
       }
@@ -184,9 +201,11 @@ class EnrollmentService {
    * @description Fetches all enrollment records from the database, excluding password fields
    * and including the associated school information for each enrollment
    */
-  async getAllEnrollments(status) {
+  async getAllEnrollments(status, page = 1, limit = 10) {
     try {
       const queryOptions = {
+        limit,
+        offset: (page - 1) * limit,
         attributes: { exclude: ['password'] }, // Exclude password
         include: [{ model: this.SchoolModel, as: 'school' }], // Include associated school
       }
@@ -196,8 +215,15 @@ class EnrollmentService {
         queryOptions.where = { status }
       }
 
-      const enrollments = await this.EnrollmentModel.findAll(queryOptions)
-      return enrollments
+      const { count, rows } = await this.EnrollmentModel.findAndCountAll(queryOptions);
+
+      const statusCounts = await this.EnrollmentModel.findAll({
+            attributes: ['status', [Sequelize.fn('COUNT', Sequelize.col('status')), 'count']],
+            group: ['status'],
+            raw: true
+      });
+
+      return { count, rows, statusCounts };
     } catch (error) {
       log.error('Error fetching all enrollments:', error)
       throw new Error('Failed to fetch enrollments')
@@ -316,22 +342,36 @@ class EnrollmentService {
         throw new Error('Enrollment not found')
       }
 
+      const existingUser = await this.UserModel.findOne({
+        where: {
+          email: updatedData.email
+        },
+      });
+  
+      if (existingUser) {
+        throw new Error('Email already exists');
+      }
+
       // *** IMPORTANT: Prevent password updates through this route ***
       delete updatedData.password
       delete updatedData.confirm_password
 
       const updatedEnrollment = await enrollment.update(updatedData)
+
       return updatedEnrollment
     } catch (error) {
       log.error('Error updating enrollment in service:', error)
       if (error.message === 'Enrollment not found') {
         throw error
       }
+      if (error.message === 'Email already exists') {
+        throw error
+      }
       if (error.name === 'SequelizeValidationError') {
         throw error
       }
       if (error.name === 'SequelizeUniqueConstraintError') {
-        throw new Error('Email already exists')
+        throw error
       }
       throw new Error('Failed to update enrollment')
     }
