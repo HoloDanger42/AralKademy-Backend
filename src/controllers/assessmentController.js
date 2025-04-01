@@ -179,8 +179,8 @@ export const getStudentSubmission = async (req, res) => {
 export const gradeSubmission = async (req, res) => {
   try {
     const { submissionId } = req.params
-    const { grades, feedback } = req.body
-    const submission = await assessmentService.gradeSubmission(submissionId, grades, feedback)
+    const { grade, feedback } = req.body
+    const submission = await assessmentService.gradeSubmission(submissionId, grade, feedback)
     res.status(200).json({
       success: true,
       submission,

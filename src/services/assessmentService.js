@@ -374,59 +374,59 @@ class AssessmentService {
         isLate = true
       }
 
-      // Auto-grade multiple choice questions
-      if (assessment.type === 'quiz') {
-        // Get all answers for this submission
-        const answers = await this.AnswerResponseModel.findAll({
-          where: { submission_id: submissionId },
-          include: [
-            {
-              model: this.QuestionModel,
-              as: 'question',
-              include: [
-                {
-                  model: this.QuestionOptionModel,
-                  as: 'options',
-                  where: { is_correct: true },
-                  required: false,
-                },
-              ],
-            },
-          ],
-        })
+      const answers = await this.AnswerResponseModel.findAll({
+        where: { submission_id: submissionId },
+        include: [
+          {
+            model: this.QuestionModel,
+            as: 'question',
+            include: [
+              {
+                model: this.QuestionOptionModel,
+                as: 'options',
+                where: { is_correct: true },
+                required: false,
+              },
+            ],
+          },
+        ],
+      })
 
-        let totalScore = 0
+      let totalScore = 0
+      let gradedCount = 0
 
-        // Grade each multiple choice/true-false answer
-        for (const answer of answers) {
-          if (
-            answer.question.question_type === 'multiple_choice' ||
-            answer.question.question_type === 'true_false'
-          ) {
-            // Find if selected option is correct
-            const correctOption = answer.question.options.find(
-              (option) => option.id === answer.selected_option_id
-            )
+      // Grade each multiple choice/true-false answer
+      for (const answer of answers) {
+        if (
+          answer.question.question_type === 'multiple_choice' ||
+          answer.question.question_type === 'true_false'
+        ) {
+          // Find if selected option is correct
+          const correctOption = answer.question.options.find(
+            (option) => option.id === answer.selected_option_id
+          )
 
-            if (correctOption) {
-              // Award full points for correct answer
-              answer.points_awarded = answer.question.points
-            } else {
-              // Zero points for incorrect answer
-              answer.points_awarded = 0
-            }
-
-            totalScore += answer.points_awarded
-            await answer.save()
+          if (correctOption) {
+            // Award full points for correct answer
+            answer.points_awarded = answer.question.points
+          } else {
+            // Zero points for incorrect answer
+            answer.points_awarded = 0
           }
-          // For short answer and essay, leave points_awarded as null for manual grading
-        }
 
-        // Update submission with score
-        submission.score = totalScore
+          totalScore += answer.points_awarded
+          await answer.save()
+          gradedCount++
+        }
+        // For short answer and essay, leave points_awarded as null for manual grading
+      }
+
+      // Update submission with score
+      submission.score = totalScore
+
+      if (gradedCount === answers.length) {
         submission.status = 'graded'
       } else {
-        // For assignments and exams, set status to submitted but not graded
         submission.status = 'submitted'
       }
 
@@ -616,43 +616,57 @@ class AssessmentService {
   /**
    * Grades a submission
    * @param {number} submissionId - ID of the submission
-   * @param {Array} grades = Array of question grades
+   * @param {Array} grade = Question grade
    * @param {string} feedback - Overall feedback
    * @return {Promise<Object>} The updated submission
    */
-  async gradeSubmission(submissionId, grades, feedback) {
+  async gradeSubmission(submissionId, grade, feedback) {
     try {
       const submission = await this.SubmissionModel.findByPk(submissionId)
       if (!submission) {
         throw new Error('Submission not found')
       }
 
-      // Update each answer with its grade and feedback
-      let totalScore = 0
+      const answer = await this.AnswerResponseModel.findOne({
+        where: {
+          submission_id: submissionId,
+          question_id: grade.questionId,
+        },
+      })
 
-      for (const grade of grades) {
-        const answer = await this.AnswerResponseModel.findOne({
-          where: {
-            submission_id: submissionId,
-            question_id: grade.questionId,
-          },
-        })
-
-        if (!answer) {
-          continue // Skip if answer doesn't exist
-        }
-
+      if(answer) {
         answer.points_awarded = grade.points
         answer.feedback = grade.feedback
         await answer.save()
+      }
 
-        totalScore += grade.points
+      // Recalculate total score after grading
+      const totalScore = await this.AnswerResponseModel.sum('points_awarded', {
+        where: { submission_id: submissionId },
+      });
+
+      // Count total answers and graded answers
+      const totalAnswers = await this.AnswerResponseModel.count({
+        where: { submission_id: submissionId },
+      });
+
+      const gradedAnswers = await this.AnswerResponseModel.count({
+        where: { 
+          submission_id: submissionId,
+          points_awarded: { [Op.not]: null },
+        },
+      });
+
+      // Combine new feedback with existing feedback (if any)
+      if (submission.feedback) {
+        submission.feedback += `\n\n${feedback}`; // Append new feedback, separating with two line breaks for clarity
+      } else {
+        submission.feedback = feedback; // If no feedback, just set the new feedback
       }
 
       // Update the submission
       submission.score = totalScore
-      submission.feedback = feedback
-      submission.status = 'graded'
+      submission.status = totalAnswers === gradedAnswers ? 'graded' : 'submitted'; // Check if all answers are graded
       await submission.save()
 
       return submission
