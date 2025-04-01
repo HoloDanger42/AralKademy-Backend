@@ -549,26 +549,29 @@ describe('Assessment API Endpoints (Integration Tests)', () => {
 
     test('should grade a submission when teacher', async () => {
       const gradeData = {
-        grades: [
-          {
-            questionId: 1, // This might need to be updated with the actual question ID
-            points: 18,
-            feedback: 'Good essay, just a few minor issues.',
-          },
-        ],
-        feedback: 'Overall good work!',
-      }
-
+        grade: {
+          questionId: 1, // This should be a valid question ID
+          points: 18,
+          feedback: 'Good essay, just a few minor issues.',
+        },
+        feedback: 'Overall excellent work!', // This is correctly placed outside of the `grade` object
+      };
+    
       const response = await request(server)
         .post(`/api/assessments/submissions/${learnerSubmission.id}/grade`)
         .set('Authorization', `Bearer ${teacherToken}`)
-        .send(gradeData)
-
-      expect(response.status).toBe(200)
-      expect(response.body.success).toBe(true)
-      expect(response.body.submission).toHaveProperty('status', 'graded')
-      expect(response.body.submission).toHaveProperty('feedback', gradeData.feedback)
-    })
+        .send(gradeData);
+    
+      // Log the response body if the status is not 200 for debugging purposes
+      if (response.status !== 200) {
+        console.log('Error response:', response.body);
+      }
+    
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.submission).toHaveProperty('status', 'graded');
+      expect(response.body.submission).toHaveProperty('feedback', gradeData.feedback);
+    });    
 
     test('should return 403 when learner tries to grade submissions', async () => {
       const gradeData = {
