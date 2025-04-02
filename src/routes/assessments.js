@@ -45,7 +45,7 @@ const router = express.Router()
  *             properties:
  *               title:
  *                 type: string
- *                 example: "Tite"
+ *                 example: "Midterm Exam"
  *               description:
  *                 type: string
  *                 example: "Comprehensive midterm covering chapters 1-5"
