@@ -87,6 +87,14 @@ class AssessmentService {
         throw new Error('Assessment not found')
       }
 
+      const totalPoints = (await this.QuestionModel.sum('points', {
+        where: { assessment_id: assessmentId },
+      })) || 0;
+
+      if (totalPoints + questionData.points > assessment.max_score) {
+        throw new Error('Invalid total points');
+      }
+
       const question = await this.QuestionModel.create({
         ...questionData,
         assessment_id: assessmentId,
@@ -632,18 +640,30 @@ class AssessmentService {
           submission_id: submissionId,
           question_id: grade.questionId,
         },
+        include: [
+          {
+            model: this.QuestionModel,
+            as: 'question',
+          },
+        ],
       })
 
-      if(answer) {
-        answer.points_awarded = grade.points
-        answer.feedback = grade.feedback
-        await answer.save()
+      if (!answer) {
+        throw new Error(`Answer for question not found`);
       }
+
+      if (grade.points > answer.question.points || grade.points < 0) {
+        throw new Error('Invalid points')
+      }
+
+      answer.points_awarded = grade.points
+      answer.feedback = grade.feedback
+      await answer.save()
 
       // Recalculate total score after grading
       const totalScore = await this.AnswerResponseModel.sum('points_awarded', {
         where: { submission_id: submissionId },
-      });
+      }) || 0;
 
       // Count total answers and graded answers
       const totalAnswers = await this.AnswerResponseModel.count({
