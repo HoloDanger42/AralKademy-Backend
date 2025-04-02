@@ -1276,7 +1276,7 @@ router.post(
  */
 router.get(
   '/submissions/:submissionId',
-  rbac.studentTeacherAndAbove,
+  rbac.allAuthenticated,
   validateRequest(assessmentSchemas.getSubmissionById),
   getSubmissionById
 )
