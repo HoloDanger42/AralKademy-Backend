@@ -648,17 +648,14 @@ class AssessmentService {
         ],
       })
 
-      if (!answer) {
-        throw new Error(`Answer for question not found`);
+      if (answer) {
+        if (grade.points > answer.question.points) {
+          throw new Error('Invalid points')
+        }
+        answer.points_awarded = grade.points
+        answer.feedback = grade.feedback
+        await answer.save()
       }
-
-      if (grade.points > answer.question.points) {
-        throw new Error('Invalid points')
-      }
-
-      answer.points_awarded = grade.points
-      answer.feedback = grade.feedback
-      await answer.save()
 
       // Recalculate total score after grading
       const totalScore = await this.AnswerResponseModel.sum('points_awarded', {
