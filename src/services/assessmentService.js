@@ -652,7 +652,7 @@ class AssessmentService {
         throw new Error(`Answer for question not found`);
       }
 
-      if (grade.points > answer.question.points || grade.points < 0) {
+      if (grade.points > answer.question.points) {
         throw new Error('Invalid points')
       }
 
