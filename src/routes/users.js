@@ -687,7 +687,7 @@ router.put('/:userId/change-password', rbac.allAuthenticated, changePassword)
 
 /**
  * @swagger
- * /users/{id}/restore:
+ * /users/{email}/restore:
  *   put:
  *     summary: Restore a user
  *     tags: [Users]
@@ -695,11 +695,11 @@ router.put('/:userId/change-password', rbac.allAuthenticated, changePassword)
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: email
  *         required: true
  *         schema:
- *           type: integer
- *         description: User ID to restore
+ *           type: email
+ *         description: User email to restore
  *     responses:
  *       200:
  *         description: User restored successfully
@@ -730,6 +730,6 @@ router.put('/:userId/change-password', rbac.allAuthenticated, changePassword)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id/restore', rbac.adminOnly, restoreUser)
+router.put('/:email/restore', rbac.adminOnly, restoreUser)
 
 export { router as usersRouter }

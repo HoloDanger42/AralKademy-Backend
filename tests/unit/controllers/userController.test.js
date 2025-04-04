@@ -791,17 +791,11 @@ describe('User Controller', () => {
   describe('restoreUser', () => {
     test('should restore a user successfully', async () => {
       // Arrange
-      const userId = '123'
-      const restoredUser = {
-        id: userId,
-        first_name: 'Restored',
-        last_name: 'User',
-        email: 'restored@example.com',
-      }
+      const email = 'hello123@example.com'
 
-      mockReq.params = { id: userId }
+      mockReq.params = { email: email }
 
-      jest.spyOn(UserServiceModule.default.prototype, 'restoreUser').mockResolvedValue(restoredUser)
+      jest.spyOn(UserServiceModule.default.prototype, 'restoreUser').mockResolvedValue(true)
 
       // Act
       await userControllerModule.restoreUser(mockReq, mockRes)
@@ -810,9 +804,8 @@ describe('User Controller', () => {
       expect(mockRes.status).toHaveBeenCalledWith(200)
       expect(mockRes.json).toHaveBeenCalledWith({
         message: 'User restored successfully ',
-        user: restoredUser,
       })
-      expect(log.info).toHaveBeenCalledWith(`User with ID ${userId} restored successfully`)
+      expect(log.info).toHaveBeenCalledWith(`User with email ${email} restored successfully`)
     })
 
     test('should return 404 if user to restore is not found', async () => {
