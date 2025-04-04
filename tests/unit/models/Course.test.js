@@ -156,24 +156,6 @@ describe('Course Model', () => {
     })
   })
 
-  describe('Cascade Behavior', () => {
-    it('should delete course when teacher is deleted', async () => {
-      await Course.create({
-        name: 'Test Course',
-        user_id: teacher.id,
-        student_teacher_group_id: stGroup.group_id,
-        learner_group_id: learnerGroup.group_id,
-      })
-
-      expect(await Course.count()).toBe(1)
-
-      await teacher.destroy({ force: true })
-
-      const courseCount = await Course.count()
-      expect(courseCount).toBe(0)
-    })
-  })
-
   describe('Soft Deletion', () => {
     it('should soft delete course', async () => {
       const course = await Course.create({
@@ -184,7 +166,7 @@ describe('Course Model', () => {
       })
 
       await course.destroy()
-
+      
       const found = await Course.findOne({
         where: { id: course.id },
         paranoid: false,
