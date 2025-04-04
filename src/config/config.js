@@ -93,7 +93,7 @@ const config = {
   // Pagination
   pagination: {
     defaultLimit: 10,
-    maxLimit: 50,
+    maxLimit: 1000000,
   },
 
   // Logging
