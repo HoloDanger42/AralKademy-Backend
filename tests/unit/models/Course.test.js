@@ -166,8 +166,16 @@ describe('Course Model', () => {
       })
 
       await course.destroy()
+      
+      const found = await Course.findOne({
+        where: { id: course.id },
+        paranoid: false,
+      })
+      expect(found.deletedAt).toBeTruthy()
+    })
+  })
 
-      const found = await Course.finiple Courses', () => {
+  describe('Multiple Courses', () => {
     it('should allow multiple courses per teacher', async () => {
       await Course.create({
         name: 'Course 1',
