@@ -759,19 +759,24 @@ class UserService {
 
   /**
    * Soft deletes a user by their ID.
-   * @param {number} userId - The ID of the user to delete.
+   * @param {number} email - Email of the user to delete.
    * @returns {Promise<Object>} The deleted user object.
    */
-  async restoreUser(userId) {
+  async restoreUser(email) {
     const transaction = await this.UserModel.sequelize.transaction();
     try {
-      const user = await this.UserModel.findByPk(userId, { paranoid: false, transaction });
+      const user = await this.UserModel.findOne({
+        where: { email },
+        paranoid: false,
+        transaction,
+      });
       if (!user) throw new Error('User not found');
   
       await user.restore({ transaction }); 
   
       await transaction.commit(); 
-      return user;
+
+      return true;
     } catch (error) {
       await transaction.rollback(); 
       log.error('Restore user error:', error);

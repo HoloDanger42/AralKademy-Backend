@@ -327,10 +327,10 @@ const updateUser = async (req, res) => {
  */
 const restoreUser = async (req, res) => {
   try {
-    const { id } = req.params
-    const user = await userService.restoreUser(id)
-    res.status(200).json({ message: 'User restored successfully ', user })
-    log.info(`User with ID ${id} restored successfully`)
+    const { email } = req.params
+    await userService.restoreUser(email)
+    res.status(200).json({ message: 'User restored successfully '})
+    log.info(`User with email ${email} restored successfully`)
   } catch (error) {
     return handleControllerError(error, res, 'Restore user', 'Failed to restore user')
   }
