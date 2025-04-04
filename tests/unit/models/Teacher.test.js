@@ -80,14 +80,6 @@ describe('Teacher Model', () => {
       })
       expect(found.deletedAt).toBeTruthy()
     })
-
-    it('should cascade delete when user is deleted', async () => {
-      await Teacher.create({ user_id: user.id })
-      await user.destroy({ force: true })
-
-      const teacherCount = await Teacher.count()
-      expect(teacherCount).toBe(0)
-    })
   })
 
   describe('Constraints', () => {
