@@ -194,7 +194,8 @@ const getContentsByModuleId = async (req, res) => {
  */
 const getModuleGradeOfUser = async (req, res) => {
   try {
-    const { id, moduleId } = req.params
+    const { moduleId } = req.params
+    const id = req.user.id
     const moduleGrade = await moduleService.getModuleGradeOfUser(id, moduleId)
     res.status(200).json(moduleGrade)
     log.info('Module grade retrieved successfully')
