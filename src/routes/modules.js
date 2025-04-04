@@ -524,7 +524,7 @@ moduleRouter.get('/:moduleId/contents', rbac.allAuthenticated, getContentsByModu
 
 /**
  * @swagger
- * /modules/{moduleId}/{id}/module-grade:
+ * /modules/{moduleId}/module-grade:
  *   get:
  *     summary: Get the module grade of a user
  *     tags: [Modules]
@@ -537,12 +537,6 @@ moduleRouter.get('/:moduleId/contents', rbac.allAuthenticated, getContentsByModu
  *           type: integer
  *         required: true
  *         description: ID of the module
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: ID of the user
  *     responses:
  *       200:
  *         description: User's module grade information
@@ -574,6 +568,6 @@ moduleRouter.get('/:moduleId/contents', rbac.allAuthenticated, getContentsByModu
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-moduleRouter.get('/:moduleId/:id/module-grade', rbac.allAuthenticated, getModuleGradeOfUser)
+moduleRouter.get('/:moduleId/module-grade', rbac.allAuthenticated, getModuleGradeOfUser)
 
 export { moduleRouter }

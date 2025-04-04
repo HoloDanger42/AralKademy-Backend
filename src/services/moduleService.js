@@ -421,11 +421,11 @@ class ModuleService {
   
       const assessments = await this.assessmentModel.findAll({
         where: { module_id: moduleId },
-        attributes: ['id', 'passing_score']
+        attributes: ['id', 'passing_score', 'max_score'],
       });
   
       if (assessments.length === 0) {
-        return { allGraded: false, allPassed: false, averageScore: 0 };
+        return { allGraded: true , allPassed: true, averageScore: 100 }; // or false, false, 0?
       }
   
       const highestScoreSubmissions = await Promise.all(
@@ -457,9 +457,11 @@ class ModuleService {
       const allPassed = allGraded && validSubmissions.every(submission => submission.passed);
   
       const totalScore = validSubmissions.reduce((sum, submission) => sum + submission.score, 0);
+      const totalPossibleScore = assessments.reduce((sum, assessment) => sum + assessment.max_score, 0);
+
       const averageScore = validSubmissions.length > 0 
-        ? parseFloat((totalScore / validSubmissions.length).toFixed(2)) 
-        : 0;
+      ? parseFloat(((totalScore / totalPossibleScore) * 100).toFixed(2))
+      : 0;
   
       await this.moduleGradeModel.upsert({
         user_id: id,
