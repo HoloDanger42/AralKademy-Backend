@@ -1180,25 +1180,23 @@ router.get(
  *           schema:
  *             type: object
  *             required:
- *               - grades
+ *               - grade
  *             properties:
- *               grades:
- *                 type: array
- *                 items:
- *                   type: object
- *                   required:
- *                     - questionId
- *                     - points
- *                   properties:
- *                     questionId:
- *                       type: integer
- *                       example: 1
- *                     points:
- *                       type: integer
- *                       example: 8
- *                     feedback:
- *                       type: string
- *                       example: "Good job!"
+ *               grade:
+ *                 type: object
+ *                 required:
+ *                   - questionId
+ *                   - points
+ *                 properties:
+ *                   questionId:
+ *                     type: integer
+ *                     example: 1
+ *                   points:
+ *                     type: integer
+ *                     example: 8
+ *                   feedback:
+ *                     type: string
+ *                     example: "Good job!"
  *               feedback:
  *                 type: string
  *                 example: "Overall excellent work."
@@ -1278,7 +1276,7 @@ router.post(
  */
 router.get(
   '/submissions/:submissionId',
-  rbac.studentTeacherAndAbove,
+  rbac.allAuthenticated,
   validateRequest(assessmentSchemas.getSubmissionById),
   getSubmissionById
 )

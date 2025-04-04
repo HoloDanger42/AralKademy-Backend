@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals'
 import AssessmentService from '../../../src/services/assessmentService.js'
+import { Op } from 'sequelize'
 
 describe('Assessment Service', () => {
   let assessmentService
@@ -25,6 +26,7 @@ describe('Assessment Service', () => {
       findByPk: jest.fn(),
       findOne: jest.fn(),
       destroy: jest.fn(),
+      sum: jest.fn(),
     }
 
     mockQuestionOptionModel = {
@@ -47,6 +49,7 @@ describe('Assessment Service', () => {
       findOne: jest.fn(),
       save: jest.fn(),
       count: jest.fn(),
+      sum: jest.fn()
     }
 
     mockModuleModel = {
@@ -587,7 +590,7 @@ describe('Assessment Service', () => {
   })
 
   describe('submitAssessment', () => {
-    test('should submit a quiz and auto-grade multiple choice questions', async () => {
+    test('should submit an assessment and auto-grade multiple choice questions', async () => {
       // Arrange
       const submissionId = 1
       const userId = 2
@@ -651,70 +654,118 @@ describe('Assessment Service', () => {
       expect(result).toEqual(mockSubmission)
     })
 
-    test('should submit an assignment without auto-grading', async () => {
+    test('should submit an assessment without auto-grading', async () => {
       // Arrange
-      const submissionId = 1
-      const userId = 2
-
+      const submissionId = 1;
+      const userId = 2;
+    
       const mockSubmission = {
         id: submissionId,
         user_id: userId,
         assessment_id: 5,
         status: 'in_progress',
         save: jest.fn().mockResolvedValue(true),
-      }
-      mockSubmissionModel.findByPk.mockResolvedValue(mockSubmission)
-
+      };
+      mockSubmissionModel.findByPk.mockResolvedValue(mockSubmission);
+    
       const mockAssessment = {
         id: 5,
-        type: 'assignment',
+        type: 'quiz',
         due_date: null,
-      }
-      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
-
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+    
+      const mockAnswers = [
+        {
+          id: 1,
+          selected_option_id: 10,
+          question: {
+            id: 3,
+            question_type: 'short_answer',
+            points: 5,
+            options: [], // No options for short answer
+          },
+          points_awarded: null,
+          save: jest.fn().mockResolvedValue(true),
+        },
+        {
+          id: 2,
+          selected_option_id: 20,
+          question: {
+            id: 4,
+            question_type: 'essay',
+            points: 5,
+            options: [], // No options for essay
+          },
+          points_awarded: null,
+          save: jest.fn().mockResolvedValue(true),
+        },
+      ];
+      mockAnswerResponseModel.findAll.mockResolvedValue(mockAnswers);
+    
       // Act
-      const result = await assessmentService.submitAssessment(submissionId, userId)
-
+      const result = await assessmentService.submitAssessment(submissionId, userId);
+    
       // Assert
-      expect(mockSubmissionModel.findByPk).toHaveBeenCalledWith(submissionId)
-      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(5)
-      expect(mockAnswerResponseModel.findAll).not.toHaveBeenCalled()
-      expect(mockSubmission.status).toBe('submitted') // Not auto-graded
-      expect(mockSubmission.save).toHaveBeenCalled()
-      expect(result).toEqual(mockSubmission)
-    })
+      expect(mockSubmissionModel.findByPk).toHaveBeenCalledWith(submissionId);
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(5);
+      expect(mockAnswerResponseModel.findAll).toHaveBeenCalled();
+      expect(mockAnswers[0].points_awarded).toBeNull(); // Short answer not graded
+      expect(mockAnswers[1].points_awarded).toBeNull(); // Essay not graded
+      expect(mockSubmission.status).toBe('submitted');
+      expect(mockSubmission.score).toBe(0); // No points awarded for non-multiple-choice questions
+      expect(mockSubmission.save).toHaveBeenCalled();
+      expect(result).toEqual(mockSubmission);
+    });    
 
     test('should detect late submissions', async () => {
       // Arrange
-      const submissionId = 1
-      const userId = 2
-
+      const submissionId = 1;
+      const userId = 2;
+    
       const mockSubmission = {
         id: submissionId,
         user_id: userId,
         assessment_id: 5,
         status: 'in_progress',
         save: jest.fn().mockResolvedValue(true),
-      }
-      mockSubmissionModel.findByPk.mockResolvedValue(mockSubmission)
-
-      const pastDate = new Date()
-      pastDate.setDate(pastDate.getDate() - 1) // Yesterday
-
+      };
+      mockSubmissionModel.findByPk.mockResolvedValue(mockSubmission);
+    
       const mockAssessment = {
         id: 5,
-        type: 'assignment',
-        due_date: pastDate.toISOString(),
-      }
-      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment)
-
+        type: 'quiz',
+        due_date: '2025-04-01T00:00:00Z', // Due date in the past
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+    
+      const mockAnswers = [
+        {
+          id: 1,
+          selected_option_id: 10,
+          question: {
+            id: 3,
+            question_type: 'multiple_choice',
+            points: 5,
+            options: [{ id: 10, is_correct: true }],
+          },
+          save: jest.fn().mockResolvedValue(true),
+        },
+      ];
+      mockAnswerResponseModel.findAll.mockResolvedValue(mockAnswers);
+    
       // Act
-      const result = await assessmentService.submitAssessment(submissionId, userId)
-
+      const result = await assessmentService.submitAssessment(submissionId, userId);
+    
       // Assert
-      expect(mockSubmission.is_late).toBe(true)
-      expect(mockSubmission.save).toHaveBeenCalled()
-    })
+      expect(mockSubmissionModel.findByPk).toHaveBeenCalledWith(submissionId);
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(5);
+      expect(mockAnswerResponseModel.findAll).toHaveBeenCalled();
+      expect(mockSubmission.is_late).toBe(true); // Should be marked as late
+      expect(mockSubmission.status).toBe('graded');
+      expect(mockSubmission.save).toHaveBeenCalled();
+      expect(result).toEqual(mockSubmission);
+    });    
 
     test('should throw error for unauthorized user', async () => {
       // Arrange
@@ -982,89 +1033,96 @@ describe('Assessment Service', () => {
   describe('gradeSubmission', () => {
     test('should grade a submission successfully', async () => {
       // Arrange
-      const submissionId = 1
-      const grades = [
-        { questionId: 5, points: 10, feedback: 'Great job!' },
-        { questionId: 6, points: 5, feedback: 'Partially correct' },
-      ]
-      const feedback = 'Overall good work'
-
+      const submissionId = 1;
+      const grade = { questionId: 5, points: 10, feedback: 'Great job!' };
+      const feedback = 'Overall good work';
+    
       const mockSubmission = {
         id: submissionId,
         status: 'submitted',
+        score: 0,
+        feedback: null,
         save: jest.fn().mockResolvedValue(true),
-      }
-      mockSubmissionModel.findByPk.mockResolvedValue(mockSubmission)
-
-      const mockAnswer1 = {
+      };
+    
+      const mockQuestion = {
+        id: 5,
+        points: 20, // Question is worth 20 points
+        question_type: 'short_answer'
+      };
+    
+      const mockAnswer = {
+        id: 1,
         question_id: 5,
+        question: mockQuestion, // Include the question object
+        points_awarded: null,
+        feedback: null,
         save: jest.fn().mockResolvedValue(true),
-      }
-      const mockAnswer2 = {
-        question_id: 6,
-        save: jest.fn().mockResolvedValue(true),
-      }
-
-      mockAnswerResponseModel.findOne
-        .mockResolvedValueOnce(mockAnswer1)
-        .mockResolvedValueOnce(mockAnswer2)
-
+      };
+    
+      // Mock database calls
+      mockSubmissionModel.findByPk.mockResolvedValue(mockSubmission);
+      mockAnswerResponseModel.findOne.mockResolvedValue(mockAnswer);
+      mockAnswerResponseModel.sum.mockResolvedValue(10);
+      mockAnswerResponseModel.count
+        .mockResolvedValueOnce(1) // totalAnswers
+        .mockResolvedValueOnce(1); // gradedAnswers
+    
       // Act
-      const result = await assessmentService.gradeSubmission(submissionId, grades, feedback)
-
+      const result = await assessmentService.gradeSubmission(submissionId, grade, feedback);
+    
       // Assert
-      expect(mockSubmissionModel.findByPk).toHaveBeenCalledWith(submissionId)
-      expect(mockAnswerResponseModel.findOne).toHaveBeenCalledTimes(2)
-      expect(mockAnswer1.points_awarded).toBe(10)
-      expect(mockAnswer1.feedback).toBe('Great job!')
-      expect(mockAnswer1.save).toHaveBeenCalled()
-      expect(mockAnswer2.points_awarded).toBe(5)
-      expect(mockAnswer2.feedback).toBe('Partially correct')
-      expect(mockAnswer2.save).toHaveBeenCalled()
-      expect(mockSubmission.score).toBe(15)
-      expect(mockSubmission.feedback).toBe('Overall good work')
-      expect(mockSubmission.status).toBe('graded')
-      expect(mockSubmission.save).toHaveBeenCalled()
-      expect(result).toEqual(mockSubmission)
-    })
+      expect(mockSubmissionModel.findByPk).toHaveBeenCalledWith(submissionId);
+      expect(mockAnswerResponseModel.findOne).toHaveBeenCalledWith({
+        where: {
+          submission_id: submissionId,
+          question_id: grade.questionId,
+        },
+        include: expect.anything(), // Verify the include is correct
+      });
+      
+      // Verify grading logic
+      expect(mockAnswer.points_awarded).toBe(10);
+      expect(mockAnswer.feedback).toBe('Great job!');
+      expect(mockAnswer.save).toHaveBeenCalled();
+      
+      // Verify submission updates
+      expect(mockSubmission.score).toBe(10);
+      expect(mockSubmission.feedback).toBe('Overall good work');
+      expect(mockSubmission.status).toBe('graded');
+      expect(mockSubmission.save).toHaveBeenCalled();
+      expect(result).toEqual(mockSubmission);
+    });
 
     test('should skip missing answers when grading', async () => {
       // Arrange
       const submissionId = 1
-      const grades = [
+      const grade = [
         { questionId: 5, points: 10, feedback: 'Great job!' },
-        { questionId: 999, points: 5, feedback: 'This question does not exist' }, // Non-existent question
       ]
       const feedback = 'Overall good work'
 
       const mockSubmission = {
         id: submissionId,
+        score: 0,
         status: 'submitted',
         save: jest.fn().mockResolvedValue(true),
       }
       mockSubmissionModel.findByPk.mockResolvedValue(mockSubmission)
 
-      // Only one answer exists
-      const mockAnswer = {
-        question_id: 5,
-        save: jest.fn().mockResolvedValue(true),
-      }
-
       mockAnswerResponseModel.findOne
-        .mockResolvedValueOnce(mockAnswer) // First question exists
-        .mockResolvedValueOnce(null) // Second question doesn't exist
+        .mockResolvedValueOnce(null) // First question exists
+
+      mockAnswerResponseModel.sum = jest.fn().mockResolvedValue(0);
 
       // Act
-      const result = await assessmentService.gradeSubmission(submissionId, grades, feedback)
+      const result = await assessmentService.gradeSubmission(submissionId, grade, feedback)
 
       // Assert
       expect(mockSubmissionModel.findByPk).toHaveBeenCalledWith(submissionId)
-      expect(mockAnswerResponseModel.findOne).toHaveBeenCalledTimes(2)
-      expect(mockAnswer.points_awarded).toBe(10)
-      expect(mockAnswer.feedback).toBe('Great job!')
-      expect(mockAnswer.save).toHaveBeenCalled()
+      expect(mockAnswerResponseModel.findOne).toHaveBeenCalledTimes(1)
       // Total score should only include points from the existing answer
-      expect(mockSubmission.score).toBe(10)
+      expect(mockSubmission.score).toBe(0)
       expect(mockSubmission.feedback).toBe('Overall good work')
       expect(mockSubmission.status).toBe('graded')
       expect(mockSubmission.save).toHaveBeenCalled()
@@ -1083,32 +1141,6 @@ describe('Assessment Service', () => {
         'Submission not found'
       )
       expect(mockAnswerResponseModel.findOne).not.toHaveBeenCalled()
-    })
-
-    test('should handle empty grades array', async () => {
-      // Arrange
-      const submissionId = 1
-      const grades = []
-      const feedback = 'No grades provided'
-
-      const mockSubmission = {
-        id: submissionId,
-        status: 'submitted',
-        save: jest.fn().mockResolvedValue(true),
-      }
-      mockSubmissionModel.findByPk.mockResolvedValue(mockSubmission)
-
-      // Act
-      const result = await assessmentService.gradeSubmission(submissionId, grades, feedback)
-
-      // Assert
-      expect(mockSubmissionModel.findByPk).toHaveBeenCalledWith(submissionId)
-      expect(mockAnswerResponseModel.findOne).not.toHaveBeenCalled()
-      expect(mockSubmission.score).toBe(0)
-      expect(mockSubmission.feedback).toBe('No grades provided')
-      expect(mockSubmission.status).toBe('graded')
-      expect(mockSubmission.save).toHaveBeenCalled()
-      expect(result).toEqual(mockSubmission)
     })
   })
 

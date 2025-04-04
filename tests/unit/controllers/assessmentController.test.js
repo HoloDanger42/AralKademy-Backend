@@ -583,9 +583,8 @@ describe('Assessment Controller', () => {
       const submissionId = '1'
       mockReq.params.submissionId = submissionId
       mockReq.body = {
-        grades: [
+        grade: [
           { questionId: 1, points: 5, feedback: 'Good job!' },
-          { questionId: 2, points: 3, feedback: 'Partially correct' },
         ],
         feedback: 'Overall good work',
       }
@@ -604,7 +603,7 @@ describe('Assessment Controller', () => {
       // Assert
       expect(AssessmentService.prototype.gradeSubmission).toHaveBeenCalledWith(
         submissionId,
-        mockReq.body.grades,
+        mockReq.body.grade,
         mockReq.body.feedback
       )
       expect(mockRes.status).toHaveBeenCalledWith(200)
