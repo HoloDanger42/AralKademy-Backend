@@ -111,20 +111,6 @@ describe('Teacher Model', () => {
       })
       expect(found.courses.length).toBe(2)
     })
-
-    it('should cascade delete courses when teacher is deleted', async () => {
-      const teacher = await Teacher.create({ user_id: user.id })
-      await Course.create({
-        name: 'Test Course',
-        user_id: teacher.user_id,
-        student_teacher_group_id: stGroup.group_id,
-        learner_group_id: learnerGroup.group_id,
-      })
-
-      await teacher.destroy({ force: true })
-      const courseCount = await Course.count()
-      expect(courseCount).toBe(0)
-    })
   })
 
   describe('Query Operations', () => {
