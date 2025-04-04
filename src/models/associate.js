@@ -51,7 +51,6 @@ Teacher.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
 Teacher.hasMany(Course, {
   foreignKey: 'user_id',
   as: 'courses',
-  onDelete: 'CASCADE',
 })
 
 // Admin associations
