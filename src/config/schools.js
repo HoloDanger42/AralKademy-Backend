@@ -8,7 +8,7 @@ export const schoolsList = [
   {
     name: 'Asuncion Consunji Elementary School',
     address: 'Samal, Bataan',
-    contact_no: '+6324061611',
+    contact_no: '+639082212694',
     school_id: 1002,
   },
 ]
