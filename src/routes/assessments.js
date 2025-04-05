@@ -16,6 +16,8 @@ import {
   getStudentSubmission,
   gradeSubmission,
   getSubmissionById,
+  publishAssessment,
+  unpublishAssessment
 } from '../controllers/assessmentController.js'
 import { validateRequest } from '../middleware/validationMiddleware.js'
 import { assessmentSchemas } from '../schemas/assessmentSchemas.js'
@@ -687,6 +689,118 @@ router.delete(
   validateRequest(assessmentSchemas.deleteQuestion),
   deleteQuestion
 )
+
+/**
+ * @swagger
+ * /assessments/{assessmentId}/publish:
+ *   patch:
+ *     summary: Publish an assessment
+ *     description: Publishes an assessment making it visible and available to students. Once published, certain fields cannot be modified.
+ *     tags: [Assessments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: assessmentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the assessment to publish
+ *     responses:
+ *       200:
+ *         description: Assessment published successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Assessment published successfully"
+ *                 assessment:
+ *                   $ref: '#/components/schemas/Assessment'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - requires student teacher, teacher, or admin role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Assessment not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.patch('/:assessmentId/publish', 
+  rbac.studentTeacherAndAbove,
+  validateRequest(assessmentSchemas.publishAssessment),
+  publishAssessment)
+
+/**
+ * @swagger
+ * /assessments/{assessmentId}/unpublish:
+ *   patch:
+ *     summary: Unpublish an assessment
+ *     description: Unpublishes an assessment making it no longer visible or available to students. Can only be done if no submissions exist.
+ *     tags: [Assessments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: assessmentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the assessment to unpublish
+ *     responses:
+ *       200:
+ *         description: Assessment unpublished successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Assessment unpublished successfully"
+ *                 assessment:
+ *                   $ref: '#/components/schemas/Assessment'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - requires student teacher, teacher, or admin role
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Assessment not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.patch('/:assessmentId/unpublish', 
+  rbac.studentTeacherAndAbove,
+  validateRequest(assessmentSchemas.unpublishAssessment),
+  unpublishAssessment)
 
 /**
  * @swagger

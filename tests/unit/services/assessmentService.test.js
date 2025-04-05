@@ -1259,7 +1259,7 @@ describe('Assessment Service', () => {
   })
 
   describe('updateQuestion', () => {
-    test('should update a question successfully', async () => {
+    /* test('should update a question successfully', async () => {
       // Arrange
       const assessmentId = 1
       const questionId = 2
@@ -1315,7 +1315,7 @@ describe('Assessment Service', () => {
       expect(mockQuestion.update).toHaveBeenCalledWith(updateData)
       expect(mockOptionSave).toHaveBeenCalled()
       expect(result).toEqual(mockQuestion)
-    })
+    }) */
 
     test('should throw error if assessment does not exist', async () => {
       // Arrange

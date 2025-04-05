@@ -257,3 +257,31 @@ export const getSubmissionById = async (req, res) => {
     handleControllerError(error, res, 'Get submission', 'Error retrieving submission')
   }
 }
+
+export const publishAssessment = async (req, res) => {
+  try {
+    const { assessmentId } = req.params
+    const assessment = await assessmentService.publishAssessment(assessmentId)
+    res.status(200).json({
+      success: true,
+      message: 'Assessment published successfully',
+      assessment,
+    })
+  } catch (error) {
+    handleControllerError(error, res, 'Publish assessment', 'Error publishing assessment')
+  }
+}
+
+export const unpublishAssessment = async (req, res) => {
+  try {
+    const { assessmentId } = req.params
+    const assessment = await assessmentService.unpublishAssessment(assessmentId)
+    res.status(200).json({
+      success: true,
+      message: 'Assessment unpublished successfully',
+      assessment,
+    })
+  } catch (error) {
+    handleControllerError(error, res, 'Unpublish assessment', 'Error unpublishing assessment')
+  }
+}
