@@ -5,6 +5,7 @@ export const adminsList = [
     email: 'smmasangkay@ust.edu.ph',
     password: process.env.ADMIN_PASSWORD,
     role: 'admin',
+    school_id: 1001,
   },
   {
     first_name: 'Drew Darwin',
@@ -13,6 +14,7 @@ export const adminsList = [
     email: 'drewdarwin.cruz.cics@ust.edu.ph',
     password: process.env.ADMIN_PASSWORD,
     role: 'admin',
+    school_id: 1001,
   },{
     first_name: 'Stephanie',
     middle_initial: 'C',
@@ -20,6 +22,7 @@ export const adminsList = [
     email: 'stephanie.curilan.cics@ust.edu.ph',
     password: process.env.ADMIN_PASSWORD,
     role: 'admin',
+    school_id: 1001,
   },
   {
     first_name: 'Melchor Ray',
@@ -28,6 +31,7 @@ export const adminsList = [
     email: 'melchorray.domingo.cics@ust.edu.ph',
     password: process.env.ADMIN_PASSWORD,
     role: 'admin',
+    school_id: 1001,
   },
   {
     first_name: 'Lennard Ace',
@@ -36,6 +40,7 @@ export const adminsList = [
     email: 'lennardace.flores.cics@ust.edu.ph',
     password: process.env.ADMIN_PASSWORD,
     role: 'admin',
+    school_id: 1001,
   },
   {
     first_name: 'John Lester Emmanuel',
@@ -43,6 +48,7 @@ export const adminsList = [
     email: 'johnlester.lopez.cics@ust.edu.ph',
     password: process.env.ADMIN_PASSWORD,
     role: 'admin',
+    school_id: 1001,
   },
   {
     first_name: 'John Dexter Ivan',
@@ -51,6 +57,7 @@ export const adminsList = [
     email: 'johndexter.sanchez.cics@ust.edu.ph',
     password: process.env.ADMIN_PASSWORD,
     role: 'admin',
+    school_id: 1001,
   },
   {
     first_name: 'Tristan Daniel',
@@ -59,6 +66,7 @@ export const adminsList = [
     email: 'tristandaniel.sigua.cics@ust.edu.ph',
     password: process.env.ADMIN_PASSWORD,
     role: 'admin',
+    school_id: 1001,
   },
   {
     first_name: 'Erika Bianca',
@@ -67,6 +75,7 @@ export const adminsList = [
     email: 'erikabianca.villaroza.cics@ust.edu.ph',
     password: process.env.ADMIN_PASSWORD,
     role: 'admin',
+    school_id: 1001,
   },
   {
     first_name: 'Ma. Ailene',
@@ -74,5 +83,6 @@ export const adminsList = [
     email: 'aralkademy@gmail.com',
     password: process.env.ADMIN_PASSWORD,
     role: 'admin',
+    school_id: 1002,
   },
 ]
