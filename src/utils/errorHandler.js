@@ -116,7 +116,7 @@ export const handleControllerError = (
     })
   }
 
-  if (error.message === 'Cannot delete assessment with existing submissions') {
+  if (error.message === 'Cannot delete assessment with existing submissions' || error.message === 'Cannot delete question with existing answers') {
     return res.status(409).json({
       error: {
         code: 'CONFLICT',

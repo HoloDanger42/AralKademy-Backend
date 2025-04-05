@@ -179,6 +179,18 @@ export const assessmentSchemas = {
     }),
   },
 
+  publishAssessment: {
+    params: Joi.object({
+      assessmentId: Joi.number().integer().required(),
+    }),
+  },
+
+  unpublishAssessment: {
+    params: Joi.object({
+      assessmentId: Joi.number().integer().required(),
+    }),
+  },
+
   gradeSubmission: {
     body: Joi.object({
       grade: Joi.object({

@@ -786,6 +786,10 @@ class AssessmentService {
         throw new Error('Assessment not found')
       }
 
+      if (assessment.is_published) {
+        throw new Error('Assessment must be unpublished to update questions')
+      }
+
       // Find the question and verify it belongs to the assessment
       const question = await this.QuestionModel.findOne({
         where: {
@@ -823,6 +827,19 @@ class AssessmentService {
         (!questionData.options || questionData.options.length < 2)
       ) {
         throw new Error('Multiple choice questions require at least 2 options')
+      }
+
+      const totalPoints = (await this.QuestionModel.sum('points', {
+        where: {
+          assessment_id: assessmentId,
+          id: {
+            [this.QuestionModel.sequelize.Sequelize.Op.ne]: questionId,
+          },
+        },
+      })) || 0;
+
+      if (totalPoints + questionData.points > assessment.max_score) {
+        throw new Error('Invalid total points');
       }
 
       // Update the question
@@ -911,6 +928,10 @@ class AssessmentService {
         throw new Error('Assessment not found')
       }
 
+      if (assessment.is_published) {
+        throw new Error('Assessment must be unpublished to delete questions')
+      }
+
       // Find the question and verify it belongs to the assessment
       const question = await this.QuestionModel.findOne({
         where: {
@@ -943,6 +964,69 @@ class AssessmentService {
     } catch (error) {
       log.error('Delete question error:', error)
       throw error
+    }
+  }
+
+  /**
+   * Publishes an assessment
+   * @param {number} assessmentId - ID of the assessment to publish
+   * @returns {Promise<Object>} The published assessment
+   */
+  async publishAssessment(assessmentId) {
+    try {
+      const assessment = await this.AssessmentModel.findByPk(assessmentId, {
+        include: [
+          {
+            model: this.QuestionModel,
+            as: 'questions',
+            attributes: ['points'],
+          },
+        ],
+      });
+  
+      if (!assessment) {
+        throw new Error('Assessment not found');
+      }
+  
+      const totalPoints = assessment.questions.reduce(
+        (sum, question) => sum + question.points,
+        0
+      );
+  
+      if (totalPoints < assessment.max_score) {
+        throw new Error('Total points of questions must be equal to max score');
+      }
+  
+      // Update the assessment to be published
+      assessment.is_published = true;
+      await assessment.save();
+      return assessment;
+    } catch (error) {
+      log.error('Publish assessment error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Unpublishes an assessment
+   * @param {number} assessmentId - ID of the assessment to unpublish
+   * @returns {Promise<Object>} The unpublished assessment
+   */
+  async unpublishAssessment(assessmentId) {
+    try {
+      const assessment = await this.AssessmentModel.findByPk(assessmentId)
+
+      if (!assessment) {
+        throw new Error('Assessment not found');
+      }
+
+      // Update the assessment to be unpublished
+      assessment.is_published = false;
+      await assessment.save();
+      return assessment;
+    } catch (error) {
+      log.error('Unpublish assessment error:', error);
+      throw error;
     }
   }
 }
