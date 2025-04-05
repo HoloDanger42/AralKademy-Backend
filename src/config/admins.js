@@ -71,7 +71,7 @@ export const adminsList = [
   {
     first_name: 'Ma. Ailene',
     last_name: 'Libao',
-    email: 'maailene.libao@deped.gov.ph',
+    email: 'aralkademy@gmail.com',
     password: process.env.ADMIN_PASSWORD,
     role: 'admin',
   },
