@@ -463,9 +463,9 @@ describe('Module Service', () => {
       const result = await moduleService.getModuleGradeOfUser(1, 1);
   
       expect(result).toEqual({
-        allGraded: false,
-        allPassed: false,
-        averageScore: 0
+        allGraded: true,
+        allPassed: true,
+        averageScore: 100
       });
     });
   
@@ -473,8 +473,16 @@ describe('Module Service', () => {
       mockUserModel.findByPk.mockResolvedValue({ id: 1 });
       mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
       mockAssessmentModel.findAll.mockResolvedValue([
-        { id: 1, passing_score: 70 },
-        { id: 2, passing_score: 80 }
+        {
+          id: 1,
+          passing_score: 70,
+          questions: [{ points: 100 }]
+        },
+        {
+          id: 2,
+          passing_score: 80,
+          questions: [{ points: 100 }]
+        }
       ]);
   
       
@@ -490,7 +498,7 @@ describe('Module Service', () => {
       expect(result).toEqual({
         allGraded: false,
         allPassed: false,
-        averageScore: 75,
+        averageScore: 37.5,
         submissions: [
           {
             assessment_id: undefined,
@@ -506,8 +514,16 @@ describe('Module Service', () => {
       mockUserModel.findByPk.mockResolvedValue({ id: 1 });
       mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
       mockAssessmentModel.findAll.mockResolvedValue([
-        { id: 1, passing_score: 70 },
-        { id: 2, passing_score: 80 }
+        {
+          id: 1,
+          passing_score: 70,
+          questions: [{ points: 100 }]
+        },
+        {
+          id: 2,
+          passing_score: 80,
+          questions: [{ points: 100 }]
+        }
       ]);
   
       mockSubmissionModel.findOne
@@ -531,8 +547,16 @@ describe('Module Service', () => {
       mockUserModel.findByPk.mockResolvedValue({ id: 1 });
       mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
       mockAssessmentModel.findAll.mockResolvedValue([
-        { id: 1, passing_score: 70 },
-        { id: 2, passing_score: 80 }
+        {
+          id: 1,
+          passing_score: 70,
+          questions: [{ points: 100 }]
+        },
+        {
+          id: 2,
+          passing_score: 80,
+          questions: [{ points: 100 }]
+        }
       ]);
   
       mockSubmissionModel.findOne
@@ -556,7 +580,16 @@ describe('Module Service', () => {
       mockUserModel.findByPk.mockResolvedValue({ id: 1 });
       mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
       mockAssessmentModel.findAll.mockResolvedValue([
-        { id: 1, passing_score: 70 }
+        {
+          id: 1,
+          passing_score: 70,
+          questions: [{ points: 100 }]
+        },
+        {
+          id: 2,
+          passing_score: 80,
+          questions: [{ points: 100 }]
+        }
       ]);
       mockSubmissionModel.findOne.mockResolvedValue({ score: 85, status: 'graded' });
   

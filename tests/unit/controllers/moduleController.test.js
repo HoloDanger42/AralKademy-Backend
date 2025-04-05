@@ -19,7 +19,7 @@ describe('Module Controller', () => {
   let mockRes
 
   beforeEach(() => {
-    mockReq = { body: {}, params: {} }
+    mockReq = { body: {}, params: {}, user: { id: 1 } }
     mockRes = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
@@ -327,7 +327,8 @@ describe('Module Controller', () => {
 
   describe('getModuleGradeOfUser', () => {
     test('should retrieve module grade successfully', async () => {
-      mockReq.params = { id: '1', moduleId: '1' }
+      mockReq.query = { id: '1' }
+      mockReq.params = { moduleId: '1' }
       const mockGrade = {
         allGraded: true,
         allPassed: true,
@@ -343,7 +344,8 @@ describe('Module Controller', () => {
     })
   
     test('should handle user not found error', async () => {
-      mockReq.params = { id: '1', moduleId: '1' }
+      mockReq.query = { id: '1' }
+      mockReq.params = { moduleId: '1' }
       const error = new Error('User not found')
       jest.spyOn(ModuleService.prototype, 'getModuleGradeOfUser').mockRejectedValue(error)
   
@@ -360,7 +362,8 @@ describe('Module Controller', () => {
     })
   
     test('should handle module not found error', async () => {
-      mockReq.params = { id: '1', moduleId: '1' }
+      mockReq.query = { id: '1' }
+      mockReq.params = { moduleId: '1' }
       const error = new Error('Module not found')
       jest.spyOn(ModuleService.prototype, 'getModuleGradeOfUser').mockRejectedValue(error)
   
@@ -377,7 +380,8 @@ describe('Module Controller', () => {
     })
   
     test('should handle generic errors', async () => {
-      mockReq.params = { id: '1', moduleId: '1' }
+      mockReq.query = { id: '1' }
+      mockReq.params = { moduleId: '1' }
       const error = new Error('Database error')
       jest.spyOn(ModuleService.prototype, 'getModuleGradeOfUser').mockRejectedValue(error)
   
@@ -394,7 +398,8 @@ describe('Module Controller', () => {
     })
   
     test('should handle missing parameters', async () => {
-      mockReq.params = {} // Missing both id and moduleId
+      mockReq.query = {} // Missing userId
+      mockReq.params = {} // Missing moduleId
       const error = new Error('Missing required parameters')
       jest.spyOn(ModuleService.prototype, 'getModuleGradeOfUser').mockRejectedValue(error)
   

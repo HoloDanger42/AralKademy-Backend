@@ -421,7 +421,13 @@ class ModuleService {
   
       const assessments = await this.assessmentModel.findAll({
         where: { module_id: moduleId },
-        attributes: ['id', 'passing_score', 'max_score'],
+        attributes: ['id', 'passing_score'],
+        include: [
+          {
+            model: this.questionModel,
+            attributes: ['points']
+          },
+        ],
       });
   
       if (assessments.length === 0) {
@@ -457,7 +463,10 @@ class ModuleService {
       const allPassed = allGraded && validSubmissions.every(submission => submission.passed);
   
       const totalScore = validSubmissions.reduce((sum, submission) => sum + submission.score, 0);
-      const totalPossibleScore = assessments.reduce((sum, assessment) => sum + assessment.max_score, 0);
+      const totalPossibleScore = assessments.reduce((sum, assessment) => {
+        const assessmentPoints = (assessment.questions || []).reduce((a, question) => a + question.points, 0);
+        return sum + assessmentPoints;
+      }, 0);
 
       const averageScore = validSubmissions.length > 0 
       ? parseFloat(((totalScore / totalPossibleScore) * 100).toFixed(2))
