@@ -698,7 +698,8 @@ router.put('/:userId/change-password', rbac.allAuthenticated, changePassword)
  *         name: email
  *         required: true
  *         schema:
- *           type: email
+ *           type: string
+ *           format: email
  *         description: User email to restore
  *     responses:
  *       200:
