@@ -476,12 +476,12 @@ describe('Module Service', () => {
         {
           id: 1,
           passing_score: 70,
-          questions: [{ points: 100 }]
+          max_score: 100,
         },
         {
           id: 2,
           passing_score: 80,
-          questions: [{ points: 100 }]
+          max_score: 100,
         }
       ]);
   
@@ -517,12 +517,12 @@ describe('Module Service', () => {
         {
           id: 1,
           passing_score: 70,
-          questions: [{ points: 100 }]
+          max_score: 100,
         },
         {
           id: 2,
           passing_score: 80,
-          questions: [{ points: 100 }]
+          max_score: 100,
         }
       ]);
   
@@ -550,12 +550,12 @@ describe('Module Service', () => {
         {
           id: 1,
           passing_score: 70,
-          questions: [{ points: 100 }]
+          max_score: 100,
         },
         {
           id: 2,
           passing_score: 80,
-          questions: [{ points: 100 }]
+          max_score: 100,
         }
       ]);
   
@@ -583,12 +583,12 @@ describe('Module Service', () => {
         {
           id: 1,
           passing_score: 70,
-          questions: [{ points: 100 }]
+          max_score: 100,
         },
         {
           id: 2,
           passing_score: 80,
-          questions: [{ points: 100 }]
+          max_score: 100,
         }
       ]);
       mockSubmissionModel.findOne.mockResolvedValue({ score: 85, status: 'graded' });
