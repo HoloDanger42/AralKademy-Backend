@@ -13,6 +13,7 @@ const Admin = sequelize.define(
       },
       unique: true,
       onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
     },
   },
   {

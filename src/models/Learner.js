@@ -13,6 +13,7 @@ const Learner = sequelize.define(
       },
       unique: true,
       onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
     },
     year_level: {
       type: DataTypes.INTEGER,
