@@ -706,6 +706,10 @@ class AssessmentService {
         throw new Error('Assessment not found')
       }
 
+      if (assessment.is_published) {
+        throw new Error('Assessment must be unpublished to update assessment')
+      }
+
       // If module_id is being updated, verify the module exists
       if (assessmentData.module_id && assessmentData.module_id !== assessment.module_id) {
         const module = await this.ModuleModel.findByPk(assessmentData.module_id)
@@ -748,6 +752,10 @@ class AssessmentService {
         throw new Error('Assessment not found')
       }
 
+      if (assessment.is_published) {
+        throw new Error('Assessment must be unpublished to delete assessment')
+      }
+
       // Check if there are any submissions for this assessment
       const submissionCount = await this.SubmissionModel.count({
         where: { assessment_id: assessmentId },
@@ -786,9 +794,9 @@ class AssessmentService {
         throw new Error('Assessment not found')
       }
 
-      if (assessment.is_published) {
-        throw new Error('Assessment must be unpublished to update questions')
-      }
+        if (assessment.is_published) {
+          throw new Error('Assessment must be unpublished to update questions')
+        }
 
       // Find the question and verify it belongs to the assessment
       const question = await this.QuestionModel.findOne({
@@ -993,7 +1001,7 @@ class AssessmentService {
         0
       );
   
-      if (totalPoints < assessment.max_score) {
+      if (totalPoints < assessment.max_score || totalPoints > assessment.max_score) {
         throw new Error('Total points of questions must be equal to max score');
       }
   
