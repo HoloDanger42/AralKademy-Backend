@@ -57,6 +57,7 @@ const Learner = sequelize.define(
     tableName: 'learners',
     timestamps: true,
     underscored: true,
+    paranoid: true,
   }
 )
 export { Learner }

@@ -78,13 +78,13 @@ Group.hasMany(StudentTeacher, {
   foreignKey: 'student_teacher_group_id',
   as: 'studentTeachers',
 })
-Group.hasOne(Course, {
+Group.hasMany(Course, {
   foreignKey: 'student_teacher_group_id',
-  as: 'studentTeacherCourse',
+  as: 'studentTeacherCourses',
 })
-Group.hasOne(Course, {
+Group.hasMany(Course, {
   foreignKey: 'learner_group_id',
-  as: 'learnerCourse',
+  as: 'learnerCourses',
 })
 
 // School associations
