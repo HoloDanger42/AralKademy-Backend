@@ -159,16 +159,16 @@ describe('Group Model', () => {
       // Test student teacher course
       const foundST = await Group.findOne({
         where: { group_id: stGroup.group_id },
-        include: [{ model: Course, as: 'studentTeacherCourse' }],
+        include: [{ model: Course, as: 'studentTeacherCourses' }],
       })
-      expect(foundST.studentTeacherCourse.id).toBe(course.id)
+      expect(foundST.studentTeacherCourses[0].id).toBe(course.id)
 
       // Test learner course
       const foundLearner = await Group.findOne({
         where: { group_id: learnerGroup.group_id },
-        include: [{ model: Course, as: 'learnerCourse' }],
+        include: [{ model: Course, as: 'learnerCourses' }],
       })
-      expect(foundLearner.learnerCourse.id).toBe(course.id)
+      expect(foundLearner.learnerCourses[0].id).toBe(course.id)
     })
   })
 
