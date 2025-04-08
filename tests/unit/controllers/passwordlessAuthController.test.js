@@ -11,6 +11,8 @@ describe('PasswordlessAuthController', () => {
   beforeEach(() => {
     mockReq = {
       body: {},
+      ip: '127.0.0.1',
+      headers: { 'x-forwarded-for': '192.168.1.1' },
     }
 
     mockRes = {
@@ -235,7 +237,7 @@ describe('PasswordlessAuthController', () => {
   describe('verifyToken', () => {
     test('should verify token and return authentication details', async () => {
       // Arrange
-      mockReq.body = { token: 'valid-token-123' }
+      mockReq.body = { token: 'valid-token-123', tokenType: 'picture_code' }
       passwordlessAuthService.verifyToken.mockResolvedValue({
         user: { id: 1, email: 'user@example.com', role: 'teacher' },
         token: 'jwt-token-123',
@@ -246,7 +248,11 @@ describe('PasswordlessAuthController', () => {
       await PasswordlessAuthController.verifyToken(mockReq, mockRes)
 
       // Assert
-      expect(passwordlessAuthService.verifyToken).toHaveBeenCalledWith('valid-token-123')
+      expect(passwordlessAuthService.verifyToken).toHaveBeenCalledWith(
+        'valid-token-123',
+        '127.0.0.1',
+        'picture_code'
+      )
       expect(mockRes.status).toHaveBeenCalledWith(200)
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -282,7 +288,52 @@ describe('PasswordlessAuthController', () => {
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.objectContaining({
+            code: 'INVALID_TOKEN',
             message: 'Invalid or expired token',
+          }),
+        })
+      )
+    })
+
+    test('should handle too many attempts error', async () => {
+      // Arrange
+      mockReq.body = { token: 'rate-limited-token' }
+      passwordlessAuthService.verifyToken.mockRejectedValue(
+        new Error('Too many failed attempts with this code. Please request a new code.')
+      )
+
+      // Act
+      await PasswordlessAuthController.verifyToken(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(429)
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({
+            code: 'RATE_LIMITED',
+            message: 'Too many failed attempts with this code. Please request a new code.',
+          }),
+        })
+      )
+    })
+
+    test('should handle code already used error', async () => {
+      // Arrange
+      mockReq.body = { token: 'used-token' }
+      passwordlessAuthService.verifyToken.mockRejectedValue(
+        new Error('This code has already been used. Please request a new code.')
+      )
+
+      // Act
+      await PasswordlessAuthController.verifyToken(mockReq, mockRes)
+
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(403)
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({
+            code: 'CODE_ALREADY_USED',
+            message: 'This code has already been used. Please request a new code.',
           }),
         })
       )
