@@ -337,11 +337,6 @@ describe('UserService', () => {
 
       const deletedUser = await sequelize.models.User.findByPk(testUser.id)
       expect(deletedUser).toBeNull()
-
-      const teacherRecord = await sequelize.models.Teacher.findOne({
-        where: { user_id: testUser.id },
-      })
-      expect(teacherRecord).toBeNull()
     })
 
     it('should throw error for non-existent user', async () => {

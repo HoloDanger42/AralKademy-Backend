@@ -495,16 +495,6 @@ class UserService {
       const user = await this.UserModel.findByPk(userId)
       if (!user) throw new Error('User not found')
 
-      if (user.role === 'teacher') {
-        await this.TeacherModel.destroy({
-          where: { user_id: userId },
-          force: true,
-          transaction,
-        })
-      } else if (user.role === 'admin') {
-        await this.AdminModel.destroy({ where: { user_id: userId }, force: true, transaction })
-      }
-
       await user.destroy({ transaction })
       await transaction.commit()
       return true
