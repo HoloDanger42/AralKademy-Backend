@@ -10,7 +10,10 @@ class PasswordlessAuthService {
   constructor() {
     this.tokenExpiry = 15 * 60 * 1000 // 15 minutes
     this.jwtSecret = config.jwt.accessTokenSecret
-    this.failedAttemptsCache = new Map() // Track failed attempts
+    // Separate caches for different auth types
+    this.failedAttemptsCache = new Map() // For magic links and numeric codes
+    this.pictureCodeAttemptsCache = new Map() // Specifically for picture codes
+    this.ipAttemptsCache = new Map() // For IP-based rate limiting
   }
 
   /**
@@ -163,15 +166,36 @@ class PasswordlessAuthService {
    * Verifies any type of passwordless token and returns JWT tokens
    *
    * @param {string} token - The token to verify
+   * @param {string} [clientIp] - Optional client IP address for rate limiting
+   * @param {string} [tokenType] - Type of token being verified ('magic_link', 'numeric_code', 'picture_code')
    * @returns {Promise<Object>} User data and JWT tokens if valid
    */
-  async verifyToken(token) {
-    // Check if token has had too many failed attempts (basic rate limiting)
-    const failedAttempts = this.failedAttemptsCache.get(token) || 0
-    if (failedAttempts >= 3) {
-      throw new Error('Too many failed attempts with this token. Please request a new code.')
+  async verifyToken(token, clientIp = null, tokenType = null) {
+    let attemptCache
+    let maxAttempts
+    let cacheTimeout
+
+    // Select appropriate cache and limits based on token type
+    if (tokenType === 'picture_code') {
+      attemptCache = this.pictureCodeAttemptsCache
+      maxAttempts = 5 // More attempts for picture codes (kid-friendly)
+      cacheTimeout = 2 * 60 * 1000 // 2 minutes cooldown
+    } else {
+      attemptCache = this.failedAttemptsCache
+      maxAttempts = 3 // Stricter for magic links and numeric codes
+      cacheTimeout = 10 * 60 * 1000 // 10 minutes cooldown
     }
 
+    // IP-based rate limiting
+    if (clientIp) {
+      const ipAttempts = this.ipAttemptsCache.get(clientIp) || 0
+      if (ipAttempts >= 10) {
+        // 10 attempts per IP
+        throw new Error('Too many login attempts from this device. Please try again later.')
+      }
+    }
+
+    // First check if the token exists in the database before checking cache
     const authToken = await AuthToken.findOne({
       where: {
         token,
@@ -181,11 +205,22 @@ class PasswordlessAuthService {
     })
 
     if (!authToken) {
-      // Track failed attempts
-      this.failedAttemptsCache.set(token, failedAttempts + 1)
-      // Automatically clean up cache after 10 minutes
-      setTimeout(() => this.failedAttemptsCache.delete(token), 10 * 60 * 1000)
+      // Only track failed attempts for IP to prevent storing unlimited invalid tokens
+      if (clientIp) {
+        const currentIpAttempts = this.ipAttemptsCache.get(clientIp) || 0
+        this.ipAttemptsCache.set(clientIp, currentIpAttempts + 1)
+
+        // Reset IP attempts after 15 minutes
+        setTimeout(() => this.ipAttemptsCache.delete(clientIp), 15 * 60 * 1000)
+      }
+
       throw new Error('Invalid or expired token')
+    }
+
+    // Only check attempt cache for tokens that do exist in the database
+    const failedAttempts = attemptCache.get(token) || 0
+    if (failedAttempts >= maxAttempts) {
+      throw new Error('Too many failed attempts with this code. Please request a new code.')
     }
 
     // If token is already used, provide a clear error
@@ -219,7 +254,10 @@ class PasswordlessAuthService {
     await User.update({ refreshToken }, { where: { id: user.id } })
 
     // Clear any failed attempts for this token
-    this.failedAttemptsCache.delete(token)
+    attemptCache.delete(token)
+    if (clientIp) {
+      this.ipAttemptsCache.delete(clientIp)
+    }
 
     return {
       user: {
