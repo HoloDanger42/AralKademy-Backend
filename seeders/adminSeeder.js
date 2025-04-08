@@ -34,7 +34,6 @@ export const seedAdmins = async () => {
           first_name: adminData.first_name,
           last_name: adminData.last_name,
           role: adminData.role,
-          is_verified: adminData.is_verified,
           school_id: school.school_id,
         },
         { transaction: t }

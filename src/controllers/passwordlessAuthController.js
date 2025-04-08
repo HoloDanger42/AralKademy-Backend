@@ -111,13 +111,14 @@ export const PasswordlessAuthController = {
    */
   verifyToken: asyncHandler(async (req, res) => {
     try {
-      const { token } = req.body
+      const { token, tokenType } = req.body
+      const clientIp = req.ip || req.headers['x-forwarded-for']
 
       if (!token) {
         return res.status(400).json({ error: { message: 'Token is required' } })
       }
 
-      const authResult = await passwordlessAuthService.verifyToken(token)
+      const authResult = await passwordlessAuthService.verifyToken(token, clientIp, tokenType)
 
       res.status(200).json({
         message: 'Login successful',
@@ -137,11 +138,18 @@ export const PasswordlessAuthController = {
           },
         })
       } else if (
-        error.message === 'Too many failed attempts with this token. Please request a new code.'
+        error.message === 'Too many failed attempts with this code. Please request a new code.'
       ) {
         return res.status(429).json({
           error: {
             code: 'RATE_LIMITED',
+            message: error.message,
+          },
+        })
+      } else if (error.message === 'Invalid or expired token') {
+        return res.status(401).json({
+          error: {
+            code: 'INVALID_TOKEN',
             message: error.message,
           },
         })

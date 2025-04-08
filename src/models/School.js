@@ -50,7 +50,7 @@ const School = sequelize.define(
           msg: 'Contact number is required',
         },
         is: {
-          args: /^(?:\+63|0)?(?:2|3\d{2})[-\s]?\d{3,4}[-\s]?\d{4}$/,
+          args: /^(?:\+63|0)(?:2|3\d{2}|9\d{2})[-\s]?\d{3,4}[-\s]?\d{4}$/,
           msg: 'Contact number must be valid',
         },
       },
