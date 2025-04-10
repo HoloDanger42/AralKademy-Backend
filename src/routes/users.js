@@ -300,7 +300,7 @@ router.get('/available-student-teachers', rbac.adminOnly, getAvailableStudentTea
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', rbac.adminOnly, getUserById)
+router.get('/:id', rbac.studentTeacherAndAbove, getUserById)
 
 /**
  * @swagger
