@@ -399,7 +399,7 @@ describe('Group Service', () => {
         include: [{
           model: mockUserModel,
           as: 'user',
-          attributes: ['id', 'first_name', 'middle_initial', 'last_name', 'email'],
+          attributes: ['id', 'first_name', 'middle_initial', 'last_name', 'email'],        
         }],
       })
     })
