@@ -23,11 +23,15 @@ const mockLearnerModel = {
   findAll: jest.fn(),
 }
 
+const mockUserModel = {
+  findAll: jest.fn(),
+}
+
 describe('Group Service', () => {
   let groupService
 
   beforeEach(() => {
-    groupService = new GroupService(mockGroupModel, mockStudentTeacherModel, mockLearnerModel)
+    groupService = new GroupService(mockGroupModel, mockStudentTeacherModel, mockLearnerModel, mockUserModel)
     jest.resetAllMocks()
   })
 
@@ -308,7 +312,7 @@ describe('Group Service', () => {
     })
   })
 
-  describe('getGroupMembers', () => {
+  describe('getGroupMembers', () => { 
     test('should retrieve student teacher members of the group (get group members)', async () => {
       // Arrange
       const groupId = '1'
@@ -329,6 +333,10 @@ describe('Group Service', () => {
       expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
       expect(mockStudentTeacherModel.findAll).toHaveBeenCalledWith({
         where: { group_id: groupId },
+        include: [{
+          model: mockUserModel,
+          attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
+        }],
       })
       expect(mockLearnerModel.findAll).not.toHaveBeenCalled()
     })
@@ -353,6 +361,10 @@ describe('Group Service', () => {
       expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
       expect(mockLearnerModel.findAll).toHaveBeenCalledWith({
         where: { group_id: groupId },
+        include: [{
+          model: mockUserModel,
+          attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
+        }],
       })
       expect(mockStudentTeacherModel.findAll).not.toHaveBeenCalled()
     })
@@ -379,7 +391,13 @@ describe('Group Service', () => {
       // Act & Assert
       await expect(groupService.getGroupMembers(groupId)).rejects.toThrow('Failed to fetch group members')
       expect(mockGroupModel.findByPk).toHaveBeenCalledWith(groupId)
-      expect(mockLearnerModel.findAll).toHaveBeenCalledWith({ where: { group_id: groupId } })
+      expect(mockLearnerModel.findAll).toHaveBeenCalledWith({
+        where: { group_id: groupId },
+        include: [{
+          model: mockUserModel,
+          attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
+        }],
+      })
     })
   })
 
