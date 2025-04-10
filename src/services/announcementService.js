@@ -20,7 +20,7 @@ const transporter = (() => {
 })()
 
 class AnnouncementService {
-    constructor(announcementModel, courseModel, userModel, groupModel, studentTeacherModel, learnerModel, teacherModel, adminModel, enrollmentModel, schoolModel, blacklistModel ) {
+    constructor(announcementModel, courseModel, userModel, groupModel, studentTeacherModel, learnerModel, teacherModel, adminModel, enrollmentModel, schoolModel, blacklistModel) {
         this.announcementModel = announcementModel
         this.courseModel = courseModel
         this.userModel = userModel
@@ -64,37 +64,49 @@ class AnnouncementService {
 
                 const announcement = await this.announcementModel.create({
                     course_id,
-                    title, 
-                    message,  
+                    title,
+                    message,
                     user_id
                 })
 
-                    const learners = await this.groupService.getGroupMembers(course.learner_group_id)
-                    const emails = learners.map((learner) => learner.user.email)
+                const learners = await this.groupService.getGroupMembers(course.learner_group_id)
+                const emails = learners.map((learner) => learner.user.email)
 
-                    if (!skipEmail) {
-                        try {
-                            if (!transporter) {
-                                log.error('Email service not configured.')
-                                throw new Error('Email service unavailable')
-                            }
-
-                            const emailPromises = emails.map((email) => {
-                                const mailOptions = {
-                                    from: process.env.EMAIL_USER,
-                                    to: email,
-                                    subject: `${course.name} Announcement`,
-                                    text:
-                                        `New announcement in ${course.name}: ${announcement.title}`,
-                                    html: `<p>${announcement.message}</p>`,
-                                }
-                                return transporter.sendMail(mailOptions)
-                            })
-                            await Promise.all(emailPromises)
-                        } catch (emailError) {
-                            log.error('Failed to send email:', emailError)
+                if (!skipEmail) {
+                    try {
+                        if (!transporter) {
+                            log.error('Email service not configured.')
+                            throw new Error('Email service unavailable')
                         }
+
+                        const emailPromises = emails.map((email) => {
+                            const mailOptions = {
+                                from: process.env.EMAIL_USER,
+                                to: email,
+                                subject: `${course.name} Announcement`,
+                                text: `New announcement in ${course.name}: ${announcement.title}\n\n${announcement.message}`,
+                                html: `
+                                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                                        <h2 style="color: #4a4a4a;">New Announcement in ${course.name}</h2>
+                                        <p><strong>Title:</strong> ${announcement.title}</p>
+                                        <p><strong>Message:</strong></p>
+                                        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
+                                        <p>${announcement.message}</p>
+                                        </div>
+                                        <p>For more information, please log in to your account on the platform.</p>
+                                        <p>If you have any questions, feel free to contact us at aralkademy.techsupp@gmail.com.</p>
+                                        <p>Best regards,</p>
+                                        <p><strong>AralKademy Team</strong></p>
+                                    </div>
+                                    `,
+                            }
+                            return transporter.sendMail(mailOptions)
+                        })
+                        await Promise.all(emailPromises)
+                    } catch (emailError) {
+                        log.error('Failed to send email:', emailError)
                     }
+                }
 
                 return announcement
             } else {
@@ -102,8 +114,8 @@ class AnnouncementService {
                 const emails = learners.map((learner) => learner.email)
                 const announcement = await this.announcementModel.create({
                     course_id,
-                    title, 
-                    message,  
+                    title,
+                    message,
                     user_id
                 })
 
@@ -119,9 +131,21 @@ class AnnouncementService {
                                 from: process.env.EMAIL_USER,
                                 to: email,
                                 subject: `Announcement`,
-                                text:
-                                    `New announcement: ${announcement.title}`,
-                                html: `<p>${announcement.message}</p>`,
+                                text: `New announcement: ${announcement.title}\n\n${announcement.message}`,
+                                html: `
+                                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                                        <h2 style="color: #4a4a4a;">New Announcement</h2>
+                                        <p><strong>Title:</strong> ${announcement.title}</p>
+                                        <p><strong>Message:</strong></p>
+                                        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
+                                        <p>${announcement.message}</p>
+                                        </div>
+                                        <p>For more information, please log in to your account on the platform.</p>
+                                        <p>If you have any questions, feel free to contact us at aralkademy.techsupp@gmail.com.</p>
+                                        <p>Best regards,</p>
+                                        <p><strong>AralKademy Team</strong></p>
+                                    </div>
+                                    `,
                             }
                             return transporter.sendMail(mailOptions)
                         })
@@ -281,7 +305,7 @@ class AnnouncementService {
     }
 
     async updateAnnouncement(announcementId, course_id = null, title, message, user_id) {
-        try{
+        try {
             const announcement = await this.announcementModel.findByPk(announcementId)
 
             if (!announcement) {
@@ -297,8 +321,8 @@ class AnnouncementService {
 
             await announcement.update({
                 course_id,
-                title, 
-                message,  
+                title,
+                message,
                 user_id
             })
             return announcement;
