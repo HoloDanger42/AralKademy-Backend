@@ -1,6 +1,5 @@
 import swaggerJSDoc from 'swagger-jsdoc'
 import config from './config.js'
-import { Announcement } from '../models/Announcement.js'
 
 const options = {
   definition: {
