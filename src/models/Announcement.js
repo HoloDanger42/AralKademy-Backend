@@ -9,11 +9,6 @@ const Announcement = sequelize.define(
             primaryKey: true,
             autoIncrement: true,
         },
-        is_global: {
-            type: DataTypes.BOOLEAN,
-            allowNull: false,
-            defaultValue: false,
-        },
         course_id: {
             type: DataTypes.INTEGER,
             allowNull: true,
@@ -64,7 +59,7 @@ const Announcement = sequelize.define(
         },
     },
     {
-        tableName: 'modules',
+        tableName: 'announcements',
         timestamps: true,
         underscored: true,
         paranoid: true,

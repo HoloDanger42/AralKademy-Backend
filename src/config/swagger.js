@@ -220,7 +220,6 @@ const options = {
           type: 'object',
           properties: {
             announcement_id: { type: 'integer' },
-            is_global: { type: 'boolean' },
             course_id: { type: 'integer' },
             title: { type: 'string' },
             message: { type: 'string' },

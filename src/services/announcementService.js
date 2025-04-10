@@ -1,5 +1,7 @@
 import { log } from '../utils/logger.js'
 import GroupService from './groupService.js';
+import UserService from './userService.js';
+import nodemailer from 'nodemailer'
 
 // Configure nodemailer with proper error handling
 const transporter = (() => {
@@ -18,40 +20,57 @@ const transporter = (() => {
 })()
 
 class AnnouncementService {
-    constructor(announcementModel, courseModel, userModel) {
+    constructor(announcementModel, courseModel, userModel, groupModel, studentTeacherModel, learnerModel, teacherModel, adminModel, enrollmentModel, schoolModel, blacklistModel ) {
         this.announcementModel = announcementModel
         this.courseModel = courseModel
         this.userModel = userModel
         this.groupModel = groupModel
         this.studentTeacherModel = studentTeacherModel
         this.learnerModel = learnerModel
+        this.teacherModel = teacherModel
+        this.adminModel = adminModel
+        this.enrollmentModel = enrollmentModel
+        this.schoolModel = schoolModel
+        this.blacklistModel = blacklistModel
 
         this.groupService = new GroupService(
             groupModel,
             studentTeacherModel,
-            learnerModel
+            learnerModel,
+            userModel
+        );
+
+        this.userService = new UserService(
+            userModel,
+            teacherModel,
+            adminModel,
+            studentTeacherModel,
+            learnerModel,
+            enrollmentModel,
+            courseModel,
+            groupModel,
+            schoolModel,
+            blacklistModel
         );
     }
 
-    async createAnnouncement(announcementData, skipEmail = false) {
+    async createAnnouncement(course_id = null, title, message, user_id, skipEmail = false) {
         try {
-            if (announcementData.courseId) {
-                const course = await this.courseModel.findByPk(announcementData.courseId)
+            if (course_id) {
+                const course = await this.courseModel.findByPk(course_id)
                 if (!course) {
                     throw new Error('Course not found')
                 }
 
-                const announcement = await this.announcementModel.create(announcementData)
-
-                const learnerGroup = await this.groupModel.findOne({
-                    where: { course_id: course.id, group_type: 'learner' },
+                const announcement = await this.announcementModel.create({
+                    course_id,
+                    title, 
+                    message,  
+                    user_id
                 })
 
-
-
-                if (learnerGroup) {
-                    const learners = await this.groupService.getGroupMembers(learnerGroup.group_id)
-                    const emails = learners.map((learner) => learner.email)
+                    const learners = await this.groupService.getGroupMembers(course.learner_group_id)
+                    const emails = learners.map((learner) => learner.user.email)
 
                     if (!skipEmail) {
                         try {
@@ -76,11 +95,42 @@ class AnnouncementService {
                             log.error('Failed to send email:', emailError)
                         }
                     }
-                }
 
                 return announcement
             } else {
-                const announcement = await this.announcementModel.create(announcementData)
+                const learners = await this.userService.getUsersByRole('learner')
+                const emails = learners.map((learner) => learner.email)
+                const announcement = await this.announcementModel.create({
+                    course_id,
+                    title, 
+                    message,  
+                    user_id
+                })
+
+                if (!skipEmail) {
+                    try {
+                        if (!transporter) {
+                            log.error('Email service not configured.')
+                            throw new Error('Email service unavailable')
+                        }
+
+                        const emailPromises = emails.map((email) => {
+                            const mailOptions = {
+                                from: process.env.EMAIL_USER,
+                                to: email,
+                                subject: `Announcement`,
+                                text:
+                                    `New announcement: ${announcement.title}`,
+                                html: `<p>${announcement.message}</p>`,
+                            }
+                            return transporter.sendMail(mailOptions)
+                        })
+                        await Promise.all(emailPromises)
+                    } catch (emailError) {
+                        log.error('Failed to send email:', emailError)
+                    }
+                }
+
                 return announcement
             }
         } catch (error) {
@@ -101,10 +151,12 @@ class AnnouncementService {
                 include: [
                     {
                         model: this.userModel,
+                        as: 'user',
                         attributes: ['id', 'first_name', 'last_name'],
                     },
                     {
                         model: this.courseModel,
+                        as: 'course',
                         attributes: ['id', 'name'],
                     },
                 ],
@@ -119,10 +171,11 @@ class AnnouncementService {
     async getGlobalAnnouncements() {
         try {
             const announcements = await this.announcementModel.findAll({
-                where: { is_global: true },
+                where: { course_id: null },
                 include: [
                     {
                         model: this.userModel,
+                        as: 'user',
                         attributes: ['id', 'first_name', 'last_name'],
                     },
                 ],
@@ -141,10 +194,12 @@ class AnnouncementService {
                 include: [
                     {
                         model: this.userModel,
+                        as: 'user',
                         attributes: ['id', 'first_name', 'last_name'],
                     },
                     {
                         model: this.courseModel,
+                        as: 'course',
                         attributes: ['id', 'name'],
                         required: false,
                     },
@@ -178,10 +233,12 @@ class AnnouncementService {
                 include: [
                     {
                         model: this.userModel,
+                        as: 'user',
                         attributes: ['id', 'first_name', 'last_name'],
                     },
                     {
                         model: this.courseModel,
+                        as: 'course',
                         attributes: ['id', 'name'],
                     },
                 ],
@@ -205,10 +262,12 @@ class AnnouncementService {
                 include: [
                     {
                         model: this.userModel,
+                        as: 'user',
                         attributes: ['id', 'first_name', 'last_name'],
                     },
                     {
                         model: this.courseModel,
+                        as: 'course',
                         attributes: ['id', 'name'],
                         required: false,
                     },
@@ -221,6 +280,49 @@ class AnnouncementService {
         }
     }
 
+    async updateAnnouncement(announcementId, course_id = null, title, message, user_id) {
+        try{
+            const announcement = await this.announcementModel.findByPk(announcementId)
+
+            if (!announcement) {
+                throw new Error('Announcement not found')
+            }
+
+            if (course_id) {
+                const course = await this.courseModel.findByPk(course_id);
+                if (!course) {
+                    throw new Error('Course not found');
+                }
+            }
+
+            await announcement.update({
+                course_id,
+                title, 
+                message,  
+                user_id
+            })
+            return announcement;
+        } catch (error) {
+            console.error('Error updating announcement:', error.message);
+            throw error;
+        }
+    }
+
+    async deleteAnnouncement(announcementId) {
+        try {
+            const announcement = await this.announcementModel.findByPk(announcementId)
+
+            if (!announcement) {
+                throw new Error('Announcement not found')
+            }
+
+            await announcement.destroy()
+            return { message: 'Announcement deleted successfully' }
+        } catch (error) {
+            console.error('Error deleting announcement:', error.message);
+            throw error;
+        }
+    }
 }
 
 export default AnnouncementService

@@ -35,7 +35,7 @@ class GroupService {
    * @param {Object} LearnerModel - The model for learners
    * @param {Object} UserModel - The model for users
    */
-  constructor(GroupModel, StudentTeacherModel, LearnerModel) {
+  constructor(GroupModel, StudentTeacherModel, LearnerModel, UserModel) {
     this.GroupModel = GroupModel
     this.StudentTeacherModel = StudentTeacherModel
     this.LearnerModel = LearnerModel
@@ -337,6 +337,13 @@ class GroupService {
       if (group.group_type === 'student_teacher') {
         groupMembers = await this.StudentTeacherModel.findAll({
           where: { group_id: groupId },
+          include: [
+            {
+              model: this.UserModel,
+              as: 'user',
+              attributes: ['id', 'first_name', 'middle_initial', 'last_name', 'email'],
+            },
+          ],
         })
       } else if (group.group_type === 'learner') {
         groupMembers = await this.LearnerModel.findAll({
@@ -344,7 +351,8 @@ class GroupService {
           include: [
             {
               model: this.UserModel,
-              attributes: ['email'],
+              as: 'user',
+              attributes: ['id', 'first_name', 'middle_initial', 'last_name', 'email'],
             },
           ],
         })
