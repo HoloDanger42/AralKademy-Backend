@@ -24,14 +24,6 @@ class AnnouncementService {
         this.announcementModel = announcementModel
         this.courseModel = courseModel
         this.userModel = userModel
-        this.groupModel = groupModel
-        this.studentTeacherModel = studentTeacherModel
-        this.learnerModel = learnerModel
-        this.teacherModel = teacherModel
-        this.adminModel = adminModel
-        this.enrollmentModel = enrollmentModel
-        this.schoolModel = schoolModel
-        this.blacklistModel = blacklistModel
 
         this.groupService = new GroupService(
             groupModel,
@@ -69,6 +61,12 @@ class AnnouncementService {
                     user_id
                 })
 
+                const postedBy = await this.userModel.findByPk(announcement.user_id)
+
+                if (!postedBy) {
+                    throw new Error('Posted by not found')
+                }
+
                 const learners = await this.groupService.getGroupMembers(course.learner_group_id)
                 const emails = learners.map((learner) => learner.user.email)
 
@@ -84,7 +82,7 @@ class AnnouncementService {
                                 from: process.env.EMAIL_USER,
                                 to: email,
                                 subject: `${course.name} Announcement`,
-                                text: `New announcement in ${course.name}: ${announcement.title}\n\n${announcement.message}`,
+                                text: `New announcement in ${course.name}: ${announcement.title}\n\n${announcement.message}\n\nPosted by: ${postedBy.first_name} ${postedBy.last_name}`,
                                 html: `
                                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
                                         <h2 style="color: #4a4a4a;">New Announcement in ${course.name}</h2>
@@ -93,6 +91,7 @@ class AnnouncementService {
                                         <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
                                         <p>${announcement.message}</p>
                                         </div>
+                                        <p><strong>Posted by:</strong> ${postedBy.first_name} ${postedBy.last_name}</p>
                                         <p>For more information, please log in to your account on the platform.</p>
                                         <p>If you have any questions, feel free to contact us at aralkademy.techsupp@gmail.com.</p>
                                         <p>Best regards,</p>
@@ -110,14 +109,21 @@ class AnnouncementService {
 
                 return announcement
             } else {
-                const learners = await this.userService.getUsersByRole('learner')
-                const emails = learners.map((learner) => learner.email)
                 const announcement = await this.announcementModel.create({
                     course_id,
                     title,
                     message,
                     user_id
                 })
+
+                const postedBy = await this.userModel.findByPk(announcement.user_id)
+
+                if (!postedBy) {
+                    throw new Error('Posted by not found')
+                }
+
+                const learners = await this.userService.getUsersByRole('learner')
+                const emails = learners.map((learner) => learner.email)
 
                 if (!skipEmail) {
                     try {
@@ -131,7 +137,7 @@ class AnnouncementService {
                                 from: process.env.EMAIL_USER,
                                 to: email,
                                 subject: `Announcement`,
-                                text: `New announcement: ${announcement.title}\n\n${announcement.message}`,
+                                text: `New announcement: ${announcement.title}\n\n${announcement.message}\n\nPosted by: ${postedBy.first_name} ${postedBy.last_name}`,
                                 html: `
                                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
                                         <h2 style="color: #4a4a4a;">New Announcement</h2>
@@ -140,6 +146,7 @@ class AnnouncementService {
                                         <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
                                         <p>${announcement.message}</p>
                                         </div>
+                                        <p><strong>Posted by:</strong> ${postedBy.first_name} ${postedBy.last_name}</p>
                                         <p>For more information, please log in to your account on the platform.</p>
                                         <p>If you have any questions, feel free to contact us at aralkademy.techsupp@gmail.com.</p>
                                         <p>Best regards,</p>
