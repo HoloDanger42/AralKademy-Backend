@@ -51,7 +51,8 @@ const databaseConnection = async () => {
       School,
       Module,
       Content,
-      ModuleGrade
+      ModuleGrade,
+      Announcement
     } = await import('../models/index.js')
 
     // Import associations after models are loaded
@@ -72,7 +73,8 @@ const databaseConnection = async () => {
       School,
       Module,
       Content,
-      ModuleGrade
+      ModuleGrade,
+      Announcement,
     }
   } catch (error) {
     log.error('Database connection failed:', error)

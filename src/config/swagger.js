@@ -1,5 +1,6 @@
 import swaggerJSDoc from 'swagger-jsdoc'
 import config from './config.js'
+import { Announcement } from '../models/Announcement.js'
 
 const options = {
   definition: {
@@ -212,6 +213,20 @@ const options = {
             module_id: { type: 'integer' },
             user_id: { type: 'integer' },
             grade: { type: 'float' },
+          },
+        },
+
+        Announcement: {
+          type: 'object',
+          properties: {
+            announcement_id: { type: 'integer' },
+            is_global: { type: 'boolean' },
+            course_id: { type: 'integer' },
+            title: { type: 'string' },
+            message: { type: 'string' },
+            user_id: { type: 'integer' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
           },
         },
       },
