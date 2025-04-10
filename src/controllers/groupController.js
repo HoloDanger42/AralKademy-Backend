@@ -1,9 +1,9 @@
 import GroupService from '../services/groupService.js'
-import { Group, Learner, StudentTeacher } from '../models/index.js'
+import { Group, Learner, StudentTeacher, User } from '../models/index.js'
 import { log } from '../utils/logger.js'
 import { handleControllerError } from '../utils/errorHandler.js'
 
-const groupService = new GroupService(Group, StudentTeacher, Learner)
+const groupService = new GroupService(Group, StudentTeacher, Learner, User)
 
 /**
  * Retrieves all groups, optionally filtered by group type.
