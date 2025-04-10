@@ -335,6 +335,7 @@ describe('Group Service', () => {
         where: { group_id: groupId },
         include: [{
           model: mockUserModel,
+          as: 'user',
           attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
         }],
       })
@@ -363,6 +364,7 @@ describe('Group Service', () => {
         where: { group_id: groupId },
         include: [{
           model: mockUserModel,
+          as: 'user',
           attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
         }],
       })
@@ -395,6 +397,7 @@ describe('Group Service', () => {
         where: { group_id: groupId },
         include: [{
           model: mockUserModel,
+          as: 'user',
           attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
         }],
       })
