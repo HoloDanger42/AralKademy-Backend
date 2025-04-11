@@ -137,12 +137,13 @@ class PasswordlessAuthService {
       'kite',
     ]
 
-    // Select 3 random pictures
-    const pictureCode = []
-    for (let i = 0; i < 3; i++) {
-      const randomIdx = Math.floor(Math.random() * allPictures.length)
-      pictureCode.push(allPictures[randomIdx])
+    const shuffledPictures = [...allPictures];
+    
+    for (let i = shuffledPictures.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledPictures[i], shuffledPictures[j]] = [shuffledPictures[j], shuffledPictures[i]];
     }
+    const pictureCode = shuffledPictures.slice(0, 3);
 
     // Join with separator and store in DB
     const tokenString = pictureCode.join('-')
