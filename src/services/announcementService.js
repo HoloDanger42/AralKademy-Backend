@@ -122,8 +122,11 @@ class AnnouncementService {
                     throw new Error('Posted by not found')
                 }
 
-                const learners = await this.userService.getUsersByRole('learner')
-                const emails = learners.map((learner) => learner.email)
+                const roles = ['learner', 'teacher', 'student_teacher'];
+                const userPromises = roles.map(role => this.userService.getUsersByRole(role));
+                const usersByRole = await Promise.all(userPromises);
+                const users = usersByRole.flat();
+                const emails = users.map((user) => user.email)
 
                 if (!skipEmail) {
                     try {
