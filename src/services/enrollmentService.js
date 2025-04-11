@@ -157,6 +157,11 @@ class EnrollmentService {
       await transaction.rollback()
       log.error('Error approving enrollment:', error)
 
+      // Handle unique constraint violation (course name)
+      if (error.name === 'SequelizeUniqueConstraintError') {
+        throw error
+      }
+
       if (error.message === 'Enrollment not found') {
         throw error
       }
