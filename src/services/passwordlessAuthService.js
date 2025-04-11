@@ -137,16 +137,12 @@ class PasswordlessAuthService {
       'kite',
     ]
 
-    // Create a copy of the array to shuffle
     const shuffledPictures = [...allPictures];
     
-    // Shuffle the array (Fisher-Yates algorithm)
     for (let i = shuffledPictures.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffledPictures[i], shuffledPictures[j]] = [shuffledPictures[j], shuffledPictures[i]];
     }
-
-    // Select first 3 pictures from the shuffled array
     const pictureCode = shuffledPictures.slice(0, 3);
 
     // Join with separator and store in DB
