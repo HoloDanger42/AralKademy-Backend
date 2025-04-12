@@ -1064,7 +1064,7 @@ class AssessmentService {
               from: process.env.EMAIL_USER,
               to: email,
               subject: `${assessment.module.course.name} Assessment Published`,
-              text: `New assessment in ${assessment.module.course.name}: ${assessment.title}\n\nType: ${assessment.type}\n\n${assessment.description ? assessment.description : 'The assessment has been published and is now available for you to complete.'}`,
+              text: `New assessment in ${assessment.module.course.name} (${assessment.module.name}): ${assessment.title}\n\nType: ${assessment.type}\n\n${assessment.description ? assessment.description : 'The assessment has been published and is now available for you to complete.'}`,
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
                     <h2 style="color: #4a4a4a;">New Assessment in ${assessment.module.course.name}</h2>
