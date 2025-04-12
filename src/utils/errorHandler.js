@@ -38,17 +38,21 @@ export const handleControllerError = (
 
   // Handle Sequelize validation errors
   if (error.name === 'SequelizeValidationError') {
-    const errors = {}
-    error.errors.forEach((err) => {
-      errors[err.path] = err.message
-    })
+    // Combine all validation messages into a single string, no field names
+    const errorMessages = error.errors.map(err => err.message).join(', ');
+  
     return res.status(400).json({
       error: {
-        message: 'Validation failed',
+        message: errorMessages, // Just the messages, no field names
         code: 'VALIDATION_ERROR',
-        details: errors,
-      },
-    })
+        details: {
+          ...error.errors.reduce((acc, err) => {
+            acc[err.path] = err.message;
+            return acc;
+          }, {})
+        }
+      }
+    });
   }
 
   // Handle unique constaint violations
