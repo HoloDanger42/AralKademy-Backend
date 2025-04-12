@@ -1,7 +1,7 @@
 import { log } from '../utils/logger.js'
 import { Op } from 'sequelize'
-import ModuleService from './moduleService.js';
-import GroupService from './groupService.js';
+import ModuleService from './moduleService.js'
+import GroupService from './groupService.js'
 import nodemailer from 'nodemailer'
 
 // Configure nodemailer with proper error handling
@@ -64,14 +64,9 @@ class AssessmentService {
       SubmissionModel,
       ModuleGradeModel,
       UserModel
-    );
+    )
 
-    this.groupService = new GroupService(
-      GroupModel,
-      StudentTeacherModel,
-      LearnerModel,
-      UserModel
-    );
+    this.groupService = new GroupService(GroupModel, StudentTeacherModel, LearnerModel, UserModel)
   }
 
   /**
@@ -116,12 +111,13 @@ class AssessmentService {
         throw new Error('Assessment not found')
       }
 
-      const totalPoints = (await this.QuestionModel.sum('points', {
-        where: { assessment_id: assessmentId },
-      })) || 0;
+      const totalPoints =
+        (await this.QuestionModel.sum('points', {
+          where: { assessment_id: assessmentId },
+        })) || 0
 
       if (totalPoints + questionData.points > assessment.max_score) {
-        throw new Error('Invalid total points');
+        throw new Error('Invalid total points')
       }
 
       const question = await this.QuestionModel.create({
@@ -269,20 +265,25 @@ class AssessmentService {
 
       const courseModules = await this.moduleService.getModulesByCourseId(currentModule.course_id)
 
-      const currentModuleIndex = courseModules.findIndex(m => m.module_id === currentModule.module_id);
+      const currentModuleIndex = courseModules.findIndex(
+        (m) => m.module_id === currentModule.module_id
+      )
 
       if (currentModuleIndex > 0) {
-        const prevModule = courseModules[currentModuleIndex - 1];
-        const prevModuleGrade = await this.moduleService.getModuleGradeOfUser(userId, prevModule.module_id);
+        const prevModule = courseModules[currentModuleIndex - 1]
+        const prevModuleGrade = await this.moduleService.getModuleGradeOfUser(
+          userId,
+          prevModule.module_id
+        )
 
         if (prevModuleGrade?.allPassed !== true) {
-          throw new Error(`Invalid attempt`);
+          throw new Error(`Invalid attempt`)
         }
       }
 
       const submissionCount = await this.SubmissionModel.count({
-        where: { assessment_id: assessmentId, user_id: userId }
-      });
+        where: { assessment_id: assessmentId, user_id: userId },
+      })
 
       if (submissionCount >= assessment.allowed_attempts) {
         throw new Error('Invalid attempt')
@@ -502,20 +503,20 @@ class AssessmentService {
   }
 
   /**
- * Gets all of a student's submissions for an assessment
- * @param {number} assessmentId - ID of the assessment
- * @param {number} userId - ID of the user
- * @param {boolean} includeAnswers - Whether to include answers
- * @returns {Promise<Array>} The submissions
- */
+   * Gets all of a student's submissions for an assessment
+   * @param {number} assessmentId - ID of the assessment
+   * @param {number} userId - ID of the user
+   * @param {boolean} includeAnswers - Whether to include answers
+   * @returns {Promise<Array>} The submissions
+   */
   async getStudentSubmissions(assessmentId, userId, includeAnswers = false) {
     try {
       const where = {
         assessment_id: assessmentId,
         user_id: userId,
-      };
+      }
 
-      const include = [];
+      const include = []
 
       if (includeAnswers) {
         include.push({
@@ -531,16 +532,16 @@ class AssessmentService {
               as: 'selected_option',
             },
           ],
-        });
+        })
       }
 
       return await this.SubmissionModel.findAll({
         where,
         include,
-      });
+      })
     } catch (error) {
-      log.error('Get student submissions error:', error);
-      throw error;
+      log.error('Get student submissions error:', error)
+      throw error
     }
   }
 
@@ -687,32 +688,33 @@ class AssessmentService {
       }
 
       // Recalculate total score after grading
-      const totalScore = await this.AnswerResponseModel.sum('points_awarded', {
-        where: { submission_id: submissionId },
-      }) || 0;
+      const totalScore =
+        (await this.AnswerResponseModel.sum('points_awarded', {
+          where: { submission_id: submissionId },
+        })) || 0
 
       // Count total answers and graded answers
       const totalAnswers = await this.AnswerResponseModel.count({
         where: { submission_id: submissionId },
-      });
+      })
 
       const gradedAnswers = await this.AnswerResponseModel.count({
         where: {
           submission_id: submissionId,
           points_awarded: { [Op.not]: null },
         },
-      });
+      })
 
       // Combine new feedback with existing feedback (if any)
       if (submission.feedback) {
-        submission.feedback += `\n\n${feedback}`; // Append new feedback, separating with two line breaks for clarity
+        submission.feedback += `\n\n${feedback}` // Append new feedback, separating with two line breaks for clarity
       } else {
-        submission.feedback = feedback; // If no feedback, just set the new feedback
+        submission.feedback = feedback // If no feedback, just set the new feedback
       }
 
       // Update the submission
       submission.score = totalScore
-      submission.status = totalAnswers === gradedAnswers ? 'graded' : 'submitted'; // Check if all answers are graded
+      submission.status = totalAnswers === gradedAnswers ? 'graded' : 'submitted' // Check if all answers are graded
       await submission.save()
 
       return submission
@@ -866,17 +868,18 @@ class AssessmentService {
         throw new Error('Multiple choice questions require at least 2 options')
       }
 
-      const totalPoints = (await this.QuestionModel.sum('points', {
-        where: {
-          assessment_id: assessmentId,
-          id: {
-            [this.QuestionModel.sequelize.Sequelize.Op.ne]: questionId,
+      const totalPoints =
+        (await this.QuestionModel.sum('points', {
+          where: {
+            assessment_id: assessmentId,
+            id: {
+              [this.QuestionModel.sequelize.Sequelize.Op.ne]: questionId,
+            },
           },
-        },
-      })) || 0;
+        })) || 0
 
       if (totalPoints + questionData.points > assessment.max_score) {
-        throw new Error('Invalid total points');
+        throw new Error('Invalid total points')
       }
 
       // Update the question
@@ -1019,37 +1022,36 @@ class AssessmentService {
             attributes: ['points'],
           },
           {
-            model: this.ModuleModel, 
-            as: 'module',  
+            model: this.ModuleModel,
+            as: 'module',
             include: [
               {
-                model: this.CourseModel,  
-                as: 'course',  
-                attributes: ['name', 'learner_group_id'], 
-              }
-            ]
-          }
+                model: this.CourseModel,
+                as: 'course',
+                attributes: ['name', 'learner_group_id'],
+              },
+            ],
+          },
         ],
-      });
+      })
 
       if (!assessment) {
-        throw new Error('Assessment not found');
+        throw new Error('Assessment not found')
       }
 
-      const totalPoints = assessment.questions.reduce(
-        (sum, question) => sum + question.points,
-        0
-      );
+      const totalPoints = assessment.questions.reduce((sum, question) => sum + question.points, 0)
 
       if (totalPoints < assessment.max_score || totalPoints > assessment.max_score) {
-        throw new Error('Total points of questions must be equal to max score');
+        throw new Error('Total points of questions must be equal to max score')
       }
 
       // Update the assessment to be published
-      assessment.is_published = true;
-      await assessment.save();
+      assessment.is_published = true
+      await assessment.save()
 
-      const learners = await this.groupService.getGroupMembers(assessment.module.course.learner_group_id)
+      const learners = await this.groupService.getGroupMembers(
+        assessment.module.course.learner_group_id
+      )
       const emails = learners.map((learner) => learner.user.email)
 
       if (!skipEmail) {
@@ -1067,7 +1069,7 @@ class AssessmentService {
               text: `New assessment in ${assessment.module.course.name} (${assessment.module.name}): ${assessment.title}\n\nType: ${assessment.type}\n\n${assessment.description ? assessment.description : 'The assessment has been published and is now available for you to complete.'}`,
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-                    <h2 style="color: #4a4a4a;">New Assessment in ${assessment.module.course.name}</h2>
+                    <h2 style="color: #4a4a4a;">New Assessment in ${assessment.module.course.name} (${assessment.module.name})</h2>
                     <p><strong>Title:</strong> ${assessment.title}</p>
                     <p><strong>Assessment Type:</strong> ${assessment.type}</p>
                     <p><strong>Description:</strong></p>
@@ -1079,7 +1081,7 @@ class AssessmentService {
                     <p>Best regards,</p>
                     <p><strong>AralKademy Team</strong></p>
                 </div>
-              `          
+              `,
             }
             return transporter.sendMail(mailOptions)
           })
@@ -1089,10 +1091,10 @@ class AssessmentService {
         }
       }
 
-      return assessment;
+      return assessment
     } catch (error) {
-      log.error('Publish assessment error:', error);
-      throw error;
+      log.error('Publish assessment error:', error)
+      throw error
     }
   }
 
@@ -1106,16 +1108,16 @@ class AssessmentService {
       const assessment = await this.AssessmentModel.findByPk(assessmentId)
 
       if (!assessment) {
-        throw new Error('Assessment not found');
+        throw new Error('Assessment not found')
       }
 
       // Update the assessment to be unpublished
-      assessment.is_published = false;
-      await assessment.save();
-      return assessment;
+      assessment.is_published = false
+      await assessment.save()
+      return assessment
     } catch (error) {
-      log.error('Unpublish assessment error:', error);
-      throw error;
+      log.error('Unpublish assessment error:', error)
+      throw error
     }
   }
 }
