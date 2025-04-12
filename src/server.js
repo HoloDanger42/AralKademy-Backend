@@ -30,6 +30,7 @@ import { enrollmentRouter } from './routes/enrollments.js'
 import { groupsRouter } from './routes/groups.js'
 import { moduleRouter } from './routes/modules.js'
 import { assessmentRouter } from './routes/assessments.js'
+import { announcementRouter } from './routes/announcements.js'
 import { passwordlessAuthRouter } from './routes/passwordlessAuth.js'
 
 // Token cleanup
@@ -176,6 +177,7 @@ app.use('/api/enrollments', enrollmentRouter)
 app.use('/api/groups', groupsRouter)
 app.use('/api/modules', moduleRouter)
 app.use('/api/assessments', assessmentRouter)
+app.use('/api/announcements', announcementRouter)
 app.use('/api/auth/passwordless', passwordlessAuthRouter)
 
 /**

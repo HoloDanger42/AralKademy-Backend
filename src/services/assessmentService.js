@@ -1,6 +1,24 @@
 import { log } from '../utils/logger.js'
 import { Op } from 'sequelize'
 import ModuleService from './moduleService.js';
+import GroupService from './groupService.js';
+import nodemailer from 'nodemailer'
+
+// Configure nodemailer with proper error handling
+const transporter = (() => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    log.warn('Email credentials not configured.')
+    return null
+  }
+
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  })
+})()
 
 class AssessmentService {
   /**
@@ -22,9 +40,12 @@ class AssessmentService {
     AnswerResponseModel,
     ModuleModel,
     UserModel,
-    CourseModel, 
+    CourseModel,
     ContentModel,
-    ModuleGradeModel
+    ModuleGradeModel,
+    GroupModel,
+    StudentTeacherModel,
+    LearnerModel
   ) {
     this.AssessmentModel = AssessmentModel
     this.QuestionModel = QuestionModel
@@ -33,14 +54,22 @@ class AssessmentService {
     this.AnswerResponseModel = AnswerResponseModel
     this.ModuleModel = ModuleModel
     this.UserModel = UserModel
+    this.CourseModel = CourseModel
 
     this.moduleService = new ModuleService(
-      ModuleModel, 
+      ModuleModel,
       CourseModel,
       ContentModel,
       AssessmentModel,
       SubmissionModel,
       ModuleGradeModel,
+      UserModel
+    );
+
+    this.groupService = new GroupService(
+      GroupModel,
+      StudentTeacherModel,
+      LearnerModel,
       UserModel
     );
   }
@@ -225,11 +254,11 @@ class AssessmentService {
           user_id: userId,
           status: 'in_progress',
         },
-      }) 
+      })
 
       if (existingSubmission) {
         return existingSubmission
-      } 
+      }
 
       const assessment = await this.AssessmentModel.findByPk(assessmentId)
       if (!assessment) {
@@ -245,7 +274,7 @@ class AssessmentService {
       if (currentModuleIndex > 0) {
         const prevModule = courseModules[currentModuleIndex - 1];
         const prevModuleGrade = await this.moduleService.getModuleGradeOfUser(userId, prevModule.module_id);
-  
+
         if (prevModuleGrade?.allPassed !== true) {
           throw new Error(`Invalid attempt`);
         }
@@ -668,7 +697,7 @@ class AssessmentService {
       });
 
       const gradedAnswers = await this.AnswerResponseModel.count({
-        where: { 
+        where: {
           submission_id: submissionId,
           points_awarded: { [Op.not]: null },
         },
@@ -729,7 +758,7 @@ class AssessmentService {
 
       if (assessmentData.allowed_attempts == null || assessmentData.allowed_attempts <= 0) {
         throw new Error('Invalid allowed attempts')
-    }
+      }
 
       // Update the assessment
       await assessment.update(assessmentData)
@@ -794,9 +823,9 @@ class AssessmentService {
         throw new Error('Assessment not found')
       }
 
-        if (assessment.is_published) {
-          throw new Error('Assessment must be unpublished to update questions')
-        }
+      if (assessment.is_published) {
+        throw new Error('Assessment must be unpublished to update questions')
+      }
 
       // Find the question and verify it belongs to the assessment
       const question = await this.QuestionModel.findOne({
@@ -980,7 +1009,7 @@ class AssessmentService {
    * @param {number} assessmentId - ID of the assessment to publish
    * @returns {Promise<Object>} The published assessment
    */
-  async publishAssessment(assessmentId) {
+  async publishAssessment(assessmentId, skipEmail = false) {
     try {
       const assessment = await this.AssessmentModel.findByPk(assessmentId, {
         include: [
@@ -989,25 +1018,77 @@ class AssessmentService {
             as: 'questions',
             attributes: ['points'],
           },
+          {
+            model: this.ModuleModel, 
+            as: 'module',  
+            include: [
+              {
+                model: this.CourseModel,  
+                as: 'course',  
+                attributes: ['name', 'learner_group_id'], 
+              }
+            ]
+          }
         ],
       });
-  
+
       if (!assessment) {
         throw new Error('Assessment not found');
       }
-  
+
       const totalPoints = assessment.questions.reduce(
         (sum, question) => sum + question.points,
         0
       );
-  
+
       if (totalPoints < assessment.max_score || totalPoints > assessment.max_score) {
         throw new Error('Total points of questions must be equal to max score');
       }
-  
+
       // Update the assessment to be published
       assessment.is_published = true;
       await assessment.save();
+
+      const learners = await this.groupService.getGroupMembers(assessment.module.course.learner_group_id)
+      const emails = learners.map((learner) => learner.user.email)
+
+      if (!skipEmail) {
+        try {
+          if (!transporter) {
+            log.error('Email service not configured.')
+            throw new Error('Email service unavailable')
+          }
+
+          const emailPromises = emails.map((email) => {
+            const mailOptions = {
+              from: process.env.EMAIL_USER,
+              to: email,
+              subject: `${assessment.module.course.name} Assessment Published`,
+              text: `New assessment in ${assessment.module.course.name} (${assessment.module.name}): ${assessment.title}\n\nType: ${assessment.type}\n\n${assessment.description ? assessment.description : 'The assessment has been published and is now available for you to complete.'}`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                    <h2 style="color: #4a4a4a;">New Assessment in ${assessment.module.course.name}</h2>
+                    <p><strong>Title:</strong> ${assessment.title}</p>
+                    <p><strong>Assessment Type:</strong> ${assessment.type}</p>
+                    <p><strong>Description:</strong></p>
+                    <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px;">
+                        <p>${assessment.description ? assessment.description : 'The assessment has been published and is now available for you to complete.'}</p>
+                    </div>
+                    <p>For more information, please log in to your account on the platform.</p>
+                    <p>If you have any questions, feel free to contact us at aralkademy.techsupp@gmail.com.</p>
+                    <p>Best regards,</p>
+                    <p><strong>AralKademy Team</strong></p>
+                </div>
+              `          
+            }
+            return transporter.sendMail(mailOptions)
+          })
+          await Promise.all(emailPromises)
+        } catch (emailError) {
+          log.error('Failed to send email:', emailError)
+        }
+      }
+
       return assessment;
     } catch (error) {
       log.error('Publish assessment error:', error);

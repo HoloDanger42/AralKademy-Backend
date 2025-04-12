@@ -17,6 +17,7 @@ import { Submission } from './Submission.js'
 import { AnswerResponse } from './AnswerResponse.js'
 import { ModuleGrade } from './ModuleGrade.js'
 import { AuthToken } from './AuthToken.js'
+import { Announcement } from './Announcement.js'
 
 export {
   User,
@@ -38,4 +39,5 @@ export {
   AnswerResponse,
   ModuleGrade,
   AuthToken,
+  Announcement,
 }

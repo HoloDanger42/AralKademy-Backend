@@ -214,6 +214,19 @@ const options = {
             grade: { type: 'float' },
           },
         },
+
+        Announcement: {
+          type: 'object',
+          properties: {
+            announcement_id: { type: 'integer' },
+            course_id: { type: 'integer' },
+            title: { type: 'string' },
+            message: { type: 'string' },
+            user_id: { type: 'integer' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
       },
     },
     security: [{ bearerAuth: [] }],

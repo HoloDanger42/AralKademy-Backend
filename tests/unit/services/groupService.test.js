@@ -1,3 +1,4 @@
+
 import { beforeEach, describe, expect, jest } from '@jest/globals'
 import GroupService from '../../../src/services/groupService'
 import {
@@ -336,7 +337,7 @@ describe('Group Service', () => {
         include: [{
           model: mockUserModel,
           as: 'user',
-          attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
+          attributes: ['id', 'first_name', 'middle_initial', 'last_name', 'email'],
         }],
       })
       expect(mockLearnerModel.findAll).not.toHaveBeenCalled()
@@ -365,7 +366,7 @@ describe('Group Service', () => {
         include: [{
           model: mockUserModel,
           as: 'user',
-          attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
+          attributes: ['id', 'first_name', 'middle_initial', 'last_name', 'email'],
         }],
       })
       expect(mockStudentTeacherModel.findAll).not.toHaveBeenCalled()
@@ -398,7 +399,7 @@ describe('Group Service', () => {
         include: [{
           model: mockUserModel,
           as: 'user',
-          attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
+          attributes: ['id', 'first_name', 'middle_initial', 'last_name', 'email'],        
         }],
       })
     })

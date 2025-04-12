@@ -340,8 +340,8 @@ class GroupService {
           include: [
             {
               model: this.UserModel,
-              as: 'user',
-              attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
+              as: 'user', 
+              attributes: ['id', 'first_name', 'middle_initial', 'last_name', 'email'],
             },
           ],
         })
@@ -352,7 +352,7 @@ class GroupService {
             {
               model: this.UserModel,
               as: 'user',
-              attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
+              attributes: ['id', 'first_name', 'middle_initial', 'last_name', 'email'],
             },
           ],
         })
