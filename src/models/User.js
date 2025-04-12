@@ -15,10 +15,10 @@ const User = sequelize.define(
       allowNull: false,
       validate: {
         notNull: {
-          msg: 'First name cannot be null.',
+          msg: 'First name cannot be null',
         },
         notEmpty: {
-          msg: 'First name cannot be empty.',
+          msg: 'First name cannot be empty',
         },
       },
       set(value) {
@@ -40,10 +40,10 @@ const User = sequelize.define(
       allowNull: false,
       validate: {
         notNull: {
-          msg: 'Last name cannot be null.',
+          msg: 'Last name cannot be null',
         },
         notEmpty: {
-          msg: 'Last name cannot be empty.',
+          msg: 'Last name cannot be empty',
         },
       },
       set(value) {
@@ -59,13 +59,13 @@ const User = sequelize.define(
       },
       validate: {
         notNull: {
-          msg: 'Email cannot be null.',
+          msg: 'Email cannot be null',
         },
         isEmail: {
           msg: 'Email must be a valid email address',
         },
         notEmpty: {
-          msg: 'Email cannot be empty.',
+          msg: 'Email cannot be empty',
         },
       },
     },
@@ -74,10 +74,10 @@ const User = sequelize.define(
       allowNull: false,
       validate: {
         notNull: {
-          msg: 'Password cannot be null.',
+          msg: 'Password cannot be null',
         },
         notEmpty: {
-          msg: 'Password cannot be empty.',
+          msg: 'Password cannot be empty',
         },
         len: {
           args: [8, Infinity],
