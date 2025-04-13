@@ -34,7 +34,8 @@ describe('Error Middleware', () => {
     expect(mockRes.json).toHaveBeenCalledWith({
       error: {
         message: 'Custom error',
-        code: 'INTERNAL_ERROR',
+        code: 'VALIDATION_ERROR',
+        details: {},
       },
     })
   })
@@ -57,7 +58,7 @@ describe('Error Middleware', () => {
         message: 'Validation failed',
         code: 'VALIDATION_ERROR',
         details: {
-          email: 'email must be unique',
+          email: 'Email must be unique',
         },
       },
     })

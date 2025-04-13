@@ -1,8 +1,6 @@
 import { log } from './logger.js'
 import {
-  BadRequestError,
   NotFoundError,
-  ConflictError,
   ValidationError,
   AppError,
 } from './errors.js'
@@ -38,12 +36,9 @@ export const handleControllerError = (
 
   // Handle Sequelize validation errors
   if (error.name === 'SequelizeValidationError') {
-    // Combine all validation messages into a single string, no field names
-    const errorMessages = error.errors.map(err => err.message).join(', ');
-  
     return res.status(400).json({
       error: {
-        message: errorMessages, // Just the messages, no field names
+        message: 'Validation failed',
         code: 'VALIDATION_ERROR',
         details: {
           ...error.errors.reduce((acc, err) => {
