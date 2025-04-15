@@ -59,9 +59,17 @@ jest.unstable_mockModule('express-rate-limit', () => ({
 
 // Mock fs
 const mockReadFileSync = jest.fn()
+const mockExistsSync = jest.fn().mockReturnValue(true) // Default to returning true
+const mockMkdirSync = jest.fn()
 jest.unstable_mockModule('fs', () => ({
-  default: { readFileSync: mockReadFileSync },
+  default: { 
+    readFileSync: mockReadFileSync,
+    existsSync: mockExistsSync,
+    mkdirSync: mockMkdirSync
+  },
   readFileSync: mockReadFileSync,
+  existsSync: mockExistsSync,
+  mkdirSync: mockMkdirSync
 }))
 
 // Mock https
@@ -423,6 +431,7 @@ describe('Cache Middleware Application', () => {
   test('should serve from cache if cache hit for /api/courses', async () => {
     mockConfig.cache.enabled = true
     const cachedData = 'cached-course-data'
+    const duration = 10 // Define the duration variable here
 
     // Create fake request and response
     const req = {
@@ -433,7 +442,6 @@ describe('Cache Middleware Application', () => {
 
     const res = {
       send: jest.fn(),
-      sendResponse: jest.fn(),
     }
 
     // Clear previous calls
@@ -449,32 +457,65 @@ describe('Cache Middleware Application', () => {
       return null
     })
 
-    // Call middleware directly
-    const next = jest.fn()
-
-    // Simple middleware implementation for cache hit scenario
-    const middleware = (req, res, next) => {
+    // Create middleware function that matches server.js implementation
+    const cacheMiddleware = (req, res, next) => {
       const key = `__express__${req.originalUrl || req.url}${JSON.stringify(req.body)}`
       const cachedBody = mockCacheGet(key)
       if (cachedBody) {
         res.send(cachedBody)
-        // When cache hit, we don't call next()
         return
+      } else {
+        res.sendResponse = res.send
+        res.send = (body) => {
+          if (!res.statusCode || res.statusCode >= 200 && res.statusCode < 300) {
+            mockCachePut(key, body, duration * 1000)
+          }
+          res.sendResponse(body)
+        }
+        next && next()
       }
-      // If no cache hit, call next() (this shouldn't happen in this test)
-      next()
     }
 
-    middleware(req, res, next)
-
-    // Verify the cache was checked
+    const next = jest.fn()
+    
+    // First, test cache hit scenario
+    cacheMiddleware(req, res, next)
+    
+    // Verify cache was checked and response was sent from cache
     expect(mockCacheGet).toHaveBeenCalledWith(cacheKey)
-    // On cache hit, res.send should be called with cached data
     expect(res.send).toHaveBeenCalledWith(cachedData)
-    // On cache hit, next() should NOT be called
-    expect(next).not.toHaveBeenCalled()
-    // On cache hit, mockCachePut should NOT be called
-    expect(mockCachePut).not.toHaveBeenCalled()
+    expect(next).not.toHaveBeenCalled() // Next should not be called for cache hits
+    
+    // Now test cache miss and subsequent put
+    res.statusCode = 200
+    mockCacheGet.mockReturnValue(null) // Now simulate cache miss
+    res.send = jest.fn() // Reset the send function
+    
+    // Create a new middleware instance for cache miss scenario  
+    const cacheMiddlewareMiss = (req, res, next) => {
+      const key = `__express__${req.originalUrl || req.url}${JSON.stringify(req.body)}`
+      const cachedBody = mockCacheGet(key)
+      if (cachedBody) {
+        res.send(cachedBody)
+        return
+      } else {
+        res.sendResponse = res.send
+        res.send = (body) => {
+          if (!res.statusCode || res.statusCode >= 200 && res.statusCode < 300) {
+            mockCachePut(key, body, duration * 1000)
+          }
+          res.sendResponse(body)
+        }
+        next && next()
+      }
+    }
+    
+    // Call the middleware and then send a response
+    cacheMiddlewareMiss(req, res, next)
+    res.send('complex response')
+    
+    // Now verify the cache put operation
+    expect(mockCachePut).toHaveBeenCalledWith(cacheKey, 'complex response', duration * 1000)
   })
 })
 
@@ -1142,7 +1183,7 @@ describe('Cache Middleware Extended', () => {
     }
 
     const next = jest.fn()
-    const duration = 10
+    const duration = 10 // Define the duration variable
 
     // Expected cache key for complex body
     const expectedKey = `__express__/api/courses/search${JSON.stringify(complexBody)}`

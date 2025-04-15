@@ -9,6 +9,8 @@ import swaggerSpec from './config/swagger.js'
 import fs from 'fs'
 import https from 'https'
 import basicAuth from 'express-basic-auth'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 // CORS
 import cors from 'cors'
@@ -37,6 +39,13 @@ import { passwordlessAuthRouter } from './routes/passwordlessAuth.js'
 import TokenCleanup from './utils/tokenCleanup.js'
 
 const app = express()
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const UPLOAD_DIR = path.join(__dirname, '..', 'uploads') // Define upload dir relative to server.js
+
+// Serve files from the 'uploads' directory under the '/uploads' path
+app.use('/uploads', express.static(UPLOAD_DIR))
 
 app.set('trust proxy', 1)
 

@@ -1,17 +1,19 @@
 import express from 'express'
 import {
-    createModule,
-    getModuleById,
-    getModulesByCourseId,
-    updateModule,
-    deleteModule,
-    addModuleContent,
-    updateModuleContent,
-    deleteModuleContent,
-    getContentsByModuleId,
-    getModuleGradeOfUser
+  createModule,
+  getModuleById,
+  getModulesByCourseId,
+  updateModule,
+  deleteModule,
+  addModuleContent,
+  addModuleFileContent,
+  updateModuleContent,
+  deleteModuleContent,
+  getContentsByModuleId,
+  getModuleGradeOfUser,
 } from '../controllers/moduleController.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
+import upload from '../config/multerConfig.js'
 
 const moduleRouter = express.Router()
 
@@ -285,6 +287,65 @@ moduleRouter.put('/:moduleId', rbac.studentTeacherAndAbove, updateModule)
  *               $ref: '#/components/schemas/Error'
  */
 moduleRouter.delete('/:moduleId', rbac.studentTeacherAndAbove, deleteModule)
+
+/**
+ * @swagger
+ * /modules/{moduleId}/content/upload:
+ *   post:
+ *     summary: Upload a content file to a module
+ *     tags: [Modules]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: moduleId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Module ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data: // Use multipart/form-data for file uploads
+ *           schema:
+ *             type: object
+ *             properties:
+ *               contentFile: // Name of the file input field in the form
+ *                 type: string
+ *                 format: binary
+ *               name: // Optional: Name for the content item
+ *                 type: string
+ *                 example: "Lecture Slides Week 1"
+ *     responses:
+ *       201:
+ *         description: File uploaded and content created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "File uploaded successfully"
+ *                 content:
+ *                   $ref: '#/components/schemas/Content' // Assuming Content schema exists
+ *       400:
+ *         description: Invalid input, file type, or file size exceeded
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Module not found
+ */
+// Use upload.single('<field_name>') middleware for single file uploads
+// '<field_name>' must match the name attribute of the file input in your form/request
+moduleRouter.post(
+  '/:moduleId/content/upload',
+  rbac.studentTeacherAndAbove,
+  upload.single('contentFile'),
+  addModuleFileContent
+)
 
 /**
  * @swagger

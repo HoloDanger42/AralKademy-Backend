@@ -1,4 +1,6 @@
 import { log } from '../utils/logger.js'
+import path from 'path'
+import fs from 'fs'
 
 /**
  * ModuleService
@@ -29,7 +31,15 @@ class ModuleService {
    * @param {Object} moduleGradeModel - The model representing modulegrades.
    * @param {Object} userModel - The model representing users.
    */
-  constructor(moduleModel, courseModel, contentModel, assessmentModel, submissionModel, moduleGradeModel, userModel) {
+  constructor(
+    moduleModel,
+    courseModel,
+    contentModel,
+    assessmentModel,
+    submissionModel,
+    moduleGradeModel,
+    userModel
+  ) {
     this.moduleModel = moduleModel
     this.courseModel = courseModel
     this.contentModel = contentModel
@@ -282,6 +292,59 @@ class ModuleService {
   }
 
   /**
+   * Adds file-based content to a specified module.
+   * Stores file metadata and a relative URL path in the Content model.
+   *
+   * @async
+   * @param {number|string} moduleId - The ID of the module.
+   * @param {string} [name] - Optional name for the content item. Defaults to the original filename.
+   * @param {object} fileData - Object containing file details from multer (originalName, fileName, path, mimeType, size).
+   * @returns {Promise<Object>} The newly created content record.
+   * @throws {Error} When the module is not found or validation/creation fails.
+   */
+  async addModuleFileContent(moduleId, name, fileData) {
+    try {
+      const module = await this.moduleModel.findByPk(moduleId)
+      if (!module) {
+        throw new Error('Module not found')
+      }
+
+      const contentName = name || fileData.originalName // Use provided name or default to original filename
+
+      if (!contentName) {
+        throw new Error('Content name is required (either provide one or ensure file has a name)')
+      }
+      if (contentName.length > 255) {
+        throw new Error('Content name is too long')
+      }
+
+      const contentLink = `/uploads/${fileData.fileName}`
+
+      const contentRecordData = {
+        name: contentName,
+        link: contentLink, // Store the relative URL path
+        module_id: moduleId,
+      }
+
+      const newContent = await this.contentModel.create(contentRecordData)
+      return newContent
+    } catch (error) {
+      log.error(`Error adding file content to module ${moduleId}:`, error)
+
+      if (
+        error.message === 'Module not found' ||
+        error.message.includes('Content name is required') ||
+        error.message.includes('Content name is too long') ||
+        error.name === 'SequelizeValidationError'
+      ) {
+        throw error // Re-throw specific validation errors
+      }
+
+      throw new Error('Failed to add file content') // Generic fallback error
+    }
+  }
+
+  /**
    * Updates an existing module content.
    *
    * @async
@@ -352,15 +415,39 @@ class ModuleService {
       if (!content) {
         throw new Error('Content not found')
       }
+
+      if (content.link && content.link.startsWith('/uploads/')) {
+        const filename = path.basename(content.link) // Extract filename from URL path
+
+        const UPLOAD_DIR = path.join(
+          path.dirname(fileURLToPath(import.meta.url)),
+          '..',
+          '..',
+          'uploads'
+        )
+        const filePath = path.join(UPLOAD_DIR, filename)
+
+        if (fs.existsSync(filePath)) {
+          try {
+            await fs.promises.unlink(filePath)
+            log.info(`Deleted file associated with content ${contentId}: ${filePath}`)
+          } catch (fileError) {
+            log.error(`Failed to delete file ${filePath} for content ${contentId}:`, fileError)
+          }
+        } else {
+          log.warn(
+            `File path not found for content ${contentId}, link: ${content.link}, derived path: ${filePath}`
+          )
+        }
+      }
+
       await content.destroy()
       return { message: 'Content deleted successfully' }
     } catch (error) {
       log.error(`Error deleting content with ID ${contentId}:`, error)
-
       if (error.message === 'Content not found') {
         throw error
       }
-
       throw new Error('Failed to delete content')
     }
   }
@@ -409,68 +496,71 @@ class ModuleService {
    */
   async getModuleGradeOfUser(id, moduleId) {
     try {
-      const user = await this.userModel.findByPk(id);
+      const user = await this.userModel.findByPk(id)
       if (!user) {
-        throw new Error('User not found');
+        throw new Error('User not found')
       }
-  
-      const module = await this.moduleModel.findByPk(moduleId);
+
+      const module = await this.moduleModel.findByPk(moduleId)
       if (!module) {
-        throw new Error('Module not found');
+        throw new Error('Module not found')
       }
-  
+
       const assessments = await this.assessmentModel.findAll({
         where: { module_id: moduleId },
         attributes: ['id', 'passing_score', 'max_score'],
-      });
-  
+      })
+
       if (assessments.length === 0) {
-        return { allGraded: true , allPassed: true, averageScore: 100 }; // or false, false, 0?
+        return { allGraded: true, allPassed: true, averageScore: 100 } // or false, false, 0?
       }
-  
+
       const highestScoreSubmissions = await Promise.all(
         assessments.map(async (assessment) => {
           const highestSubmission = await this.submissionModel.findOne({
-            where: { 
-              user_id: id, 
-              assessment_id: assessment.id, 
-              status: 'graded'
+            where: {
+              user_id: id,
+              assessment_id: assessment.id,
+              status: 'graded',
             },
-            order: [['score', 'DESC']]
-          });
-  
+            order: [['score', 'DESC']],
+          })
+
           return highestSubmission
-            ? { 
+            ? {
                 assessment_id: highestSubmission.assessment_id,
                 score: highestSubmission.score,
                 max_score: highestSubmission.max_score,
-                passed: highestSubmission.score >= assessment.passing_score
+                passed: highestSubmission.score >= assessment.passing_score,
               }
-            : null;
+            : null
         })
-      );
-  
-      const validSubmissions = highestScoreSubmissions.filter(submission => submission !== null);
-  
-      const allGraded = validSubmissions.length === assessments.length;
-  
-      const allPassed = allGraded && validSubmissions.every(submission => submission.passed);
-  
-      const totalScore = validSubmissions.reduce((sum, submission) => sum + submission.score, 0);
-      const totalPossibleScore = assessments.reduce((sum, assessment) => sum + assessment.max_score, 0);
+      )
 
-      const averageScore = validSubmissions.length > 0 
-      ? parseFloat(((totalScore / totalPossibleScore) * 100).toFixed(2))
-      : 0;
-  
+      const validSubmissions = highestScoreSubmissions.filter((submission) => submission !== null)
+
+      const allGraded = validSubmissions.length === assessments.length
+
+      const allPassed = allGraded && validSubmissions.every((submission) => submission.passed)
+
+      const totalScore = validSubmissions.reduce((sum, submission) => sum + submission.score, 0)
+      const totalPossibleScore = assessments.reduce(
+        (sum, assessment) => sum + assessment.max_score,
+        0
+      )
+
+      const averageScore =
+        validSubmissions.length > 0
+          ? parseFloat(((totalScore / totalPossibleScore) * 100).toFixed(2))
+          : 0
+
       await this.moduleGradeModel.upsert({
         user_id: id,
         module_id: moduleId,
         grade: averageScore,
-      });
-  
-      return { allGraded, allPassed, averageScore, submissions: validSubmissions };
-  
+      })
+
+      return { allGraded, allPassed, averageScore, submissions: validSubmissions }
     } catch (error) {
       log.error('Error getting contents:', error)
 
@@ -482,7 +572,7 @@ class ModuleService {
         throw error
       }
 
-      throw new Error('Failed to get module grade');
+      throw new Error('Failed to get module grade')
     }
   }
 }
