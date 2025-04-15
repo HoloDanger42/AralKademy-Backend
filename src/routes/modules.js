@@ -306,14 +306,14 @@ moduleRouter.delete('/:moduleId', rbac.studentTeacherAndAbove, deleteModule)
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data: // Use multipart/form-data for file uploads
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
- *               contentFile: // Name of the file input field in the form
+ *               contentFile:
  *                 type: string
  *                 format: binary
- *               name: // Optional: Name for the content item
+ *               name:
  *                 type: string
  *                 example: "Lecture Slides Week 1"
  *     responses:
@@ -328,7 +328,7 @@ moduleRouter.delete('/:moduleId', rbac.studentTeacherAndAbove, deleteModule)
  *                   type: string
  *                   example: "File uploaded successfully"
  *                 content:
- *                   $ref: '#/components/schemas/Content' // Assuming Content schema exists
+ *                   $ref: '#/components/schemas/Content'
  *       400:
  *         description: Invalid input, file type, or file size exceeded
  *       401:
@@ -338,8 +338,6 @@ moduleRouter.delete('/:moduleId', rbac.studentTeacherAndAbove, deleteModule)
  *       404:
  *         description: Module not found
  */
-// Use upload.single('<field_name>') middleware for single file uploads
-// '<field_name>' must match the name attribute of the file input in your form/request
 moduleRouter.post(
   '/:moduleId/content/upload',
   rbac.studentTeacherAndAbove,
