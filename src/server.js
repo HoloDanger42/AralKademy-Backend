@@ -20,6 +20,7 @@ import { errorMiddleware } from './middleware/errorMiddleware.js'
 import { logMiddleware } from './middleware/logMiddleware.js'
 import { requestLogger, getRequestCounts } from './middleware/requestLogger.js'
 import { securityMiddleware, authLimiter } from './middleware/securityMiddleware.js'
+import { express5Compatibility } from './middleware/express5Compatibility.js'
 
 // Configuration
 import { sequelize, databaseConnection, initializeDatabase } from './config/database.js'
@@ -48,6 +49,9 @@ const UPLOAD_DIR = path.join(__dirname, '..', 'uploads') // Define upload dir re
 app.use('/uploads', express.static(UPLOAD_DIR))
 
 app.set('trust proxy', 1)
+
+// Apply Express 5 compatibility middleware early
+app.use(express5Compatibility)
 
 // CORS configuration
 const allowedOrigins = config.cors.origins
