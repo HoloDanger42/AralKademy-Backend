@@ -1,3 +1,128 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="0" failures="0" errors="0" time="0.181">
+<testsuites name="jest tests" tests="52" failures="3" errors="0" time="4.073">
+  <testsuite name="Server Configuration and Middleware" errors="0" failures="3" skipped="0" timestamp="2025-04-15T06:00:44" time="3.946" tests="52">
+    <testcase classname="Server Configuration and Middleware CORS options should allow configured origin" name="Server Configuration and Middleware CORS options should allow configured origin" time="0.008">
+    </testcase>
+    <testcase classname="Server Configuration and Middleware CORS options should disallow unconfigured origin" name="Server Configuration and Middleware CORS options should disallow unconfigured origin" time="0.001">
+    </testcase>
+    <testcase classname="Server Configuration and Middleware CORS options should allow requests with no origin (e.g., same-origin)" name="Server Configuration and Middleware CORS options should allow requests with no origin (e.g., same-origin)" time="0.001">
+    </testcase>
+    <testcase classname="Server Configuration and Middleware Rate limit handler should return 429" name="Server Configuration and Middleware Rate limit handler should return 429" time="0.002">
+    </testcase>
+    <testcase classname="Server Configuration and Middleware General rate limiter should apply to non-auth API routes" name="Server Configuration and Middleware General rate limiter should apply to non-auth API routes" time="0.002">
+    </testcase>
+    <testcase classname="Server Configuration and Middleware General rate limiter should NOT apply to specific auth API routes" name="Server Configuration and Middleware General rate limiter should NOT apply to specific auth API routes" time="0.004">
+    </testcase>
+    <testcase classname="Server Routes GET / should return API is running message" name="Server Routes GET / should return API is running message" time="0.091">
+    </testcase>
+    <testcase classname="Server Routes Unknown route should return 404" name="Server Routes Unknown route should return 404" time="0.017">
+    </testcase>
+    <testcase classname="Server Routes /api/health should return UP when database is connected" name="Server Routes /api/health should return UP when database is connected" time="0.018">
+    </testcase>
+    <testcase classname="Server Routes /api/health should return DOWN when database connection fails" name="Server Routes /api/health should return DOWN when database connection fails" time="0.016">
+    </testcase>
+    <testcase classname="Server Routes GET /api/swagger.json should return the API documentation spec" name="Server Routes GET /api/swagger.json should return the API documentation spec" time="0.033">
+    </testcase>
+    <testcase classname="Cache Middleware Application should attempt to get from cache for /api/courses" name="Cache Middleware Application should attempt to get from cache for /api/courses" time="0.003">
+    </testcase>
+    <testcase classname="Cache Middleware Application should serve from cache if cache hit for /api/courses" name="Cache Middleware Application should serve from cache if cache hit for /api/courses" time="0.002">
+    </testcase>
+    <testcase classname="App Initialization (initializeApp) should attempt database connection" name="App Initialization (initializeApp) should attempt database connection" time="0.004">
+    </testcase>
+    <testcase classname="App Initialization (initializeApp) should initialize database if not in test environment" name="App Initialization (initializeApp) should initialize database if not in test environment" time="0.002">
+    </testcase>
+    <testcase classname="App Initialization (initializeApp) should NOT initialize database if in test environment" name="App Initialization (initializeApp) should NOT initialize database if in test environment" time="0.003">
+    </testcase>
+    <testcase classname="App Initialization (initializeApp) should start HTTP server by default in test env" name="App Initialization (initializeApp) should start HTTP server by default in test env" time="0.004">
+    </testcase>
+    <testcase classname="App Initialization (initializeApp) should attempt HTTPS server in production when SSL is enabled" name="App Initialization (initializeApp) should attempt HTTPS server in production when SSL is enabled" time="0.005">
+    </testcase>
+    <testcase classname="App Initialization (initializeApp) should fallback to HTTP when SSL files cannot be read in production" name="App Initialization (initializeApp) should fallback to HTTP when SSL files cannot be read in production" time="0.002">
+    </testcase>
+    <testcase classname="App Initialization (initializeApp) should log correct HTTP startup message in development" name="App Initialization (initializeApp) should log correct HTTP startup message in development" time="0.002">
+    </testcase>
+    <testcase classname="App Initialization (initializeApp) should log correct HTTPS startup message in production" name="App Initialization (initializeApp) should log correct HTTPS startup message in production" time="0.003">
+    </testcase>
+    <testcase classname="App Initialization (initializeApp) should log fallback HTTP startup message in production if SSL fails" name="App Initialization (initializeApp) should log fallback HTTP startup message in production if SSL fails" time="0.002">
+    </testcase>
+    <testcase classname="App Initialization (initializeApp) should NOT log startup message in test environment" name="App Initialization (initializeApp) should NOT log startup message in test environment" time="0.006">
+    </testcase>
+    <testcase classname="Graceful Shutdown signal handlers should be registered during app initialization" name="Graceful Shutdown signal handlers should be registered during app initialization" time="0.006">
+    </testcase>
+    <testcase classname="Graceful Shutdown SIGTERM handler should close server and database connections" name="Graceful Shutdown SIGTERM handler should close server and database connections" time="0.114">
+    </testcase>
+    <testcase classname="Graceful Shutdown SIGINT handler should trigger SIGTERM logic" name="Graceful Shutdown SIGINT handler should trigger SIGTERM logic" time="0.107">
+    </testcase>
+    <testcase classname="Graceful Shutdown shutdown handler should handle database close errors" name="Graceful Shutdown shutdown handler should handle database close errors" time="0.11">
+    </testcase>
+    <testcase classname="Debug Endpoints should return request counts in development mode" name="Debug Endpoints should return request counts in development mode" time="0.003">
+    </testcase>
+    <testcase classname="Debug Endpoints should return 404 for debug endpoint in production" name="Debug Endpoints should return 404 for debug endpoint in production" time="0.001">
+    </testcase>
+    <testcase classname="Debug Endpoints should have test error endpoint in non-production environments" name="Debug Endpoints should have test error endpoint in non-production environments" time="0.001">
+    </testcase>
+    <testcase classname="Debug Endpoints should return 404 for test error endpoint in production" name="Debug Endpoints should return 404 for test error endpoint in production" time="0.001">
+    </testcase>
+    <testcase classname="Rate Limiting Application should apply general and auth rate limiters in development" name="Rate Limiting Application should apply general and auth rate limiters in development" time="0.001">
+    </testcase>
+    <testcase classname="Rate Limiting Application should NOT apply rate limiters in test environment" name="Rate Limiting Application should NOT apply rate limiters in test environment" time="0.001">
+    </testcase>
+    <testcase classname="Token Cleanup Scheduling should schedule token cleanup in non-test environments" name="Token Cleanup Scheduling should schedule token cleanup in non-test environments" time="0.003">
+    </testcase>
+    <testcase classname="Token Cleanup Scheduling should NOT schedule token cleanup in test environment" name="Token Cleanup Scheduling should NOT schedule token cleanup in test environment" time="0.004">
+    </testcase>
+    <testcase classname="Token Cleanup Scheduling should handle default cleanup interval if not specified" name="Token Cleanup Scheduling should handle default cleanup interval if not specified" time="0.006">
+      <failure>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 60
+Received: undefined
+    at Object.toBe (C:\Users\johnl\Desktop\School\College\3rd Year\ICS26010\AralKademy Backend\tests\unit\setup\server.test.js:973:25)</failure>
+    </testcase>
+    <testcase classname="startServer Function should call initializeApp if not in test mode" name="startServer Function should call initializeApp if not in test mode" time="0.005">
+    </testcase>
+    <testcase classname="startServer Function should NOT call initializeApp if in test mode" name="startServer Function should NOT call initializeApp if in test mode" time="0.003">
+    </testcase>
+    <testcase classname="startServer Function should handle errors during initialization" name="startServer Function should handle errors during initialization" time="0.001">
+    </testcase>
+    <testcase classname="Pagination Middleware should apply pagination middleware with config values" name="Pagination Middleware should apply pagination middleware with config values" time="0.001">
+    </testcase>
+    <testcase classname="Pagination Middleware should use default pagination values when config is missing" name="Pagination Middleware should use default pagination values when config is missing" time="0.002">
+    </testcase>
+    <testcase classname="Cache Middleware Extended should handle undefined cache durations gracefully" name="Cache Middleware Extended should handle undefined cache durations gracefully" time="0.003">
+    </testcase>
+    <testcase classname="Cache Middleware Extended should handle cache key construction with various request objects" name="Cache Middleware Extended should handle cache key construction with various request objects" time="0.002">
+    </testcase>
+    <testcase classname="Rate Limiting Details should skip auth limiter for non-auth paths" name="Rate Limiting Details should skip auth limiter for non-auth paths" time="0.001">
+    </testcase>
+    <testcase classname="Rate Limiting Details should use auth limiter for auth login path" name="Rate Limiting Details should use auth limiter for auth login path" time="0.002">
+    </testcase>
+    <testcase classname="Rate Limiting Details should use auth limiter for user registration path" name="Rate Limiting Details should use auth limiter for user registration path" time="0.002">
+    </testcase>
+    <testcase classname="Error Middleware Application should pass errors to errorMiddleware" name="Error Middleware Application should pass errors to errorMiddleware" time="0.002">
+    </testcase>
+    <testcase classname="Error Middleware Application should handle SpecificError with status code" name="Error Middleware Application should handle SpecificError with status code" time="0.002">
+    </testcase>
+    <testcase classname="TokenCleanup scheduling details should schedule token cleanup with correct interval" name="TokenCleanup scheduling details should schedule token cleanup with correct interval" time="0.004">
+    </testcase>
+    <testcase classname="TokenCleanup scheduling details should handle default cleanup interval if not specified" name="TokenCleanup scheduling details should handle default cleanup interval if not specified" time="0.003">
+      <failure>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: 60
+Received: undefined
+    at Object.toBe (C:\Users\johnl\Desktop\School\College\3rd Year\ICS26010\AralKademy Backend\tests\unit\setup\server.test.js:1375:25)</failure>
+    </testcase>
+    <testcase classname="HTTPS Server Configuration should add additional SSL options when available in config" name="HTTPS Server Configuration should add additional SSL options when available in config" time="0.019">
+      <failure>Error: expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+Expected: &quot;./mock-ca.pem&quot;
+Received
+       1: &quot;./mock-key.pem&quot;
+       2: &quot;./mock-cert.pem&quot;
+
+Number of calls: 2
+    at Object.toHaveBeenCalledWith (C:\Users\johnl\Desktop\School\College\3rd Year\ICS26010\AralKademy Backend\tests\unit\setup\server.test.js:1427:30)</failure>
+    </testcase>
+    <testcase classname="HTTPS Server Configuration should handle partial SSL configuration gracefully" name="HTTPS Server Configuration should handle partial SSL configuration gracefully" time="0.005">
+    </testcase>
+  </testsuite>
 </testsuites>

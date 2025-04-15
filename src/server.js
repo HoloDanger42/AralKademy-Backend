@@ -4,7 +4,7 @@ import rateLimit from 'express-rate-limit'
 import cache from 'memory-cache'
 import paginate from 'express-paginate'
 import config from './config/config.js'
-import swaggerUi from 'swagger-ui-express'
+import * as swaggerUi from 'swagger-ui-express'
 import swaggerSpec from './config/swagger.js'
 import fs from 'fs'
 import https from 'https'
@@ -63,7 +63,6 @@ app.use(compression())
 
 // Rate limiting
 const FIFTEEN_MINUTES = config.api.rateLimit.window
-const AUTH_MAX_REQUESTS = config.api.rateLimit.auth.max
 
 // Apply rate limiting based on environment variables
 const applyRateLimiter = config.env !== 'test'
@@ -103,7 +102,7 @@ if (applyRateLimiter) {
     }
 
     // Apply general limiter to all other API routes
-    generalLimiter(req, res, next)
+    return generalLimiter(req, res, next)
   })
 }
 
@@ -262,6 +261,20 @@ export const initializeApp = async () => {
         cert: fs.readFileSync(config.ssl.certPath),
       }
 
+      // Add CA certificate if configured
+      if (config.ssl.caPath) {
+        options.ca = fs.readFileSync(config.ssl.caPath)
+      }
+
+      // Add additional SSL options if configured
+      if (config.ssl.requestCert !== undefined) {
+        options.requestCert = config.ssl.requestCert
+      }
+
+      if (config.ssl.rejectUnauthorized !== undefined) {
+        options.rejectUnauthorized = config.ssl.rejectUnauthorized
+      }
+
       // Create HTTPS server
       server = https.createServer(options, app).listen(config.port, () => {
         console.log(
@@ -288,11 +301,6 @@ export const initializeApp = async () => {
     })
   }
 
-  if (config.env !== 'test') {
-    // Schedule token cleanup to run every hour
-    TokenCleanup.scheduleTokenCleanup(config.tokenBlacklist.cleanupIntervalMinutes)
-  }
-
   // Graceful shutdown handler
   const gracefulShutdown = (signal) => {
     console.log(`${signal} signal received. Shutting down gracefully.`)
@@ -303,24 +311,36 @@ export const initializeApp = async () => {
         .close()
         .then(() => {
           console.log('Database connections closed.')
-          process.exit(0)
+          if (config.env !== 'test') {
+            process.exit(0)
+          }
         })
         .catch((err) => {
           console.error('Error closing database connections:', err)
-          process.exit(1)
+          if (config.env !== 'test') {
+            process.exit(1)
+          }
         })
     })
 
     // Force shutdown after 30 seconds if graceful shutdown fails
-    setTimeout(() => {
-      console.error('Forcing shutdown after timeout')
-      process.exit(1)
-    }, 30000)
+    if (config.env !== 'test') {
+      setTimeout(() => {
+        console.error('Forcing shutdown after timeout')
+        process.exit(1)
+      }, 30000)
+    }
   }
 
   // Listen for termination signals
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
   process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+
+  if (config.env !== 'test') {
+    // Schedule token cleanup to run every hour with a default of 60 minutes if not specified
+    const cleanupInterval = config.tokenBlacklist?.cleanupIntervalMinutes || 60
+    TokenCleanup.scheduleTokenCleanup(cleanupInterval)
+  }
 
   return server
 }
