@@ -11,6 +11,12 @@ describe('Assessment Service', () => {
   let mockAnswerResponseModel
   let mockModuleModel
   let mockUserModel
+  let mockCourseModel
+  let mockContentModel
+  let mockModuleGradeModel
+  let mockGroupModel
+  let mockStudentTeacherModel
+  let mockLearnerModel
 
   beforeEach(() => {
     mockAssessmentModel = {
@@ -18,6 +24,11 @@ describe('Assessment Service', () => {
       findAll: jest.fn(),
       findByPk: jest.fn(),
       update: jest.fn(),
+      sequelize: {
+        Sequelize: {
+          Op: { ne: 'ne' }
+        }
+      }
     }
 
     mockQuestionModel = {
@@ -27,6 +38,9 @@ describe('Assessment Service', () => {
       findOne: jest.fn(),
       destroy: jest.fn(),
       sum: jest.fn(),
+      sequelize: {
+        Sequelize: { Op: { ne: 'ne', notIn: 'notIn' } }
+      }
     }
 
     mockQuestionOptionModel = {
@@ -58,6 +72,14 @@ describe('Assessment Service', () => {
 
     mockUserModel = {}
 
+    mockCourseModel = {}
+    mockContentModel = {}
+    mockModuleGradeModel = {}
+    mockGroupModel = {}
+    mockStudentTeacherModel = {}
+    mockLearnerModel = {}
+
+    // Create the service with all required models
     assessmentService = new AssessmentService(
       mockAssessmentModel,
       mockQuestionModel,
@@ -66,7 +88,24 @@ describe('Assessment Service', () => {
       mockAnswerResponseModel,
       mockModuleModel,
       mockUserModel,
+      mockCourseModel,
+      mockContentModel,
+      mockModuleGradeModel,
+      mockGroupModel,
+      mockStudentTeacherModel,
+      mockLearnerModel
     )
+
+    // Mock the moduleService and groupService methods that are used in assessmentService
+    assessmentService.moduleService = {
+      getModuleById: jest.fn(),
+      getModulesByCourseId: jest.fn(),
+      getModuleGradeOfUser: jest.fn()
+    }
+
+    assessmentService.groupService = {
+      getGroupMembers: jest.fn()
+    }
   })
 
   describe('createAssessment', () => {
@@ -141,6 +180,27 @@ describe('Assessment Service', () => {
       expect(mockModuleModel.findByPk).toHaveBeenCalledWith(1)
       expect(mockAssessmentModel.create).not.toHaveBeenCalled()
     })
+
+    test('should throw error when passing score exceeds max score', async () => {
+      // Arrange
+      const assessmentData = {
+        title: 'Test Assessment',
+        description: 'Test description',
+        module_id: 1,
+        type: 'quiz',
+        allowed_attempts: 2,
+        max_score: 10,
+        passing_score: 15 // Higher than max score
+      };
+
+      mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
+
+      // Act & Assert
+      await expect(assessmentService.createAssessment(assessmentData))
+        .rejects.toThrow('Passing score cannot exceed maximum score');
+      
+      expect(mockAssessmentModel.create).not.toHaveBeenCalled();
+    });
   })
 
   describe('addQuestion', () => {
@@ -437,6 +497,69 @@ describe('Assessment Service', () => {
       )
       expect(mockSubmissionModel.create).not.toHaveBeenCalled()
     })
+
+    test('should throw error when user exceeds allowed attempts', async () => {
+      // Arrange
+      const assessmentId = 1;
+      const userId = 2;
+
+      mockSubmissionModel.findOne.mockResolvedValue(null); // No in-progress submission
+
+      const mockAssessment = {
+        id: assessmentId,
+        allowed_attempts: 2
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+      
+      // Mock that the user has already reached the limit of attempts
+      mockSubmissionModel.count.mockResolvedValue(2);
+
+      // Set up moduleService mocks to validate module access
+      assessmentService.moduleService.getModuleById.mockResolvedValue({ module_id: 1, course_id: 10 });
+      assessmentService.moduleService.getModulesByCourseId.mockResolvedValue([
+        { module_id: 1 }
+      ]);
+
+      // Act & Assert
+      await expect(assessmentService.startSubmission(assessmentId, userId))
+        .rejects.toThrow('Invalid attempt');
+      
+      expect(mockSubmissionModel.create).not.toHaveBeenCalled();
+    });
+
+    test('should throw error when previous module not completed', async () => {
+      // Arrange
+      const assessmentId = 1;
+      const userId = 2;
+
+      mockSubmissionModel.findOne.mockResolvedValue(null); // No in-progress submission
+
+      const mockAssessment = {
+        id: assessmentId,
+        allowed_attempts: 2,
+        module_id: 2
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+      
+      // Mock that the user has not reached the limit of attempts
+      mockSubmissionModel.count.mockResolvedValue(1);
+
+      // Mock that this is not the first module in the course
+      assessmentService.moduleService.getModuleById.mockResolvedValue({ module_id: 2, course_id: 10 });
+      assessmentService.moduleService.getModulesByCourseId.mockResolvedValue([
+        { module_id: 1 },
+        { module_id: 2 }
+      ]);
+      
+      // Mock that the previous module was not completed
+      assessmentService.moduleService.getModuleGradeOfUser.mockResolvedValue({ allPassed: false });
+
+      // Act & Assert
+      await expect(assessmentService.startSubmission(assessmentId, userId))
+        .rejects.toThrow('Invalid attempt');
+      
+      expect(mockSubmissionModel.create).not.toHaveBeenCalled();
+    });
   })
 
   describe('saveAnswer', () => {
@@ -1222,6 +1345,74 @@ describe('Assessment Service', () => {
     
         expect(mockAssessmentModel.update).not.toHaveBeenCalled()
     });
+
+    test('should throw error when assessment is published', async () => {
+      // Arrange
+      const assessmentId = 1;
+      const updateData = {
+        title: 'Updated Title'
+      };
+
+      const mockAssessment = { 
+        id: assessmentId,
+        is_published: true, // Published, so cannot be updated
+        update: jest.fn() // Add mock function for update
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+
+      // Act & Assert
+      await expect(assessmentService.updateAssessment(assessmentId, updateData))
+        .rejects.toThrow('Assessment must be unpublished to update assessment');
+      
+      expect(mockAssessment.update).not.toHaveBeenCalled();
+    });
+
+    test('should throw error when passing score exceeds max score', async () => {
+      // Arrange
+      const assessmentId = 1;
+      const updateData = {
+        passing_score: 15,
+        max_score: 10
+      };
+
+      const mockAssessment = { 
+        id: assessmentId,
+        is_published: false,
+        update: jest.fn() // Add mock function for update
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+
+      // Act & Assert
+      await expect(assessmentService.updateAssessment(assessmentId, updateData))
+        .rejects.toThrow('Passing score cannot exceed maximum score');
+      
+      expect(mockAssessment.update).not.toHaveBeenCalled();
+    });
+
+    test('should throw error when updating to non-existent module', async () => {
+      // Arrange
+      const assessmentId = 1;
+      const updateData = {
+        module_id: 999 // Non-existent module
+      };
+
+      const mockAssessment = { 
+        id: assessmentId,
+        is_published: false,
+        module_id: 1, // Original module
+        update: jest.fn() // Add mock function for update
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+      
+      // Mock that the new module doesn't exist
+      mockModuleModel.findByPk.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(assessmentService.updateAssessment(assessmentId, updateData))
+        .rejects.toThrow('Module not found');
+      
+      expect(mockAssessment.update).not.toHaveBeenCalled();
+    });
   })
 
   describe('deleteAssessment', () => {
@@ -1256,10 +1447,51 @@ describe('Assessment Service', () => {
       )
       expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId)
     })
+
+    test('should throw error when assessment is published', async () => {
+      // Arrange
+      const assessmentId = 1;
+
+      const mockAssessment = { 
+        id: assessmentId,
+        is_published: true, // Published, so cannot be deleted
+        destroy: jest.fn() // Add mock function for destroy
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+
+      // Act & Assert
+      await expect(assessmentService.deleteAssessment(assessmentId))
+        .rejects.toThrow('Assessment must be unpublished to delete assessment');
+      
+      expect(mockQuestionModel.destroy).not.toHaveBeenCalled();
+      expect(mockAssessment.destroy).not.toHaveBeenCalled();
+    });
+
+    test('should throw error when assessment has existing submissions', async () => {
+      // Arrange
+      const assessmentId = 1;
+
+      const mockAssessment = { 
+        id: assessmentId,
+        is_published: false,
+        destroy: jest.fn() // Add mock function for destroy
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+
+      // Mock that there are submissions for this assessment
+      mockSubmissionModel.count.mockResolvedValue(2);
+
+      // Act & Assert
+      await expect(assessmentService.deleteAssessment(assessmentId))
+        .rejects.toThrow('Cannot delete assessment with existing submissions');
+      
+      expect(mockQuestionModel.destroy).not.toHaveBeenCalled();
+      expect(mockAssessment.destroy).not.toHaveBeenCalled();
+    });
   })
 
   describe('updateQuestion', () => {
-    /* test('should update a question successfully', async () => {
+    test('should update a question successfully', async () => {
       // Arrange
       const assessmentId = 1
       const questionId = 2
@@ -1315,7 +1547,7 @@ describe('Assessment Service', () => {
       expect(mockQuestion.update).toHaveBeenCalledWith(updateData)
       expect(mockOptionSave).toHaveBeenCalled()
       expect(result).toEqual(mockQuestion)
-    }) */
+    })
 
     test('should throw error if assessment does not exist', async () => {
       // Arrange
@@ -1347,6 +1579,148 @@ describe('Assessment Service', () => {
         assessmentService.updateQuestion(assessmentId, questionId, updateData)
       ).rejects.toThrow('Question not found')
     })
+
+    test('should update question type and handle options correctly', async () => {
+      // Arrange
+      const assessmentId = 1;
+      const questionId = 2;
+      const updateData = {
+        question_text: 'Updated question',
+        question_type: 'short_answer', // Changing from multiple_choice to short_answer
+        points: 5
+      };
+
+      const mockAssessment = { 
+        id: assessmentId,
+        is_published: false // Not published, so can be updated
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+
+      const mockQuestion = {
+        id: questionId,
+        assessment_id: assessmentId,
+        question_text: 'Original question',
+        question_type: 'multiple_choice', // Original type
+        points: 5,
+        update: jest.fn().mockImplementation(function(data) {
+          Object.assign(this, data);
+          return Promise.resolve(this);
+        })
+      };
+      mockQuestionModel.findOne.mockResolvedValue(mockQuestion);
+
+      // Mock the sum for other questions
+      mockQuestionModel.sum.mockResolvedValue(5); // Other questions total 5 points
+
+      // Mock the result of findByPk after question update
+      const updatedMockQuestion = {
+        ...mockQuestion,
+        question_text: 'Updated question',
+        question_type: 'short_answer'
+      };
+      mockQuestionModel.findByPk.mockResolvedValue(updatedMockQuestion);
+
+      // Act
+      const result = await assessmentService.updateQuestion(assessmentId, questionId, updateData);
+
+      // Assert
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId);
+      expect(mockQuestionOptionModel.destroy).toHaveBeenCalledWith({
+        where: { question_id: questionId }
+      });
+      expect(mockQuestion.update).toHaveBeenCalledWith(updateData);
+      expect(mockQuestionModel.findByPk).toHaveBeenCalledWith(questionId, expect.anything());
+      expect(result).toEqual(updatedMockQuestion);
+      expect(result.question_type).toBe('short_answer');
+    });
+
+    test('should throw error when changing to multiple choice without options', async () => {
+      // Arrange
+      const assessmentId = 1;
+      const questionId = 2;
+      const updateData = {
+        question_text: 'Updated question',
+        question_type: 'multiple_choice', // Changing to multiple_choice
+        points: 5
+        // Missing options
+      };
+
+      const mockAssessment = { 
+        id: assessmentId,
+        is_published: false // Not published, so can be updated
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+
+      const mockQuestion = {
+        id: questionId,
+        assessment_id: assessmentId,
+        question_text: 'Original question',
+        question_type: 'short_answer', // Original type
+        points: 5,
+        update: jest.fn()
+      };
+      mockQuestionModel.findOne.mockResolvedValue(mockQuestion);
+
+      // Act & Assert
+      await expect(assessmentService.updateQuestion(assessmentId, questionId, updateData))
+        .rejects.toThrow('Multiple choice questions require at least 2 options');
+      
+      expect(mockQuestion.update).not.toHaveBeenCalled();
+    });
+
+    test('should throw error when assessment is published', async () => {
+      // Arrange
+      const assessmentId = 1;
+      const questionId = 2;
+      const updateData = {
+        question_text: 'Updated question'
+      };
+
+      const mockAssessment = { 
+        id: assessmentId,
+        is_published: true // Published, so cannot be updated
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+
+      // Act & Assert
+      await expect(assessmentService.updateQuestion(assessmentId, questionId, updateData))
+        .rejects.toThrow('Assessment must be unpublished to update questions');
+      
+      expect(mockQuestionModel.findOne).not.toHaveBeenCalled();
+    });
+
+    test('should throw error when total points exceeds assessment max score', async () => {
+      // Arrange
+      const assessmentId = 1;
+      const questionId = 2;
+      const updateData = {
+        points: 10 // Increasing points
+      };
+
+      const mockAssessment = { 
+        id: assessmentId,
+        is_published: false,
+        max_score: 10
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+
+      const mockQuestion = {
+        id: questionId,
+        assessment_id: assessmentId,
+        points: 5, // Original points
+        update: jest.fn() // Add mock function
+      };
+      mockQuestionModel.findOne.mockResolvedValue(mockQuestion);
+
+      // Mock that other questions already have 5 points, so total would be 15 (exceeds 10)
+      mockQuestionModel.sum.mockResolvedValue(5); 
+
+      // Act & Assert
+      await expect(assessmentService.updateQuestion(assessmentId, questionId, updateData))
+        .rejects.toThrow('Invalid total points');
+      
+      expect(mockQuestion.update).not.toHaveBeenCalled();
+    });
   })
 
   describe('deleteQuestion', () => {
@@ -1429,6 +1803,53 @@ describe('Assessment Service', () => {
       )
       expect(mockQuestion.destroy).not.toHaveBeenCalled()
     })
+
+    test('should throw error when assessment is published', async () => {
+      // Arrange
+      const assessmentId = 1;
+      const questionId = 2;
+
+      const mockAssessment = { 
+        id: assessmentId,
+        is_published: true // Published, so cannot be updated
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+
+      // Act & Assert
+      await expect(assessmentService.deleteQuestion(assessmentId, questionId))
+        .rejects.toThrow('Assessment must be unpublished to delete questions');
+      
+      expect(mockQuestionModel.findOne).not.toHaveBeenCalled();
+    });
+
+    test('should throw error when question has existing answers', async () => {
+      // Arrange
+      const assessmentId = 1;
+      const questionId = 2;
+
+      const mockAssessment = { 
+        id: assessmentId,
+        is_published: false
+      };
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+
+      const mockQuestion = {
+        id: questionId,
+        assessment_id: assessmentId,
+        destroy: jest.fn()
+      };
+      mockQuestionModel.findOne.mockResolvedValue(mockQuestion);
+
+      // Mock that there are answers for this question
+      mockAnswerResponseModel.count.mockResolvedValue(1);
+
+      // Act & Assert
+      await expect(assessmentService.deleteQuestion(assessmentId, questionId))
+        .rejects.toThrow('Cannot delete question with existing answers');
+      
+      expect(mockQuestionOptionModel.destroy).not.toHaveBeenCalled();
+      expect(mockQuestion.destroy).not.toHaveBeenCalled();
+    });
   })
 
   describe('getSubmissionById', () => {
@@ -1480,4 +1901,138 @@ describe('Assessment Service', () => {
       expect(mockSubmissionModel.findByPk).toHaveBeenCalledWith(submissionId, expect.anything())
     })
   })
+
+  describe('publishAssessment', () => {
+    test('should publish an assessment successfully', async () => {
+      // Arrange
+      const assessmentId = 1;
+      
+      const mockQuestions = [
+        { id: 1, points: 5 },
+        { id: 2, points: 5 },
+      ];
+      
+      const mockCourse = { 
+        name: 'Test Course',
+        learner_group_id: 10
+      };
+      
+      const mockModule = {
+        id: 1,
+        name: 'Test Module',
+        course: mockCourse
+      };
+      
+      const mockAssessment = {
+        id: assessmentId,
+        title: 'Test Assessment',
+        max_score: 10,
+        is_published: false,
+        questions: mockQuestions,
+        module: mockModule,
+        save: jest.fn().mockResolvedValue(true),
+      };
+      
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+      
+      const mockGroupMembers = [
+        { user: { email: 'student1@example.com' } },
+        { user: { email: 'student2@example.com' } }
+      ];
+      
+      assessmentService.groupService.getGroupMembers.mockResolvedValue(mockGroupMembers);
+      
+      // Act
+      const result = await assessmentService.publishAssessment(assessmentId, true); // Skip email sending
+      
+      // Assert
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId, expect.anything());
+      expect(mockAssessment.is_published).toBe(true);
+      expect(mockAssessment.save).toHaveBeenCalled();
+      expect(result).toEqual(mockAssessment);
+      expect(assessmentService.groupService.getGroupMembers).toHaveBeenCalledWith(mockCourse.learner_group_id);
+    });
+    
+    test('should throw an error if total points do not match max score', async () => {
+      // Arrange
+      const assessmentId = 1;
+      
+      const mockQuestions = [
+        { id: 1, points: 3 }, // Total points = 5, but max_score = 10
+        { id: 2, points: 2 },
+      ];
+      
+      const mockCourse = { name: 'Test Course', learner_group_id: 10 };
+      const mockModule = { id: 1, name: 'Test Module', course: mockCourse };
+      
+      const mockAssessment = {
+        id: assessmentId,
+        title: 'Test Assessment',
+        max_score: 10,
+        is_published: false,
+        questions: mockQuestions,
+        module: mockModule,
+        save: jest.fn().mockResolvedValue(true),
+      };
+      
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+      
+      // Act & Assert
+      await expect(assessmentService.publishAssessment(assessmentId, true))
+        .rejects.toThrow('Total points of questions must be equal to max score');
+      
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId, expect.anything());
+      expect(mockAssessment.is_published).toBe(false); // Should not change
+      expect(mockAssessment.save).not.toHaveBeenCalled();
+    });
+    
+    test('should throw an error if assessment not found', async () => {
+      // Arrange
+      const assessmentId = 999;
+      mockAssessmentModel.findByPk.mockResolvedValue(null);
+      
+      // Act & Assert
+      await expect(assessmentService.publishAssessment(assessmentId))
+        .rejects.toThrow('Assessment not found');
+        
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId, expect.anything());
+    });
+  });
+  
+  describe('unpublishAssessment', () => {
+    test('should unpublish an assessment successfully', async () => {
+      // Arrange
+      const assessmentId = 1;
+      
+      const mockAssessment = {
+        id: assessmentId,
+        title: 'Test Assessment',
+        is_published: true,
+        save: jest.fn().mockResolvedValue(true),
+      };
+      
+      mockAssessmentModel.findByPk.mockResolvedValue(mockAssessment);
+      
+      // Act
+      const result = await assessmentService.unpublishAssessment(assessmentId);
+      
+      // Assert
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId);
+      expect(mockAssessment.is_published).toBe(false);
+      expect(mockAssessment.save).toHaveBeenCalled();
+      expect(result).toEqual(mockAssessment);
+    });
+    
+    test('should throw an error if assessment not found', async () => {
+      // Arrange
+      const assessmentId = 999;
+      mockAssessmentModel.findByPk.mockResolvedValue(null);
+      
+      // Act & Assert
+      await expect(assessmentService.unpublishAssessment(assessmentId))
+        .rejects.toThrow('Assessment not found');
+        
+      expect(mockAssessmentModel.findByPk).toHaveBeenCalledWith(assessmentId);
+    });
+  });
 })
