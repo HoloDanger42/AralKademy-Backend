@@ -11,6 +11,7 @@ import {
   deleteModuleContent,
   getContentsByModuleId,
   getModuleGradeOfUser,
+  unlockNextModuleForLearner,
 } from '../controllers/moduleController.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
 import upload from '../config/multerConfig.js'
@@ -628,5 +629,82 @@ moduleRouter.get('/:moduleId/contents', rbac.allAuthenticated, getContentsByModu
  *               $ref: '#/components/schemas/Error'
  */
 moduleRouter.get('/:moduleId/module-grade', rbac.allAuthenticated, getModuleGradeOfUser)
+
+/**
+ * @swagger
+ * /modules/{currentModuleId}/learners/{learnerId}/unlock-next:
+ *   post:
+ *     summary: Manually unlock the next module for a learner
+ *     tags: [Modules]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: currentModuleId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the module the learner is currently on (or stuck on).
+ *       - in: path
+ *         name: learnerId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the learner for whom the next module will be unlocked.
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 example: "Learner demonstrated understanding through alternative means."
+ *     responses:
+ *       200:
+ *         description: Next module unlocked successfully or already unlocked.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Next module unlocked successfully."
+ *                 unlockedModule:
+ *                   $ref: '#/components/schemas/Module'
+ *                 override:
+ *                   $ref: '#/components/schemas/ModuleUnlockOverride'
+ *       400:
+ *         description: Invalid input data (e.g., current module is the last module).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - Teacher, Student Teacher or Admin access required.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Learner, current module, or course not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+moduleRouter.post(
+  '/:currentModuleId/learners/:learnerId/unlock-next',
+  rbac.studentTeacherAndAbove,
+  unlockNextModuleForLearner
+)
 
 export { moduleRouter }

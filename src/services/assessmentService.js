@@ -31,6 +31,13 @@ class AssessmentService {
    * @param {Object} AnswerResponseModel - The model for answer responses
    * @param {Object} ModuleModel - The model for modules
    * @param {Object} UserModel - The model for users
+   * @param {Object} CourseModel - The model for courses
+   * @param {Object} ModuleUnlockOverrideModel - The model for module unlock overrides
+   * @param {Object} GroupModel - The model for groups
+   * @param {Object} ContentModel - The model for contents
+   * @param {Object} ModuleGradeModel - The model for module grades
+   * @param {Object} StudentTeacherModel - The model for student teachers
+   * @param {Object} LearnerModel - The model for learners
    */
   constructor(
     AssessmentModel,
@@ -45,7 +52,8 @@ class AssessmentService {
     ModuleGradeModel,
     GroupModel,
     StudentTeacherModel,
-    LearnerModel
+    LearnerModel,
+    ModuleUnlockOverrideModel
   ) {
     this.AssessmentModel = AssessmentModel
     this.QuestionModel = QuestionModel
@@ -55,6 +63,7 @@ class AssessmentService {
     this.ModuleModel = ModuleModel
     this.UserModel = UserModel
     this.CourseModel = CourseModel
+    this.ModuleUnlockOverrideModel = ModuleUnlockOverrideModel
 
     this.moduleService = new ModuleService(
       ModuleModel,
@@ -63,7 +72,8 @@ class AssessmentService {
       AssessmentModel,
       SubmissionModel,
       ModuleGradeModel,
-      UserModel
+      UserModel,
+      ModuleUnlockOverrideModel
     )
 
     this.groupService = new GroupService(GroupModel, StudentTeacherModel, LearnerModel, UserModel)
@@ -261,23 +271,37 @@ class AssessmentService {
         throw new Error('Assessment not found')
       }
 
-      const currentModule = await this.moduleService.getModuleById(assessment.module_id)
-
-      const courseModules = await this.moduleService.getModulesByCourseId(currentModule.course_id)
-
-      const currentModuleIndex = courseModules.findIndex(
-        (m) => m.module_id === currentModule.module_id
+      const moduleContainingAssessment = await this.moduleService.getModuleById(
+        assessment.module_id
+      )
+      if (!moduleContainingAssessment) {
+        throw new Error('Module containing the assessment not found.')
+      }
+      const courseModules = await this.moduleService.getModulesByCourseId(
+        moduleContainingAssessment.course_id
+      )
+      const moduleContainingAssessmentIndex = courseModules.findIndex(
+        (m) => m.module_id === moduleContainingAssessment.module_id
       )
 
-      if (currentModuleIndex > 0) {
-        const prevModule = courseModules[currentModuleIndex - 1]
+      if (moduleContainingAssessmentIndex > 0) {
+        const previousModule = courseModules[moduleContainingAssessmentIndex - 1]
         const prevModuleGrade = await this.moduleService.getModuleGradeOfUser(
           userId,
-          prevModule.module_id
+          previousModule.module_id
         )
 
-        if (prevModuleGrade?.allPassed !== true) {
-          throw new Error(`Invalid attempt`)
+        const isModuleContainingAssessmentManuallyUnlocked =
+          await this.ModuleUnlockOverrideModel.findOne({
+            where: { user_id: userId, unlocked_module_id: moduleContainingAssessment.module_id },
+          })
+
+        if (
+          !(prevModuleGrade?.allPassed === true || isModuleContainingAssessmentManuallyUnlocked)
+        ) {
+          throw new Error(
+            `You must pass the module '${previousModule.name}' or have the module '${moduleContainingAssessment.name}' manually unlocked to start this assessment.`
+          )
         }
       }
 
@@ -286,7 +310,7 @@ class AssessmentService {
       })
 
       if (submissionCount >= assessment.allowed_attempts) {
-        throw new Error('Invalid attempt')
+        throw new Error('Invalid attempt: You have reached the maximum number of allowed attempts.')
       }
 
       // Create new submission
@@ -297,7 +321,7 @@ class AssessmentService {
         status: 'in_progress',
       })
     } catch (error) {
-      log.error('Start submission error:', error)
+      log.error(`Start submission error for assessment ${assessmentId}, user ${userId}:`, error)
       throw error
     }
   }
