@@ -24,6 +24,7 @@ import {
 User.hasMany(Announcement, { foreignKey: 'user_id', as: 'announcements' })
 Announcement.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
 
+
 Course.hasMany(Announcement, { foreignKey: 'course_id', as: 'announcements', onDelete: 'CASCADE' })
 Announcement.belongsTo(Course, { foreignKey: 'course_id', as: 'course' })
 
