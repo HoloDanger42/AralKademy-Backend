@@ -37,7 +37,7 @@ export const assessmentSchemas = {
       due_date: Joi.date().iso().allow(null),
       is_published: Joi.boolean(),
       instructions: Joi.string().allow('', null),
-      allowed_attempts: Joi.number().integer().required(),
+      allowed_attempts: Joi.number().integer(),
     })
       .custom((value, helpers) => {
         if (

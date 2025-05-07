@@ -6,7 +6,7 @@ const logMiddleware = (req, res, next) => {
   log.info(`Request: ${req.method} ${req.url}`, {
     timestamp: new Date().toISOString(),
     headers: req.headers,
-    body: req.body,
+    body: req.body || {},
   })
 
   const originalSend = res.send
