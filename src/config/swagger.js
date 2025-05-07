@@ -1,6 +1,7 @@
 import swaggerJSDoc from 'swagger-jsdoc'
 import config from './config.js'
 import { text } from 'express'
+import { Teacher } from '../models/associate.js'
 
 const options = {
   definition: {
@@ -64,7 +65,6 @@ const options = {
             id: { type: 'integer' },
             name: { type: 'string' },
             description: { type: 'string' },
-            user_id: { type: 'integer' },
             student_teacher_group_id: { type: 'integer' },
             learner_group_id: { type: 'integer' },
             createdAt: { type: 'string', format: 'date-time' },
@@ -238,6 +238,17 @@ const options = {
             user_id: { type: 'integer' },
             date: { type: 'string', format: 'date' },
             status: { type: 'string', enum: ['present', 'absent', 'late'] },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+
+        TeacherCourse: {
+          type: 'object',
+          properties: {
+            teacher_course_id: { type: 'integer' },
+            course_id: { type: 'integer' },
+            user_id: { type: 'integer' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
           },

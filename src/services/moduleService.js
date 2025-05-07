@@ -266,11 +266,13 @@ class ModuleService {
       if (text && text.length > 5000) {
         throw new Error('Content text must be at most 5000 characters')
       }
-
-      try {
-        new URL(link)
-      } catch (_) {
-        throw new Error('Content link is invalid')
+      
+      if (link) {
+        try {
+          new URL(link)
+        } catch (_) {
+          throw new Error('Content link is invalid')
+        }
       }
 
       const newContent = await this.contentModel.create(contentData)
@@ -369,10 +371,12 @@ class ModuleService {
         throw new Error('Content text must be at most 5000 characters')
       }
 
-      try {
-        new URL(link)
-      } catch (_) {
-        throw new Error('Content link is invalid')
+      if (link) {
+        try {
+          new URL(link)
+        } catch (_) {
+          throw new Error('Content link is invalid')
+        }
       }
 
       const content = await this.contentModel.findByPk(contentId)

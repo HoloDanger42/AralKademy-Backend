@@ -5,12 +5,13 @@ import {
   createCourse,
   assignLearnerGroupCourse,
   assignStudentTeacherGroupCourse,
-  assignTeacherCourse,
   softDeleteCourse,
+  addTeachersToCourse,
   getCourseById,
   updateCourse,
   deleteCourse,
-  getCoursesOfUser
+  getCoursesOfUser,
+  getTeachersByCourseId
 } from '../../../src/controllers/courseController.js'
 import CourseService from '../../../src/services/courseService.js'
 import { log } from '../../../src/utils/logger.js'
@@ -216,51 +217,6 @@ describe('Course Controller', () => {
       expect(log.error).toHaveBeenCalledWith('Create course error:', expect.any(Error))
     })
 
-    test('should validate teacher ID and return 400 for invalid teacher', async () => {
-      // Setup for admin user
-      mockReq.user = { role: 'admin' }
-      mockReq.body = {
-        name: 'New Course',
-        description: 'Description',
-        user_id: 123, // Invalid teacher ID
-      }
-
-      // Mock User.findByPk to return null (teacher not found)
-      jest.spyOn(User, 'findByPk').mockResolvedValue(null)
-
-      await createCourse(mockReq, mockRes)
-
-      expect(User.findByPk).toHaveBeenCalledWith(123)
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { user_id: 'Invalid teacher ID.' },
-      })
-    })
-
-    test('should validate teacher role and return 400 for non-teacher user', async () => {
-      // Setup for admin user
-      mockReq.user = { role: 'admin' }
-      mockReq.body = {
-        name: 'New Course',
-        description: 'Description',
-        user_id: 123, // User ID with wrong role
-      }
-
-      // Mock User.findByPk to return a user with non-teacher role
-      jest.spyOn(User, 'findByPk').mockResolvedValue({
-        id: 123,
-        role: 'student', // Not a teacher
-      })
-
-      await createCourse(mockReq, mockRes)
-
-      expect(User.findByPk).toHaveBeenCalledWith(123)
-      expect(mockRes.status).toHaveBeenCalledWith(400)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        errors: { user_id: 'Invalid teacher ID.' },
-      })
-    })
-
     test('should validate learner group ID and return 400 for invalid learner group', async () => {
       // Setup for admin user
       mockReq.user = { role: 'admin' }
@@ -308,7 +264,6 @@ describe('Course Controller', () => {
       mockReq.user = { role: 'admin' }
       mockReq.body = {
         name: '', // Invalid (empty)
-        user_id: 123, // Invalid teacher
         learner_group_id: 456, // Invalid group
         student_teacher_group_id: 789, // Invalid group
       }
@@ -323,7 +278,6 @@ describe('Course Controller', () => {
       expect(mockRes.json).toHaveBeenCalledWith({
         errors: {
           name: 'Course name is required.',
-          user_id: 'Invalid teacher ID.',
           learner_group_id: 'Invalid learner group ID.',
           student_teacher_group_id: 'Invalid student teacher group ID.',
         },
@@ -533,78 +487,6 @@ describe('Course Controller', () => {
         message: 'Forbidden: Only admins and teachers can assign learner groups.',
       })
     })    
-  })
-
-  describe('assignTeacherCourse', () => {
-    test('should return 403 if user is not admin (assign teacher course)', async () => {
-      mockReq.user = { role: 'teacher' } // Only admins should be allowed
-      mockReq.params = { id: 1 }
-    
-      await assignTeacherCourse(mockReq, mockRes)
-    
-      expect(mockRes.status).toHaveBeenCalledWith(403)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Forbidden: Only admins can assign teachers to courses.',
-      })
-    })    
-
-    test('should assign a teacher to a course (assign teacher course)', async () => {
-      mockReq.user = { role: 'admin' }
-      mockReq.body = { courseId: 1, teacherId: 3 }
-      mockReq.params = { id: 1 }
-
-      const updatedCourse = { id: 1, teacherId: 3 }
-      jest.spyOn(CourseService.prototype, 'assignTeacherCourse').mockResolvedValue(updatedCourse)
-
-      await assignTeacherCourse(mockReq, mockRes)
-
-      expect(mockRes.status).toHaveBeenCalledWith(200)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Teacher assigned to course successfully',
-        course: updatedCourse,
-      })
-      expect(log.info).toHaveBeenCalledWith('Teacher 3 assigned to course 1')
-    })
-
-    test('should handle when course not found (assign teacher course)', async () => {
-      mockReq.user = { role: 'admin' }
-      mockReq.params = { id: 1 }
-
-      jest
-        .spyOn(CourseService.prototype, 'assignTeacherCourse')
-        .mockRejectedValue(new Error('Course not found'))
-
-      await assignTeacherCourse(mockReq, mockRes)
-
-      expect(mockRes.status).toHaveBeenCalledWith(404)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: {
-          code: 'NOT_FOUND',
-          message: 'Course not found',
-        },
-      })
-      expect(log.error).toHaveBeenCalledWith('Assign teacher to course 1 error:', expect.any(Error))
-    })
-
-    test('should handle error when assigning the teacher (assign teacher course)', async () => {
-      mockReq.user = { role: 'admin' }
-      mockReq.params = { id: 1 }
-
-      jest
-        .spyOn(CourseService.prototype, 'assignTeacherCourse')
-        .mockRejectedValue(new Error('Error assigning teacher to course'))
-
-      await assignTeacherCourse(mockReq, mockRes)
-
-      expect(mockRes.status).toHaveBeenCalledWith(500)
-      expect(mockRes.json).toHaveBeenCalledWith({
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Error assigning teacher to course',
-        },
-      })
-      expect(log.error).toHaveBeenCalledWith('Assign teacher to course 1 error:', expect.any(Error))
-    })
   })
 
   describe('getCourseById', () => {
@@ -974,4 +856,205 @@ describe('Course Controller', () => {
       expect(res.json).toHaveBeenCalledWith(mockCourses);
     });
   })
+
+  describe('addTeachersToCourse', () => {
+    test('should return 403 if user is not admin', async () => {
+      mockReq.user = { role: 'teacher' }; // Only admins allowed
+      mockReq.params = { id: 1 };
+  
+      await addTeachersToCourse(mockReq, mockRes);
+  
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Forbidden: Only admins can add teachers to courses.',
+      });
+    });
+  
+    test('should successfully add teachers to a course', async () => {
+      mockReq.user = { role: 'admin' };
+      mockReq.params = { id: 1 };
+      mockReq.body = { teacherIds: [3, 4] };
+  
+      const teacherCourses = [
+        { course_id: 1, user_id: 3 },
+        { course_id: 1, user_id: 4 },
+      ];
+  
+      jest
+        .spyOn(CourseService.prototype, 'addTeachersToCourse')
+        .mockResolvedValue(teacherCourses);
+  
+      await addTeachersToCourse(mockReq, mockRes);
+  
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: 'Teachers added to course successfully',
+        teacherCourses: teacherCourses,
+      });
+      expect(log.info).toHaveBeenCalledWith('Teachers 3,4 added to course 1');
+    });
+  
+    test('should handle course not found error', async () => {
+      mockReq.user = { role: 'admin' };
+      mockReq.params = { id: 1 };
+      mockReq.body = { teacherIds: [3] };
+  
+      jest
+        .spyOn(CourseService.prototype, 'addTeachersToCourse')
+        .mockRejectedValue(new Error('Course not found'));
+  
+      await addTeachersToCourse(mockReq, mockRes);
+  
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Course not found',
+        },
+      });
+      expect(log.error).toHaveBeenCalledWith(
+        'Add teachers to course 1 error:',
+        expect.any(Error)
+      );
+    });
+  
+    test('should handle validation error for non-teachers', async () => {
+      mockReq.user = { role: 'admin' };
+      mockReq.params = { id: 1 };
+      mockReq.body = { teacherIds: [3] };
+  
+      jest
+        .spyOn(CourseService.prototype, 'addTeachersToCourse')
+        .mockRejectedValue(new Error('All must be existing teachers or student teachers'));
+  
+      await addTeachersToCourse(mockReq, mockRes);
+  
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'All must be existing teachers or student teachers',
+        },
+      });
+      expect(log.error).toHaveBeenCalledWith(
+        'Add teachers to course 1 error:',
+        expect.any(Error)
+      );
+    });
+  
+    test('should handle generic internal error', async () => {
+      mockReq.user = { role: 'admin' };
+      mockReq.params = { id: 1 };
+      mockReq.body = { teacherIds: [3] };
+  
+      jest
+        .spyOn(CourseService.prototype, 'addTeachersToCourse')
+        .mockRejectedValue(new Error('Unexpected error'));
+  
+      await addTeachersToCourse(mockReq, mockRes);
+  
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Error adding teachers to course',
+        },
+      });
+      expect(log.error).toHaveBeenCalledWith(
+        'Add teachers to course 1 error:',
+        expect.any(Error)
+      );
+    });
+  });
+  
+  describe('getTeachersByCourseId', () => {
+    test('should return teachers for a course when course exists', async () => {
+      // Arrange
+      const courseId = 1;
+      const mockTeachers = [
+        { 
+          teacher: { 
+            id: 101, 
+            first_name: 'John', 
+            middle_initial: 'D', 
+            last_name: 'Doe' 
+          } 
+        }
+      ];
+      
+      mockReq.params = { id: courseId };
+      jest.spyOn(CourseService.prototype, 'getTeachersByCourseId').mockResolvedValue(mockTeachers);
+  
+      // Act
+      await getTeachersByCourseId(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(mockTeachers);
+      expect(CourseService.prototype.getTeachersByCourseId).toHaveBeenCalledWith(courseId);
+      expect(log.info).toHaveBeenCalledWith(`Retrieved teachers for course ${courseId}`);
+    });
+  
+    test('should return 404 when course does not exist', async () => {
+      // Arrange
+      const courseId = 1;
+      mockReq.params = { id: courseId };
+      const notFoundError = new Error('Course not found');
+      jest.spyOn(CourseService.prototype, 'getTeachersByCourseId').mockRejectedValue(notFoundError);
+  
+      // Act
+      await getTeachersByCourseId(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Course not found',
+        },
+      });
+      expect(log.error).toHaveBeenCalledWith(
+        `Get teachers by course ID ${courseId} error:`,
+        notFoundError
+      );
+    });
+  
+    test('should return 500 when there is a database error', async () => {
+      // Arrange
+      const courseId = 1;
+      mockReq.params = { id: courseId };
+      const dbError = new Error('Database error');
+      jest.spyOn(CourseService.prototype, 'getTeachersByCourseId').mockRejectedValue(dbError);
+  
+      // Act
+      await getTeachersByCourseId(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Error fetching teachers by course ID',
+        },
+      });
+      expect(log.error).toHaveBeenCalledWith(
+        `Get teachers by course ID ${courseId} error:`,
+        dbError
+      );
+    });
+  
+    test('should handle empty teachers array as valid response', async () => {
+      // Arrange
+      const courseId = 1;
+      mockReq.params = { id: courseId };
+      jest.spyOn(CourseService.prototype, 'getTeachersByCourseId').mockResolvedValue([]);
+  
+      // Act
+      await getTeachersByCourseId(mockReq, mockRes);
+  
+      // Assert
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith([]);
+    });
+  });
 })

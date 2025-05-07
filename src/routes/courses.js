@@ -6,10 +6,12 @@ import {
   updateCourse,
   deleteCourse,
   softDeleteCourse,
-  assignTeacherCourse,
+  addTeachersToCourse,
   assignLearnerGroupCourse,
   assignStudentTeacherGroupCourse,
-  getCoursesOfUser
+  getCoursesOfUser,
+  getTeachersByCourseId,
+  removeTeacherFromCourse
 } from '../controllers/courseController.js'
 import { rbac } from '../middleware/rbacMiddleware.js'
 
@@ -177,10 +179,6 @@ courseRouter.get('/user/:id', rbac.allAuthenticated, getCoursesOfUser)
  *               description:
  *                 type: string
  *                 example: "Learn advanced web development techniques"
- *               user_id:
- *                 type: integer
- *                 description: Teacher ID (optional)
- *                 example: 5
  *               student_teacher_group_id:
  *                 type: integer
  *                 description: Student teacher group ID (optional)
@@ -395,9 +393,9 @@ courseRouter.delete('/:id', rbac.adminOnly, deleteCourse)
 
 /**
  * @swagger
- * /courses/{id}/assign-teacher:
+ * /courses/{id}/add-teachers:
  *   post:
- *     summary: Assign a teacher to a course
+ *     summary: Add teachers to a course
  *     tags: [Courses]
  *     security:
  *       - bearerAuth: []
@@ -415,15 +413,17 @@ courseRouter.delete('/:id', rbac.adminOnly, deleteCourse)
  *           schema:
  *             type: object
  *             required:
- *               - teacherId
+ *               - teacherIds
  *             properties:
- *               teacherId:
- *                 type: integer
- *                 example: 5
- *                 description: ID of the teacher to assign
+ *               teacherIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [5, 12, 18]
+ *                 description: Array of teacher or student_teacher user IDs to assign
  *     responses:
  *       200:
- *         description: Teacher assigned successfully
+ *         description: Teachers added successfully
  *         content:
  *           application/json:
  *             schema:
@@ -431,7 +431,7 @@ courseRouter.delete('/:id', rbac.adminOnly, deleteCourse)
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Teacher assigned successfully"
+ *                   example: "Teachers added successfully"
  *                 course:
  *                   $ref: '#/components/schemas/Course'
  *       400:
@@ -453,13 +453,13 @@ courseRouter.delete('/:id', rbac.adminOnly, deleteCourse)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       404:
- *         description: Course or teacher not found
+ *         description: Course or teachers not found
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-courseRouter.post('/:id/assign-teacher', rbac.adminOnly, assignTeacherCourse)
+courseRouter.post('/:id/add-teachers', rbac.adminOnly, addTeachersToCourse)
 
 /**
  * @swagger
@@ -602,5 +602,100 @@ courseRouter.post(
   rbac.adminOnly,
   assignStudentTeacherGroupCourse
 )
+
+/**
+ * @swagger
+ * /courses/{id}/teachers:
+ *   get:
+ *     summary: Get all teachers of a course
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Course ID
+ *     responses:
+ *       200:
+ *         description: List of teachers in the course
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 teachers:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+courseRouter.get('/:id/teachers', rbac.allAuthenticated, getTeachersByCourseId)
+
+/**
+ * @swagger
+ * /courses/{id}/teachers/{teacherId}:
+ *   delete:
+ *     summary: Remove a teacher from a course
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Course ID
+ *       - in: path
+ *         name: teacherId
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Teacher ID
+ *     responses:
+ *       200:
+ *         description: Teacher removed from the course successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Teacher removed from the course successfully"
+ *       400:
+ *         description: Invalid input data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Course or teacher not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+courseRouter.delete('/:id/teachers/:teacherId', rbac.adminOnly, removeTeacherFromCourse)
 
 export { courseRouter }

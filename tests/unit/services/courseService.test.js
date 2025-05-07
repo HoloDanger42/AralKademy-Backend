@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, jest } from '@jest/globals'
+import Sequelize from 'sequelize'
 import CourseService from '../../../src/services/courseService'
 import { validCourses, invalidCourses } from '../../fixtures/courseData'
 
@@ -9,6 +10,7 @@ describe('Course Service', () => {
   let mockGroupModel
   let mockLearnerModel
   let mockStudentTeacherModel
+  let mockTeacherCourseModel
 
   beforeEach(() => {
     mockCourseModel = {
@@ -35,7 +37,13 @@ describe('Course Service', () => {
     mockStudentTeacherModel = {
       findOne: jest.fn(),
     }
-    courseService = new CourseService(mockCourseModel, mockUserModel, mockGroupModel, mockLearnerModel, mockStudentTeacherModel)
+
+    mockTeacherCourseModel = {
+      bulkCreate: jest.fn(),
+      findAll: jest.fn(),
+    }
+
+    courseService = new CourseService(mockCourseModel, mockUserModel, mockGroupModel, mockLearnerModel, mockStudentTeacherModel, mockTeacherCourseModel)
   })
 
   describe('getAllCourses', () => {
@@ -79,7 +87,6 @@ describe('Course Service', () => {
         ...courseData,
         learner_group_id: null,
         student_teacher_group_id: null,
-        user_id: null,
       }
 
       mockCourseModel.create.mockResolvedValue({ id: 1, ...expectedData })
@@ -88,7 +95,6 @@ describe('Course Service', () => {
       const course = await courseService.createCourse({
         name: courseData.name,
         description: courseData.description,
-        user_id: courseData.user_id,
         learner_group_id: courseData.learner_group_id,
         student_teacher_group_id: courseData.student_teacher_group_id,
       })
@@ -336,90 +342,92 @@ describe('Course Service', () => {
     })
   })
 
-  describe('assignTeacherCourse', () => {
-    test('should successfully assign teacher to a course (assign teacher course)', async () => {
+  describe('addTeachersToCourse', () => {
+    test('should successfully assign multiple teachers to a course', async () => {
       // Arrange
-      const courseId = 1
-      const userId = 101
-      const course = { id: courseId, save: jest.fn() }
-      const teacher = { id: userId, role: 'teacher' }
-
-      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course)
-      mockUserModel.findByPk = jest.fn().mockResolvedValue(teacher)
-
+      const courseId = 1;
+      const teacherIds = [101, 102];
+      const course = { id: courseId };
+      const teachers = [
+        { id: 101, role: 'teacher' },
+        { id: 102, role: 'student_teacher' }
+      ];
+  
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+      mockUserModel.findAll = jest.fn().mockResolvedValue(teachers);
+      mockTeacherCourseModel.bulkCreate = jest.fn().mockResolvedValue([
+        { course_id: courseId, user_id: 101 },
+        { course_id: courseId, user_id: 102 }
+      ]);
+  
       // Act
-      const updatedCourse = await courseService.assignTeacherCourse(courseId, userId)
-
+      const result = await courseService.addTeachersToCourse(courseId, teacherIds);
+  
       // Assert
-      expect(course.user_id).toBe(userId)
-      expect(course.save).toHaveBeenCalled()
-      expect(updatedCourse).toEqual(course)
-      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId)
-      expect(mockUserModel.findByPk).toHaveBeenCalledWith(userId)
-    })
-
-    test('should throw an error if the course does not exist (assign teacher course)', async () => {
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+      expect(mockUserModel.findAll).toHaveBeenCalledWith({
+        where: {
+          id: teacherIds,
+          role: {
+            [Sequelize.Op.in]: ['teacher', 'student_teacher']
+          }
+        }
+      });
+      expect(mockTeacherCourseModel.bulkCreate).toHaveBeenCalledWith([
+        { course_id: courseId, user_id: 101 },
+        { course_id: courseId, user_id: 102 }
+      ]);
+      expect(result.length).toBe(2);
+    });
+  
+    test('should throw an error if the course does not exist', async () => {
       // Arrange
-      const courseId = 1
-      const userId = 101
-      mockCourseModel.findByPk = jest.fn().mockResolvedValue(null)
-
+      const courseId = 1;
+      const teacherIds = [101, 102];
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(null);
+  
       // Act & Assert
-      await expect(courseService.assignTeacherCourse(courseId, userId)).rejects.toThrow(
+      await expect(courseService.addTeachersToCourse(courseId, teacherIds)).rejects.toThrow(
         'Course not found'
-      )
-      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId)
-    })
-
-    test('should throw an error if assigning fails (assign teacher course)', async () => {
+      );
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw an error if not all provided users are teachers', async () => {
       // Arrange
-      const courseId = 1
-      const userId = 101
-      const course = { id: courseId, save: jest.fn().mockRejectedValue(new Error('Assign error')) }
-      const teacher = { id: userId, role: 'teacher' }
-
-      mockUserModel.findByPk = jest.fn().mockResolvedValue(teacher)
-      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course)
-
+      const courseId = 1;
+      const teacherIds = [101, 102];
+      const course = { id: courseId };
+      const teachers = [{ id: 101, role: 'teacher' }]; // Only 1 valid teacher
+  
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+      mockUserModel.findAll = jest.fn().mockResolvedValue(teachers);
+  
       // Act & Assert
-      await expect(courseService.assignTeacherCourse(courseId, userId)).rejects.toThrow(
-        'Failed to assign teacher to course'
-      )
-      expect(course.save).toHaveBeenCalled()
-    })
-
-    test('should throw an error if the teacher does not exist (assign teacher course)', async () => {
+      await expect(courseService.addTeachersToCourse(courseId, teacherIds)).rejects.toThrow(
+        'All must be existing teachers or student teachers'
+      );
+      expect(mockUserModel.findAll).toHaveBeenCalled();
+    });
+  
+    test('should throw a generic error if bulkCreate fails', async () => {
       // Arrange
-      const courseId = 1
-      const userId = 101
-    
-      mockCourseModel.findByPk = jest.fn().mockResolvedValue({ id: courseId, save: jest.fn() })
-      mockUserModel.findByPk = jest.fn().mockResolvedValue(null) // Simulating teacher not found
-    
+      const courseId = 1;
+      const teacherIds = [101];
+      const course = { id: courseId };
+      const teachers = [{ id: 101, role: 'teacher' }];
+  
+      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course);
+      mockUserModel.findAll = jest.fn().mockResolvedValue(teachers);
+      mockTeacherCourseModel.bulkCreate = jest.fn().mockRejectedValue(new Error('DB error'));
+  
       // Act & Assert
-      await expect(courseService.assignTeacherCourse(courseId, userId)).rejects.toThrow(
-        'Teacher not found'
-      )
-      expect(mockUserModel.findByPk).toHaveBeenCalledWith(userId)
-    })
-    
-    test('should throw an error if the user is not a teacher (assign teacher course)', async () => {
-      // Arrange
-      const courseId = 1
-      const userId = 101
-      const course = { id: courseId, save: jest.fn() }
-      const nonTeacher = { id: userId, role: 'student' } // User exists but is not a teacher
-    
-      mockCourseModel.findByPk = jest.fn().mockResolvedValue(course)
-      mockUserModel.findByPk = jest.fn().mockResolvedValue(nonTeacher)
-    
-      // Act & Assert
-      await expect(courseService.assignTeacherCourse(courseId, userId)).rejects.toThrow(
-        'Provided user ID is not a teacher.'
-      )
-      expect(mockUserModel.findByPk).toHaveBeenCalledWith(userId)
-    })    
-  })
+      await expect(courseService.addTeachersToCourse(courseId, teacherIds)).rejects.toThrow(
+        'Failed to add teachers to course'
+      );
+      expect(mockTeacherCourseModel.bulkCreate).toHaveBeenCalled();
+    });
+  });  
 
   describe('softDeleteCourse', () => {
     test('should successfully soft delete a course (soft delete course)', async () => {
@@ -667,4 +675,82 @@ describe('Course Service', () => {
       await expect(courseService.getCoursesOfUser(6)).rejects.toThrow('Failed to fetch courses of learner');
     });
   })
+
+  describe('getTeachersByCourseId', () => {
+    test('should return teachers for a course when course exists', async () => {
+      // Arrange
+      const courseId = 1;
+      const mockCourse = { id: courseId };
+      const mockTeachers = [
+        { 
+          teacher: { 
+            id: 101, 
+            first_name: 'John', 
+            middle_initial: 'D', 
+            last_name: 'Doe' 
+          } 
+        },
+        { 
+          teacher: { 
+            id: 102, 
+            first_name: 'Jane', 
+            middle_initial: 'M', 
+            last_name: 'Smith' 
+          } 
+        }
+      ];
+  
+      mockCourseModel.findByPk.mockResolvedValue(mockCourse);
+      mockTeacherCourseModel.findAll.mockResolvedValue(mockTeachers);
+  
+      // Act
+      const result = await courseService.getTeachersByCourseId(courseId);
+  
+      // Assert
+      expect(result).toEqual(mockTeachers);
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+      expect(mockTeacherCourseModel.findAll).toHaveBeenCalledWith({
+        where: { course_id: courseId },
+        include: [{
+          model: mockUserModel,
+          as: 'teacher',
+          attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
+        }]
+      });
+    });
+  
+    test('should throw "Course not found" error when course does not exist', async () => {
+      // Arrange
+      const courseId = 1;
+      mockCourseModel.findByPk.mockResolvedValue(null);
+  
+      // Act & Assert
+      await expect(courseService.getTeachersByCourseId(courseId))
+        .rejects.toThrow('Course not found');
+      expect(mockCourseModel.findByPk).toHaveBeenCalledWith(courseId);
+    });
+  
+    test('should throw generic error when findAll fails', async () => {
+      // Arrange
+      const courseId = 1;
+      const mockCourse = { id: courseId };
+      mockCourseModel.findByPk.mockResolvedValue(mockCourse);
+      mockTeacherCourseModel.findAll.mockRejectedValue(new Error('Database error'));
+  
+      // Act & Assert
+      await expect(courseService.getTeachersByCourseId(courseId))
+        .rejects.toThrow('Failed to fetch teachers by course ID');
+      expect(mockTeacherCourseModel.findAll).toHaveBeenCalled();
+    });
+  
+    test('should re-throw "Course not found" error when it occurs', async () => {
+      // Arrange
+      const courseId = 1;
+      mockCourseModel.findByPk.mockRejectedValue(new Error('Course not found'));
+  
+      // Act & Assert
+      await expect(courseService.getTeachersByCourseId(courseId))
+        .rejects.toThrow('Course not found');
+    });
+  });
 })

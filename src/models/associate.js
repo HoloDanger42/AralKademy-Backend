@@ -19,6 +19,7 @@ import {
   AuthToken,
   Announcement,
   Attendance,
+  TeacherCourse
 } from './index.js'
 
 User.hasMany(Announcement, { foreignKey: 'user_id', as: 'announcements' })
@@ -250,6 +251,26 @@ Course.hasMany(Attendance, {
 Attendance.belongsTo(Course, {
   foreignKey: 'course_id',
   as: 'course',
+})
+
+TeacherCourse.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'teacher',
+})
+
+TeacherCourse.belongsTo(Course, {
+  foreignKey: 'course_id',
+  as: 'course',
+})
+
+Course.hasMany(TeacherCourse, {
+  foreignKey: 'course_id',
+  as: 'courseUsers',
+})
+
+User.hasMany(TeacherCourse, {
+  foreignKey: 'user_id',
+  as: 'userCourses',
 })
 
 export {

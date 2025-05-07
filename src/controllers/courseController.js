@@ -1,10 +1,10 @@
 import CourseService from '../services/courseService.js'
-import { Course, User, Group, Learner, StudentTeacher } from '../models/index.js'
+import { Course, User, Group, Learner, StudentTeacher, TeacherCourse } from '../models/index.js'
 import { log } from '../utils/logger.js'
 import { handleControllerError } from '../utils/errorHandler.js'
 
 // Instantiate course service
-const courseService = new CourseService(Course, User, Group, Learner, StudentTeacher)
+const courseService = new CourseService(Course, User, Group, Learner, StudentTeacher, TeacherCourse)
 
 /**
  * Retrieves all courses.
@@ -66,14 +66,6 @@ const createCourse = async (req, res) => {
       errors.name = 'Course name is too long.'
     }
 
-    // Validate user_id (teacher), if provided
-    if (courseData.user_id) {
-      const teacher = await User.findByPk(courseData.user_id)
-      if (!teacher || teacher.role !== 'teacher') {
-        errors.user_id = 'Invalid teacher ID.'
-      }
-    }
-
     // Validate learner_group_id if provided
     if (courseData.learner_group_id) {
       const learnerGroup = await Group.findByPk(courseData.learner_group_id)
@@ -124,13 +116,6 @@ const updateCourse = async (req, res) => {
     const errors = {}
     if (!courseData.name) errors.name = 'Course name is required.'
 
-    // Validate user_id (teacher), if provided
-    if (courseData.user_id) {
-      const teacher = await User.findByPk(courseData.user_id)
-      if (!teacher || teacher.role !== 'teacher') {
-        errors.user_id = 'Invalid teacher ID.'
-      }
-    }
     // Validate learner_group_id if provided
     if (courseData.learner_group_id) {
       const learnerGroup = await Group.findByPk(courseData.learner_group_id)
@@ -225,28 +210,28 @@ const deleteCourse = async (req, res) => {
  * @param {Object} req - The request object containing the course ID in req.params and the teacher's user ID in req.body.
  * @param {Object} res - The response object.
  */
-const assignTeacherCourse = async (req, res) => {
+const addTeachersToCourse = async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
       return res
         .status(403)
-        .json({ message: 'Forbidden: Only admins can assign teachers to courses.' })
+        .json({ message: 'Forbidden: Only admins can add teachers to courses.' })
     }
 
     const { id } = req.params // Course ID
-    const { teacherId } = req.body // Teacher's user ID
+    const { teacherIds } = req.body // Teacher's user ID
 
-    const updatedCourse = await courseService.assignTeacherCourse(id, teacherId)
+    const teacherCourses = await courseService.addTeachersToCourse(id, teacherIds)
     res
       .status(200)
-      .json({ message: 'Teacher assigned to course successfully', course: updatedCourse })
-    log.info(`Teacher ${teacherId} assigned to course ${id}`)
+      .json({ message: 'Teachers added to course successfully', teacherCourses: teacherCourses })
+    log.info(`Teachers ${teacherIds} added to course ${id}`)
   } catch (error) {
     return handleControllerError(
       error,
       res,
-      `Assign teacher to course ${req.params.id}`,
-      'Error assigning teacher to course'
+      `Add teachers to course ${req.params.id}`,
+      'Error adding teachers to course'
     )
   }
 }
@@ -332,6 +317,45 @@ const getCoursesOfUser = async (req, res) => {
   }
 }
 
+const getTeachersByCourseId = async (req, res) => {
+  try {
+    const { id } = req.params
+    const teachers = await courseService.getTeachersByCourseId(id)
+    res.status(200).json(teachers)
+    log.info(`Retrieved teachers for course ${id}`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Get teachers by course ID ${req.params.id}`,
+      'Error fetching teachers by course ID'
+    )
+  }
+}
+
+const removeTeacherFromCourse = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res
+        .status(403)
+        .json({ message: 'Forbidden: Only admins can remove teachers from courses.' })
+    }
+
+    const { id, teacherId } = req.params // Course ID
+
+    await courseService.removeTeacherFromCourse(id, teacherId)
+    res.status(200).json({ message: 'Teacher removed from course successfully' })
+    log.info(`Teacher ${teacherId} removed from course ${id}`)
+  } catch (error) {
+    return handleControllerError(
+      error,
+      res,
+      `Remove teacher from course ${req.params.id}`,
+      'Error removing teacher from course'
+    )
+  }
+}
+
 export {
   getAllCourses,
   createCourse,
@@ -339,8 +363,10 @@ export {
   getCourseById,
   softDeleteCourse,
   deleteCourse,
-  assignTeacherCourse,
+  addTeachersToCourse,
   assignLearnerGroupCourse,
   assignStudentTeacherGroupCourse,
   getCoursesOfUser,
+  getTeachersByCourseId,
+  removeTeacherFromCourse
 }

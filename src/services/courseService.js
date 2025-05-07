@@ -1,4 +1,5 @@
 import { log } from '../utils/logger.js'
+import Sequelize from 'sequelize';
 
 /**
  * Service class for managing courses in the AralKademy application.
@@ -43,12 +44,13 @@ class CourseService {
    * @param {Object} learnerModel - The model representing learners.
    * @param {Object} studentTeacherModel - The model representing student-teachers.
    */
-  constructor(courseModel, userModel, groupModel, learnerModel, studentTeacherModel) {
+  constructor(courseModel, userModel, groupModel, learnerModel, studentTeacherModel, teacherCourseModel) {
     this.courseModel = courseModel
     this.userModel = userModel
     this.groupModel = groupModel
     this.learnerModel = learnerModel
     this.studentTeacherModel = studentTeacherModel
+    this.teacherCourseModel = teacherCourseModel
   }
 
   /**
@@ -142,13 +144,12 @@ class CourseService {
    * @throws {Error} When course name already exists (unique constraint violation)
    * @throws {Error} When validation fails or other errors occur during creation
    */
-  async createCourse({ name, description, user_id, learner_group_id, student_teacher_group_id }) {
+  async createCourse({ name, description, learner_group_id, student_teacher_group_id }) {
     try {
       // Create course data object
       const courseData = {
         name,
         description: description || null,
-        user_id: user_id || null,
         learner_group_id: learner_group_id || null,
         student_teacher_group_id: student_teacher_group_id || null,
       }
@@ -297,41 +298,50 @@ class CourseService {
    * @throws {Error} When the provided user is not a teacher
    * @throws {Error} When assignment fails for other reasons
    */
-  async assignTeacherCourse(courseId, teacherId) {
+  async addTeachersToCourse(id, teacherIds) {
     try {
-      const course = await this.courseModel.findByPk(courseId)
+      const course = await this.courseModel.findByPk(id)
       if (!course) {
         throw new Error('Course not found')
       }
 
-      const teacher = await this.userModel.findByPk(teacherId)
-      if (!teacher) {
-        throw new Error('Teacher not found')
-      }
-      if (teacher.role !== 'teacher') {
-        throw new Error('Provided user ID is not a teacher.')
-      }
+      const teachers = await this.userModel.findAll({
+        where: {
+          id: teacherIds,
+          role: {
+            [Sequelize.Op.in]: ['teacher', 'student_teacher']
+          }
+        }
+      });
 
-      course.user_id = teacherId
-      await course.save()
-      return course
+      if (teachers.length !== teacherIds.length) {
+        throw new Error('All must be existing teachers or student teachers')
+      }
+      
+      const teacherCourses = await this.teacherCourseModel.bulkCreate(
+        teacherIds.map(teacherId => ({
+          course_id: id,
+          user_id: teacherId
+        }))
+      );
+      
+      return teacherCourses;
     } catch (error) {
       log.error(
-        `Error assigning teacher to course. Course ID: ${courseId}, User ID: ${teacherId}`,
+        `Error adding teachers to course. Course ID: ${id}, User IDs: ${teacherIds}`,
         error
       )
 
       // Re-throw specific validation errors
       if (
         error.message === 'Course not found' ||
-        error.message === 'Teacher not found' ||
-        error.message === 'Provided user ID is not a teacher.'
+        error.message === 'All must be existing teachers or student teachers'
       ) {
         throw error
       }
 
       // Wrap all other errors with a generic message
-      throw new Error('Failed to assign teacher to course')
+      throw new Error('Failed to add teachers to course')
     }
   }
 
@@ -475,6 +485,56 @@ class CourseService {
         throw error
       }
       throw new Error('Failed to fetch courses of learner')
+    }
+  }
+
+  async getTeachersByCourseId(id) {
+    try {
+      const course = await this.courseModel.findByPk(id)
+      if (!course) {
+        throw new Error('Course not found')
+      }
+
+      const teachers = await this.teacherCourseModel.findAll({
+        where: { course_id: id },
+        include: [
+          {
+            model: this.userModel,
+            as: 'teacher',
+            attributes: ['id', 'first_name', 'middle_initial', 'last_name'],
+          },
+        ],
+      })
+
+      return teachers
+    } catch (error) {
+      log.error(`Error getting teachers by course ID ${id}:`, error)
+      if (error.message === 'Course not found') {
+        throw error
+      }
+      throw new Error('Failed to fetch teachers by course ID')
+    }
+  }
+
+  async removeTeacherFromCourse(id, teacherId) {
+    try {
+      const course = await this.courseModel.findByPk(id)
+      if (!course) {
+        throw new Error('Course not found')
+      }
+
+      const teacherCourse = await this.teacherCourseModel.findOne({
+        where: { course_id: id, user_id: teacherId },
+      })
+
+      await teacherCourse.destroy()
+      return { message: 'Teacher removed from course successfully' }
+    } catch (error) {
+      log.error(`Error removing teacher from course. Course ID: ${id}, Teacher ID: ${teacherId}`, error)
+      if (error.message === 'Course not found') {
+        throw error
+      }
+      throw new Error('Failed to remove teacher from course')
     }
   }
 }
