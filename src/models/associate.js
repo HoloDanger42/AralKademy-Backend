@@ -17,7 +17,8 @@ import {
   AnswerResponse,
   ModuleGrade,
   AuthToken,
-  Announcement
+  Announcement,
+  Attendance
 } from './index.js'
 
 User.hasMany(Announcement, { foreignKey: 'user_id', as: 'announcements'})
@@ -228,6 +229,26 @@ User.hasMany(ModuleGrade, {
   as: 'modulegrades',
 })
 
+User.hasMany(Attendance, {
+  foreignKey: 'user_id',
+  as: 'attendances',
+})
+
+Attendance.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+})
+
+Course.hasMany(Attendance, {
+  foreignKey: 'course_id',
+  as: 'attendances',
+})
+
+Attendance.belongsTo(Course, {
+  foreignKey: 'course_id',
+  as: 'course',
+})
+
 export {
   User,
   Teacher,
@@ -247,5 +268,6 @@ export {
   AnswerResponse,
   ModuleGrade,
   AuthToken,
-  Announcement
+  Announcement,
+  Attendance
 }

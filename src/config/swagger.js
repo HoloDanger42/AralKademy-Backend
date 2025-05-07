@@ -227,6 +227,19 @@ const options = {
             updatedAt: { type: 'string', format: 'date-time' },
           },
         },
+
+        Attendance: {
+          type: 'object',
+          properties: {
+            attendance_id: { type: 'integer' },
+            course_id: { type: 'integer' },
+            user_id: { type: 'integer' },
+            date: { type: 'string', format: 'date' },
+            status: { type: 'string', enum: ['present', 'absent', 'late'] },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
       },
     },
     security: [{ bearerAuth: [] }],
