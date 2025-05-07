@@ -24,7 +24,7 @@ import {
 User.hasMany(Announcement, { foreignKey: 'user_id', as: 'announcements'})
 Announcement.belongsTo(User, { foreignKey: 'user_id', as: 'user'})
 
-Course.hasMany(Announcement, { foreignKey: 'course_id', as: 'announcements'})
+Course.hasMany(Announcement, { foreignKey: 'course_id', as: 'announcements', onDelete: 'CASCADE'})
 Announcement.belongsTo(Course, { foreignKey: 'course_id', as: 'course'})
 
 // User associations
@@ -232,6 +232,7 @@ User.hasMany(ModuleGrade, {
 User.hasMany(Attendance, {
   foreignKey: 'user_id',
   as: 'attendances',
+  onDelete: 'CASCADE',
 })
 
 Attendance.belongsTo(User, {
@@ -242,6 +243,7 @@ Attendance.belongsTo(User, {
 Course.hasMany(Attendance, {
   foreignKey: 'course_id',
   as: 'attendances',
+  onDelete: 'CASCADE',
 })
 
 Attendance.belongsTo(Course, {
