@@ -293,13 +293,6 @@ describe('Module Service', () => {
         .rejects.toThrow('Content name is too long');
     });
   
-    it('should throw an error when the link is missing', async () => {
-      mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
-  
-      await expect(moduleService.addModuleContent(1, 'Content 1', ''))
-        .rejects.toThrow('Content link is required');
-    });
-  
     it('should throw an error when the link is invalid', async () => {
       mockModuleModel.findByPk.mockResolvedValue({ id: 1 });
   
@@ -389,7 +382,7 @@ describe('Module Service', () => {
       const mockContent = { 
         save: jest.fn(), 
         name: '', 
-        link: '' 
+        link: '' ,
       };
       mockContentModel.findByPk.mockResolvedValue(mockContent);
   
@@ -418,11 +411,6 @@ describe('Module Service', () => {
       
       await expect(moduleService.updateModuleContent(1, longName, 'http://valid-link.com'))
         .rejects.toThrow('Content name is too long');
-    });
-  
-    it('should throw an error if the content link is missing', async () => {
-      await expect(moduleService.updateModuleContent(1, 'Valid Content Name', ''))
-        .rejects.toThrow('Content link is required');
     });
   
     it('should throw an error if the content link is invalid', async () => {

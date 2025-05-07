@@ -1,5 +1,6 @@
 import swaggerJSDoc from 'swagger-jsdoc'
 import config from './config.js'
+import { text } from 'express'
 
 const options = {
   definition: {
@@ -117,6 +118,7 @@ const options = {
             module_id: { type: 'integer' },
             name: { type: 'string' },
             link: { type: 'string' },
+            text: { type: 'string' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
           },

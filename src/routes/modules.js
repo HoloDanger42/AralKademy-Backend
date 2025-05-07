@@ -368,7 +368,6 @@ moduleRouter.post(
  *             type: object
  *             required:
  *               - name
- *               - link
  *             properties:
  *               name:
  *                 type: string
@@ -376,6 +375,9 @@ moduleRouter.post(
  *               link:
  *                 type: string
  *                 example: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+ *               text:
+ *                 type: string
+ *                 example: "This is the content text."
  *     responses:
  *       201:
  *         description: Content added successfully

@@ -35,19 +35,18 @@ const Content = sequelize.define(
     },
     link: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        notNull: {
-          msg: 'Content link is required.',
-        },
-        notEmpty: {
-          msg: 'Content link cannot be empty.',
-        },
-        // isUrl: {
-        //     msg: 'Content link must be a valid URL.',
-        // },
-      },
+      allowNull: true,
     },
+    text: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      validate: {
+        len: {
+          args: [0, 5000],
+          msg: 'Content text must be at most 5000 characters',
+        },
+      },
+    }
   },
   {
     tableName: 'contents',

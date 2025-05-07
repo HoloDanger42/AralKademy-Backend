@@ -131,8 +131,8 @@ const deleteModule = async (req, res) => {
 const addModuleContent = async (req, res) => {
   try {
     const { moduleId } = req.params
-    const { name, link } = req.body
-    const newContent = await moduleService.addModuleContent(moduleId, name, link)
+    const { name, link, text } = req.body
+    const newContent = await moduleService.addModuleContent(moduleId, name, link, text)
     res.status(201).json({
       message: 'Content added successfully',
       content: newContent,
@@ -195,8 +195,8 @@ const addModuleFileContent = async (req, res) => {
 const updateModuleContent = async (req, res) => {
   try {
     const { contentId } = req.params
-    const { name, link } = req.body
-    const updatedContent = await moduleService.updateModuleContent(contentId, name, link)
+    const { name, link, text } = req.body
+    const updatedContent = await moduleService.updateModuleContent(contentId, name, link, text)
     res.status(200).json({
       message: 'Content updated successfully',
       content: updatedContent,

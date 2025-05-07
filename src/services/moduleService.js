@@ -241,7 +241,7 @@ class ModuleService {
    * @returns {Promise<Object>} The newly created content.
    * @throws {Error} When the module is not found or validation fails.
    */
-  async addModuleContent(moduleId, name, link) {
+  async addModuleContent(moduleId, name, link, text) {
     try {
       const module = await this.moduleModel.findByPk(moduleId)
       if (!module) {
@@ -251,6 +251,7 @@ class ModuleService {
       const contentData = {
         name,
         link,
+        text,
         module_id: moduleId,
       }
 
@@ -262,8 +263,8 @@ class ModuleService {
         throw new Error('Content name is too long')
       }
 
-      if (!link) {
-        throw new Error('Content link is required')
+      if (text && text.length > 5000) {
+        throw new Error('Content text must be at most 5000 characters')
       }
 
       try {
@@ -281,7 +282,7 @@ class ModuleService {
         error.message === 'Module not found' ||
         error.message === 'Content name is required' ||
         error.message === 'Content name is too long' ||
-        error.message === 'Content link is required' ||
+        error.message === 'Content text must be at most 5000 characters' ||
         error.message === 'Content link is invalid'
       ) {
         throw error
@@ -354,7 +355,7 @@ class ModuleService {
    * @returns {Promise<Object>} The updated content.
    * @throws {Error} When the content is not found or validation fails.
    */
-  async updateModuleContent(contentId, name, link) {
+  async updateModuleContent(contentId, name, link, text) {
     try {
       if (!name) {
         throw new Error('Content name is required')
@@ -364,8 +365,8 @@ class ModuleService {
         throw new Error('Content name is too long')
       }
 
-      if (!link) {
-        throw new Error('Content link is required')
+      if (text && text.length > 5000) {
+        throw new Error('Content text must be at most 5000 characters')
       }
 
       try {
@@ -391,7 +392,7 @@ class ModuleService {
         error.message === 'Content not found' ||
         error.message === 'Content name is required' ||
         error.message === 'Content name is too long' ||
-        error.message === 'Content link is required' ||
+        error.message === 'Content text must be at most 5000 characters' ||
         error.message === 'Content link is invalid'
       ) {
         throw error
