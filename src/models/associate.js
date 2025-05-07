@@ -18,14 +18,14 @@ import {
   ModuleGrade,
   AuthToken,
   Announcement,
-  Attendance
+  Attendance,
 } from './index.js'
 
-User.hasMany(Announcement, { foreignKey: 'user_id', as: 'announcements'})
-Announcement.belongsTo(User, { foreignKey: 'user_id', as: 'user'})
+User.hasMany(Announcement, { foreignKey: 'user_id', as: 'announcements' })
+Announcement.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
 
-Course.hasMany(Announcement, { foreignKey: 'course_id', as: 'announcements'})
-Announcement.belongsTo(Course, { foreignKey: 'course_id', as: 'course'})
+Course.hasMany(Announcement, { foreignKey: 'course_id', as: 'announcements' })
+Announcement.belongsTo(Course, { foreignKey: 'course_id', as: 'course' })
 
 // User associations
 User.belongsTo(School, { foreignKey: 'school_id', as: 'school' })
@@ -269,5 +269,5 @@ export {
   ModuleGrade,
   AuthToken,
   Announcement,
-  Attendance
+  Attendance,
 }
