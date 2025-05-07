@@ -19,11 +19,11 @@ import {
   AuthToken,
   Announcement,
   Attendance,
+  ModuleUnlockOverride,
 } from './index.js'
 
 User.hasMany(Announcement, { foreignKey: 'user_id', as: 'announcements' })
 Announcement.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
-
 
 Course.hasMany(Announcement, { foreignKey: 'course_id', as: 'announcements', onDelete: 'CASCADE' })
 Announcement.belongsTo(Course, { foreignKey: 'course_id', as: 'course' })
@@ -230,6 +230,7 @@ User.hasMany(ModuleGrade, {
   as: 'modulegrades',
 })
 
+// Attendance associations
 User.hasMany(Attendance, {
   foreignKey: 'user_id',
   as: 'attendances',
@@ -252,6 +253,22 @@ Attendance.belongsTo(Course, {
   as: 'course',
 })
 
+// ModuleUnlockOverride associations
+ModuleUnlockOverride.belongsTo(User, { foreignKey: 'user_id', as: 'learner' })
+ModuleUnlockOverride.belongsTo(User, {
+  foreignKey: 'overridden_by_user_id',
+  as: 'teacherWhoUnlocked',
+})
+ModuleUnlockOverride.belongsTo(Module, { foreignKey: 'unlocked_module_id', as: 'unlockedModule' })
+
+User.hasMany(ModuleUnlockOverride, { foreignKey: 'user_id', as: 'receivedModuleUnlocks' })
+User.hasMany(ModuleUnlockOverride, {
+  foreignKey: 'overridden_by_user_id',
+  as: 'performedModuleUnlocks',
+})
+Module.hasMany(ModuleUnlockOverride, { foreignKey: 'unlocked_module_id', as: 'manualUnlocks' })
+Course.hasMany(ModuleUnlockOverride, { foreignKey: 'course_id', as: 'manualModuleUnlocksInCourse' })
+
 export {
   User,
   Teacher,
@@ -273,4 +290,5 @@ export {
   AuthToken,
   Announcement,
   Attendance,
+  ModuleUnlockOverride,
 }

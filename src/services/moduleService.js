@@ -30,6 +30,7 @@ class ModuleService {
    * @param {Object} submissionModel - The model representing submissions.
    * @param {Object} moduleGradeModel - The model representing modulegrades.
    * @param {Object} userModel - The model representing users.
+   * @param {Object} ModuleUnlockOverrideModel - The model representing module unlock overrides.
    */
   constructor(
     moduleModel,
@@ -38,7 +39,8 @@ class ModuleService {
     assessmentModel,
     submissionModel,
     moduleGradeModel,
-    userModel
+    userModel,
+    ModuleUnlockOverrideModel
   ) {
     this.moduleModel = moduleModel
     this.courseModel = courseModel
@@ -47,6 +49,7 @@ class ModuleService {
     this.submissionModel = submissionModel
     this.moduleGradeModel = moduleGradeModel
     this.userModel = userModel
+    this.ModuleUnlockOverrideModel = ModuleUnlockOverrideModel
   }
 
   /**
@@ -573,6 +576,81 @@ class ModuleService {
       }
 
       throw new Error('Failed to get module grade')
+    }
+  }
+
+  async unlockNextModuleForLearner(learnerId, currentModuleId, teacherId, reason) {
+    try {
+      const learner = await this.userModel.findByPk(learnerId)
+      if (!learner || learner.role !== 'learner') {
+        throw new Error('Learner not found or invalid role.')
+      }
+
+      const currentModule = await this.moduleModel.findByPk(currentModuleId, {
+        include: ['course'],
+      })
+      if (!currentModule) {
+        throw new Error('Current module not found.')
+      }
+
+      const course = currentModule.course
+      if (!course) {
+        throw new Error('Course not found for the current module.')
+      }
+
+      const courseModules = await this.moduleModel.findAll({
+        where: { course_id: course.id },
+        order: [['module_id', 'ASC']],
+      })
+
+      const currentIndex = courseModules.findIndex(
+        (m) => m.module_id === parseInt(currentModuleId, 10)
+      )
+
+      if (currentIndex === -1) {
+        throw new Error('Current module not found in course module sequence.')
+      }
+
+      if (currentIndex >= courseModules.length - 1) {
+        throw new Error('Current module is already the last module.')
+      }
+
+      const nextModule = courseModules[currentIndex + 1]
+
+      const existingOverride = await this.ModuleUnlockOverrideModel.findOne({
+        where: {
+          user_id: learnerId,
+          unlocked_module_id: nextModule.module_id,
+        },
+      })
+
+      if (existingOverride) {
+        log.info(`Module ${nextModule.name} already manually unlcoked for learner ${learnerId}.`)
+        return {
+          message: 'Next module already manually unlocked.',
+          unlockedModule: nextModule,
+          override: existingOverride,
+        }
+      }
+
+      const override = await this.ModuleUnlockOverrideModel.create({
+        user_id: learnerId,
+        unlocked_module_id: nextModule.module_id,
+        course_id: course.id,
+        overridden_by_user_id: teacherId,
+        reason: reason,
+      })
+
+      log.info(
+        `Teacher ${teacherId} unlocked module ${nextModule.name} for learner ${learnerId}. Reason: ${reason}`
+      )
+      return { message: 'Next module unlocked successfully.', unlockedModule: nextModule, override }
+    } catch (error) {
+      log.error(
+        `Error unlocking next module for learner ${learnerId} (currentModuleId: ${currentModuleId}):`,
+        error
+      )
+      throw error
     }
   }
 }

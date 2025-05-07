@@ -13,7 +13,8 @@ import {
   ModuleGrade,
   StudentTeacher,
   Learner,
-  Group
+  Group,
+  ModuleUnlockOverride,
 } from '../models/index.js'
 
 const assessmentService = new AssessmentService(
@@ -29,8 +30,9 @@ const assessmentService = new AssessmentService(
   ModuleGrade,
   Group,
   StudentTeacher,
-  Learner
-);
+  Learner,
+  ModuleUnlockOverride
+)
 
 export const createAssessment = async (req, res) => {
   try {
@@ -159,7 +161,12 @@ export const getStudentSubmissions = async (req, res) => {
       submissions,
     })
   } catch (error) {
-    handleControllerError(error, res, 'Get student submissions', 'Error getting student submissions')
+    handleControllerError(
+      error,
+      res,
+      'Get student submissions',
+      'Error getting student submissions'
+    )
   }
 }
 

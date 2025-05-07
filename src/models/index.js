@@ -19,6 +19,7 @@ import { ModuleGrade } from './ModuleGrade.js'
 import { AuthToken } from './AuthToken.js'
 import { Announcement } from './Announcement.js'
 import { Attendance } from './Attendance.js'
+import { ModuleUnlockOverride } from './ModuleUnlockOverride.js'
 
 export {
   User,
@@ -41,5 +42,6 @@ export {
   ModuleGrade,
   AuthToken,
   Announcement,
-  Attendance
+  Attendance,
+  ModuleUnlockOverride,
 }

@@ -7,6 +7,7 @@ import {
   Submission,
   ModuleGrade,
   User,
+  ModuleUnlockOverride,
 } from '../models/index.js'
 import { log } from '../utils/logger.js'
 import { handleControllerError } from '../utils/errorHandler.js'
@@ -19,7 +20,8 @@ const moduleService = new ModuleService(
   Assessment,
   Submission,
   ModuleGrade,
-  User
+  User,
+  ModuleUnlockOverride
 )
 
 /**
@@ -269,6 +271,61 @@ const getModuleGradeOfUser = async (req, res) => {
   }
 }
 
+/**
+ * Allows a teacher to manually unlock the next module for a learner.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ */
+const unlockNextModuleForLearner = async (req, res) => {
+  try {
+    const { currentModuleId, learnerId } = req.params
+    const teacherId = req.user.id
+    const { reason } = req.body
+
+    if (!teacherId) {
+      return res.status(403).json({
+        error: {
+          code: 'FORBIDDEN',
+          message: 'User not authenticated or user ID not found.',
+        },
+      })
+    }
+
+    const result = await moduleService.unlockNextModuleForLearner(
+      parseInt(learnerId, 10),
+      parseInt(currentModuleId, 10),
+      teacherId,
+      reason
+    )
+
+    res.status(200).json({
+      message: result.message,
+      unlockedModule: result.unlockedModule,
+      override: result.override,
+    })
+    log.info(
+      `Teacher ${teacherId} initiated unlock for next module after module ${currentModuleId} for learner ${learnerId}. Result: ${result.message}`
+    )
+  } catch (error) {
+    // Handle specific error cases with appropriate status codes
+    if (error.message === 'Current module is already the last module.') {
+      return res.status(400).json({
+        error: {
+          message: error.message,
+          code: 'VALIDATION_ERROR',
+        },
+      })
+    }
+    
+    return handleControllerError(
+      error,
+      res,
+      `Unlock next module for learner (currentModuleId: ${req.params.currentModuleId}, learnerId: ${req.params.learnerId})`,
+      'Error unlocking next module'
+    )
+  }
+}
+
 export {
   createModule,
   getModuleById,
@@ -281,4 +338,5 @@ export {
   deleteModuleContent,
   getContentsByModuleId,
   getModuleGradeOfUser,
+  unlockNextModuleForLearner,
 }
