@@ -66,6 +66,14 @@ const createCourse = async (req, res) => {
       errors.name = 'Course name is too long.'
     }
 
+    // Validate user_id (teacher), if provided
+    if (courseData.user_id) {
+      const teacher = await User.findByPk(courseData.user_id)
+      if (!teacher || teacher.role !== 'teacher') {
+        errors.user_id = 'Invalid teacher ID.'
+      }
+    }
+
     // Validate learner_group_id if provided
     if (courseData.learner_group_id) {
       const learnerGroup = await Group.findByPk(courseData.learner_group_id)
@@ -116,6 +124,13 @@ const updateCourse = async (req, res) => {
     const errors = {}
     if (!courseData.name) errors.name = 'Course name is required.'
 
+    // Validate user_id (teacher), if provided
+    if (courseData.user_id) {
+      const teacher = await User.findByPk(courseData.user_id)
+      if (!teacher || teacher.role !== 'teacher') {
+        errors.user_id = 'Invalid teacher ID.'
+      }
+    }
     // Validate learner_group_id if provided
     if (courseData.learner_group_id) {
       const learnerGroup = await Group.findByPk(courseData.learner_group_id)

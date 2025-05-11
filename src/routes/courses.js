@@ -179,6 +179,10 @@ courseRouter.get('/user/:id', rbac.allAuthenticated, getCoursesOfUser)
  *               description:
  *                 type: string
  *                 example: "Learn advanced web development techniques"
+ *               user_id:
+ *                 type: integer
+ *                 description: Teacher ID (optional)
+ *                 example: 5
  *               student_teacher_group_id:
  *                 type: integer
  *                 description: Student teacher group ID (optional)

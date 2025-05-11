@@ -36,6 +36,14 @@ const Course = sequelize.define(
         },
       },
     },
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'teachers',
+        key: 'user_id',
+      },
+    },
     student_teacher_group_id: {
       type: DataTypes.INTEGER,
       allowNull: true,

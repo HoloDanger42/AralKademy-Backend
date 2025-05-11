@@ -144,12 +144,13 @@ class CourseService {
    * @throws {Error} When course name already exists (unique constraint violation)
    * @throws {Error} When validation fails or other errors occur during creation
    */
-  async createCourse({ name, description, learner_group_id, student_teacher_group_id }) {
+  async createCourse({ name, description, user_id, learner_group_id, student_teacher_group_id }) {
     try {
       // Create course data object
       const courseData = {
         name,
         description: description || null,
+        user_id: user_id || null,
         learner_group_id: learner_group_id || null,
         student_teacher_group_id: student_teacher_group_id || null,
       }
@@ -164,6 +165,10 @@ class CourseService {
       }
 
       const newCourse = await this.courseModel.create(courseData)
+      await this.teacherCourseModel.create({
+        course_id: newCourse.id,
+        user_id: newCourse.user_id
+      })
       return newCourse
     } catch (error) {
       log.error('Error creating course:', error)
@@ -208,6 +213,10 @@ class CourseService {
       }
 
       const updatedCourse = await course.update(updatedData)
+      await this.teacherCourseModel.upsert({
+        course_id: updatedCourse.id,
+        user_id: updatedCourse.user_id
+      })
       return updatedCourse
     } catch (error) {
       log.error(`Error updating course with ID ${id}:`, error)
