@@ -6,14 +6,20 @@ This is a RESTful API backend for the AralKademy Learning Management System (LMS
 
 ## Key Features
 
-- **User Management:** User registration, authentication, and management.
-- **Course Management:** Creation, retrieval, and management of courses.
-- **Secure Authentication:** JWT-based authentication for securing API endpoints.
+- **User Management:** User registration, authentication, and comprehensive user management with role-based access.
+- **Course Management:** Full course lifecycle management including modules and content.
+- **Assessment System:** Complete assessment creation, submission, and grading functionality supporting multiple question types.
+- **Announcement System:** Course-specific and global announcements for communication.
+- **Attendance Tracking:** Record and manage student attendance for courses.
+- **Module System:** Structured learning modules with content management and sequential unlocking.
+- **Group Management:** Organize learners and student teachers into manageable groups.
+- **Enrollment System:** Handle student enrollment applications with approval workflow.
+- **Secure Authentication:** JWT-based authentication with refresh tokens and passwordless options.
 - **Logging:** Request and response logging for debugging and monitoring.
 - **Error Handling:** Comprehensive error handling middleware for graceful error responses.
 - **Testing:** Automated unit and integration tests using Jest.
 - **Database ORM:** Sequelize for managing database interactions with PostgreSQL.
-- **API Documentation:** Automatically generated interactive API documentation.
+- **API Documentation:** Automatically generated interactive API documentation via Swagger.
 
 ## Technical Requirements
 
@@ -45,13 +51,21 @@ aralkademy-backend/
 │   │   └── database.js        # Database connection
 │   ├── controllers/            # API logic
 │   │   ├── userController.js
+│   │   ├── authController.js
 │   │   ├── enrollmentController.js
 │   │   ├── groupController.js
-│   │   └── courseController.js
+│   │   ├── courseController.js
+│   │   ├── moduleController.js
+│   │   ├── assessmentController.js
+│   │   ├── announcementController.js
+│   │   ├── attendanceController.js
+│   │   └── passwordlessAuthController.js
 │   ├── middleware/             # Middleware functions
 │   │   ├── authMiddleware.js  # Auth middleware
+│   │   ├── rbacMiddleware.js  # Role-based access control
 │   │   ├── errorMiddleware.js # Error handling
 │   │   ├── logMiddleware.js  # Logging requests and responses
+│   │   ├── validationMiddleware.js # Request validation
 │   │   └── securityMiddleware.js  # Security configs
 │   ├── models/                 # Database Models
 │   │   ├── User.js
@@ -67,15 +81,26 @@ aralkademy-backend/
 │   │   ├── index.js
 │   │   └── associate.js
 │   ├── routes/                 # API endpoint definitions
+│   │   ├── auth.js
 │   │   ├── users.js
 │   │   ├── enrollments.js
 │   │   ├── groups.js
-│   │   └── courses.js
+│   │   ├── courses.js
+│   │   ├── modules.js
+│   │   ├── assessments.js
+│   │   ├── announcements.js
+│   │   ├── attendances.js
+│   │   └── passwordlessAuth.js
 │   ├── services/               # Business logic and services
 │   │   ├── userService.js
 │   │   ├── courseService.js
 │   │   ├── enrollmentService.js
 │   │   ├── groupService.js
+│   │   ├── moduleService.js
+│   │   ├── assessmentService.js
+│   │   ├── announcementService.js
+│   │   ├── attendanceService.js
+│   │   ├── passwordlessAuthService.js
 │   │   └── roleService.js
 │   └── utils/                  # Utility functions
 │       └── logger.js
@@ -212,9 +237,11 @@ aralkademy-backend/
 
 You can view the automatically generated API documentation [here](link-to-your-swagger-doc) (e.g., using Swagger UI).
 
-### User Endpoints
+**Total Endpoints:** 90+
 
-- `POST /users/login`: Authenticate user
+### Authentication Endpoints
+
+- `POST /auth/login`: Authenticate user and get token
 
   - **Request Body:**
     ```json
@@ -228,8 +255,9 @@ You can view the automatically generated API documentation [here](link-to-your-s
     - **Example:**
       ```json
       {
-        "message": "Logged in successfully",
+        "message": "Login successful",
         "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
         "user": {
           "id": 1,
           "email": "test@example.com",
@@ -244,7 +272,37 @@ You can view the automatically generated API documentation [here](link-to-your-s
   - **Error Codes**:
     - `400 Bad Request`: Missing required fields or invalid CAPTCHA
     - `401 Unauthorized`: Invalid credentials
-    - [500 Internal Server Error](http://_vscodecontentref_/11): Authentication failed
+    - `429 Too Many Requests`: Too many authentication attempts
+    - `500 Internal Server Error`: Authentication failed
+
+- `POST /auth/logout`: Logout user and invalidate token
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` on success
+  - **Error Codes**:
+    - `401 Unauthorized`: Not authenticated
+
+- `POST /auth/refresh`: Refresh access token
+
+  - **Request Body:**
+    ```json
+    {
+      "refreshToken": "string"
+    }
+    ```
+  - **Response:** `200 OK` with new access token
+  - **Error Codes**:
+    - `400 Bad Request`: Missing refresh token
+    - `401 Unauthorized`: Invalid or expired refresh token
+    - `429 Too Many Requests`: Too many refresh attempts
+
+- `GET /auth/validate`: Validate access token
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with token validity and user info
+  - **Error Codes**:
+    - `401 Unauthorized`: Invalid or expired token
+
+### User Endpoints
 
 - `POST /users`: Create a new user
 
@@ -281,12 +339,124 @@ You can view the automatically generated API documentation [here](link-to-your-s
     - [500 Internal Server Error](http://_vscodecontentref_/13): Failed to retrieve users
 
 - `GET /users/:id`: Get user by ID
+
   - **Headers:** `Authorization: Bearer <token>`
-  - **Response:** `200 OK` on success.
+  - **Response:** `200 OK` on success
   - **Error Codes:**
     - `401 Unauthorized`: Invalid or missing token
     - `404 Not Found`: User not found
-    - [500 Internal Server Error](http://_vscodecontentref_/14): Failed to retrieve user
+    - `500 Internal Server Error`: Failed to retrieve user
+
+- `GET /users/deleted`: Get all deleted users
+
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
+
+- `GET /users/available-learners`: Get learners not assigned to any group
+
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
+
+- `GET /users/available-student-teachers`: Get student teachers not assigned to any group
+
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
+
+- `PUT /users/:id`: Update a user
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Request Body:** User fields to update (email, first_name, last_name, etc.)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid input or attempt to set admin role
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: User not found
+    - `409 Conflict`: Email already exists
+
+- `DELETE /users/:id`: Delete a user
+
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
+    - `404 Not Found`: User not found
+
+- `PUT /users/:email/restore`: Restore a deleted user
+
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
+    - `404 Not Found`: User not found
+
+- `POST /users/forgot-password`: Request password reset
+
+  - **Request Body:**
+    ```json
+    {
+      "email": "string",
+      "skipEmail": true
+    }
+    ```
+  - **Response:** `200 OK` with reset code (if skipEmail is true)
+  - **Error Codes:**
+    - `404 Not Found`: User not found
+
+- `POST /users/verify-reset-code`: Verify password reset code
+
+  - **Request Body:**
+    ```json
+    {
+      "email": "string",
+      "code": "string"
+    }
+    ```
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Code is invalid or expired
+    - `404 Not Found`: User not found
+
+- `POST /users/reset-password`: Reset password with verification code
+
+  - **Request Body:**
+    ```json
+    {
+      "email": "string",
+      "newPassword": "string",
+      "confirmPassword": "string"
+    }
+    ```
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Password invalid or doesn't match
+    - `404 Not Found`: User not found
+
+- `PUT /users/:userId/change-password`: Change user password
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Request Body:**
+    ```json
+    {
+      "oldPassword": "string",
+      "newPassword": "string",
+      "confirmPassword": "string"
+    }
+    ```
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Password invalid or doesn't match
+    - `401 Unauthorized`: Old password incorrect
+    - `404 Not Found`: User not found
 
 ### Course Endpoints
 
@@ -378,63 +548,60 @@ You can view the automatically generated API documentation [here](link-to-your-s
     - `401 Unauthorized`: Invalid or missing token
     - `404 Not Found`: Course not found
     - `409 Conflict`: Course name already exists
-    - [500 Internal Server Error](http://_vscodecontentref_/6): Error editing course
+    - `500 Internal Server Error`: Error editing course
 
-- `DELETE /courses/:courseId`: Soft delete course
+- `PATCH /courses/:id/soft-delete`: Soft delete course
+
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
+    - `404 Not Found`: Course not found
+
+- `DELETE /courses/:courseId`: Permanently delete course
 
   - **Headers:** `Authorization: Bearer <token>`
   - **Response:** `200 OK` on success
   - **Error Codes:**
     - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
     - `404 Not Found`: Course not found
-    - [500 Internal Server Error](http://_vscodecontentref_/7): Error deleting course
+    - `500 Internal Server Error`: Error deleting course
 
-- `POST /courses/assign-teacher`: Assign teacher to course
+- `GET /courses/user/:userId`: Get courses of a specific user
 
   - **Headers:** `Authorization: Bearer <token>`
-  - **Request Body:**
-    ```json
-    {
-      "courseId": "number",
-      "userId": "number"
-    }
-    ```
+  - **Response:** `200 OK` with list of courses
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: User not found
+
+- `POST /courses/:courseId/assign-teacher/:userId`: Assign teacher to course
+
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
   - **Response:** `200 OK` on success
   - **Error Codes:**
     - `401 Unauthorized`: Invalid or missing token
-    - `404 Not Found`: Course not found
-    - [500 Internal Server Error](http://_vscodecontentref_/8): Error assigning teacher to course
+    - `403 Forbidden`: Admin access required
+    - `404 Not Found`: Course or teacher not found
 
-- `POST /courses/assign-learner-group`: Assign learner group to course
+- `POST /courses/:courseId/assign-learner-group/:groupId`: Assign learner group to course
 
-  - **Headers:** `Authorization: Bearer <token>`
-  - **Request Body:**
-    ```json
-    {
-      "courseId": "number",
-      "learnerGroupId": "number"
-    }
-    ```
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
   - **Response:** `200 OK` on success
   - **Error Codes:**
     - `401 Unauthorized`: Invalid or missing token
-    - `404 Not Found`: Course not found
-    - [500 Internal Server Error](http://_vscodecontentref_/9): Error assigning learner group to course
+    - `403 Forbidden`: Admin access required
+    - `404 Not Found`: Course or group not found
 
-- `POST /courses/assign-student-teacher-group`: Assign student teacher group to course
-  - **Headers:** `Authorization: Bearer <token>`
-  - **Request Body:**
-    ```json
-    {
-      "courseId": "number",
-      "studentTeacherGroupId": "number"
-    }
-    ```
+- `POST /courses/:courseId/assign-student-teacher-group/:groupId`: Assign student teacher group to course
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
   - **Response:** `200 OK` on success
   - **Error Codes:**
     - `401 Unauthorized`: Invalid or missing token
-    - `404 Not Found`: Course not found
-    - [500 Internal Server Error](http://_vscodecontentref_/10): Error assigning student teacher group to course
+    - `403 Forbidden`: Admin access required
+    - `404 Not Found`: Course or group not found
 
 ### Enrollment Endpoints
 
@@ -474,14 +641,41 @@ You can view the automatically generated API documentation [here](link-to-your-s
     - `409 Conflict`: Email already exists
     - [500 Internal Server Error](http://_vscodecontentref_/0): Failed to create enrollment
 
+- `GET /enrollments`: Get all enrollments
+
+  - **Headers:** `Authorization: Bearer <token>` (admin access required)
+  - **Response:** `200 OK` on success with pagination
+  - **Query Parameters:** page, limit, status
+  - **Error Codes**:
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
+
 - `GET /enrollments/:enrollmentId`: Get enrollment by ID
 
   - **Headers:** `Authorization: Bearer <token>` (admin access required)
   - **Response:** `200 OK` on success
   - **Error Codes**:
     - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
     - `404 Not Found`: Enrollment not found
-    - [500 Internal Server Error](http://_vscodecontentref_/1): Failed to retrieve enrollment
+
+- `GET /enrollments/school/:schoolId`: Get enrollments by school ID
+
+  - **Headers:** `Authorization: Bearer <token>` (admin access required)
+  - **Response:** `200 OK` on success
+  - **Query Parameters:** page, limit, status
+  - **Error Codes**:
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
+    - `404 Not Found`: School not found
+
+- `GET /enrollments/user/:userId`: Get enrollments by user ID
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` on success
+  - **Error Codes**:
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: User not found
 
 - `PATCH /enrollments/:enrollmentId/approve`: Approve enrollment
 
@@ -489,8 +683,8 @@ You can view the automatically generated API documentation [here](link-to-your-s
   - **Response:** `200 OK` on success
   - **Error Codes**:
     - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
     - `404 Not Found`: Enrollment not found
-    - [500 Internal Server Error](http://_vscodecontentref_/2): Failed to approve enrollment
 
 - `PATCH /enrollments/:enrollmentId/reject`: Reject enrollment
 
@@ -498,25 +692,8 @@ You can view the automatically generated API documentation [here](link-to-your-s
   - **Response:** `200 OK` on success
   - **Error Codes**:
     - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
     - `404 Not Found`: Enrollment not found
-    - [500 Internal Server Error](http://_vscodecontentref_/3): Failed to reject enrollment
-
-- `GET /enrollments`: Get all enrollments
-
-  - **Headers:** `Authorization: Bearer <token>` (admin access required)
-  - **Response:** `200 OK` on success
-  - **Error Codes**:
-    - `401 Unauthorized`: Invalid or missing token
-    - [500 Internal Server Error](http://_vscodecontentref_/4): Failed to retrieve enrollments
-
-- `GET /enrollments/school/:schoolId`: Get enrollments by school ID
-
-  - **Headers:** `Authorization: Bearer <token>` (admin access required)
-  - **Response:** `200 OK` on success
-  - **Error Codes**:
-    - `401 Unauthorized`: Invalid or missing token
-    - `404 Not Found`: School not found
-    - [500 Internal Server Error](http://_vscodecontentref_/5): Failed to retrieve enrollments
 
 - `POST /enrollments/check-status`: Check enrollment status by email
 
@@ -536,7 +713,6 @@ You can view the automatically generated API documentation [here](link-to-your-s
   - **Error Codes**:
     - `400 Bad Request`: Email is required
     - `404 Not Found`: Enrollment not found for this email
-    - [500 Internal Server Error](http://_vscodecontentref_/6): Failed to check enrollment status
 
 - `PUT /enrollments/:enrollmentId`: Update enrollment
 
@@ -545,17 +721,17 @@ You can view the automatically generated API documentation [here](link-to-your-s
   - **Response:** `200 OK` on success
   - **Error Codes**:
     - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
     - `404 Not Found`: Enrollment not found
     - `409 Conflict`: Email already exists (if updating email)
-    - [500 Internal Server Error](http://_vscodecontentref_/7): Internal server error
 
 - `DELETE /enrollments/:enrollmentId`: Delete enrollment
   - **Headers:** `Authorization: Bearer <token>` (admin access required)
-  - **Response:** `204 No Content` on success
+  - **Response:** `200 OK` on success
   - **Error Codes**:
     - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
     - `404 Not Found`: Enrollment not found
-    - [500 Internal Server Error](http://_vscodecontentref_/8): Internal server error
 
 ### Group Endpoints
 
@@ -584,7 +760,7 @@ You can view the automatically generated API documentation [here](link-to-your-s
       ```
   - **Error Codes:**
     - `401 Unauthorized`: Invalid or missing token
-    - [500 Internal Server Error](http://_vscodecontentref_/0): Failed to retrieve groups
+    - `403 Forbidden`: Admin access required
 
 - `POST /groups`: Create a new group
 
@@ -614,7 +790,7 @@ You can view the automatically generated API documentation [here](link-to-your-s
   - **Error Codes:**
     - `400 Bad Request`: All fields are required
     - `401 Unauthorized`: Invalid or missing token
-    - [500 Internal Server Error](http://_vscodecontentref_/1): Failed to create group
+    - `403 Forbidden`: Admin access required
 
 - `GET /groups/:groupId`: Get group by ID
 
@@ -623,7 +799,47 @@ You can view the automatically generated API documentation [here](link-to-your-s
   - **Error Codes:**
     - `401 Unauthorized`: Invalid or missing token
     - `404 Not Found`: Group not found
-    - [500 Internal Server Error](http://_vscodecontentref_/2): Failed to retrieve group
+
+- `PUT /groups/:groupId`: Update a group
+
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
+  - **Request Body:**
+    ```json
+    {
+      "name": "string"
+    }
+    ```
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
+    - `404 Not Found`: Group not found
+
+- `DELETE /groups/:groupId`: Delete a group
+
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
+    - `404 Not Found`: Group not found
+
+- `GET /groups/:groupId/members`: Get members of a group
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with array of users
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Group not found
+
+- `PATCH /groups/:groupId/members/:userId`: Remove a member from a group
+
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Admin access required
+    - `404 Not Found`: Group or member not found
 
 - `POST /groups/assign-student-teachers`: Assign student teachers to a group
 
@@ -639,10 +855,10 @@ You can view the automatically generated API documentation [here](link-to-your-s
   - **Error Codes:**
     - `400 Bad Request`: All fields are required
     - `401 Unauthorized`: Invalid or missing token
-    - [500 Internal Server Error](http://_vscodecontentref_/3): Failed to assign student teacher members
+    - `403 Forbidden`: Admin access required
 
 - `POST /groups/assign-learners`: Assign learners to a group
-  - **Headers:** `Authorization: Bearer <token>`
+  - **Headers:** `Authorization: Bearer <token>` (admin only)
   - **Request Body:**
     ```json
     {
@@ -654,7 +870,577 @@ You can view the automatically generated API documentation [here](link-to-your-s
   - **Error Codes:**
     - `400 Bad Request`: All fields are required
     - `401 Unauthorized`: Invalid or missing token
-    - [500 Internal Server Error](http://_vscodecontentref_/4): Failed to assign learner members
+    - `403 Forbidden`: Admin access required
+
+### Module Endpoints
+
+- `POST /modules/course/:courseId`: Create a new module
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:**
+    ```json
+    {
+      "name": "string",
+      "description": "string"
+    }
+    ```
+  - **Response:** `201 Created` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid input
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Course not found
+
+- `GET /modules/:moduleId`: Get module by ID
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with module details
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Module not found
+
+- `GET /modules/course/:courseId`: Get modules by course ID
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with list of modules
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Course not found
+
+- `PUT /modules/:moduleId`: Update a module
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:**
+    ```json
+    {
+      "name": "string",
+      "description": "string"
+    }
+    ```
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Module not found
+
+- `DELETE /modules/:moduleId`: Delete a module
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Module not found
+
+- `POST /modules/:moduleId/content`: Add content to a module
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:**
+    ```json
+    {
+      "name": "string",
+      "link": "string"
+    }
+    ```
+  - **Response:** `201 Created` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid input
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Module not found
+
+- `POST /modules/:moduleId/content/file`: Upload a content file to a module
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:** multipart/form-data with contentFile and name
+  - **Response:** `201 Created` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid file or size exceeded
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Module not found
+
+- `PUT /modules/content/:contentId`: Update a content
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:**
+    ```json
+    {
+      "name": "string",
+      "link": "string"
+    }
+    ```
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Content not found
+
+- `DELETE /modules/content/:contentId`: Delete a content
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Content not found
+
+- `GET /modules/:moduleId/contents`: Get contents by module ID
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with list of contents
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Module not found
+
+- `GET /modules/:moduleId/grade/:userId`: Get module grade of a user
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with grade information
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: User or module not found
+
+- `POST /modules/:moduleId/unlock/:userId`: Manually unlock next module for a learner
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:**
+    ```json
+    {
+      "reason": "string"
+    }
+    ```
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid input
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Learner, module, or course not found
+
+### Assessment Endpoints
+
+- `POST /assessments`: Create a new assessment
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:**
+    ```json
+    {
+      "title": "string",
+      "description": "string",
+      "module_id": "number",
+      "type": "quiz|assignment|exam",
+      "max_score": "number",
+      "passing_score": "number",
+      "duration_minutes": "number",
+      "due_date": "date-time",
+      "instructions": "string",
+      "allowed_attempts": "number"
+    }
+    ```
+  - **Response:** `201 Created` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid input
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+
+- `GET /assessments/:assessmentId`: Get assessment by ID
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Parameters:** includeQuestions (boolean), teacherView (boolean)
+  - **Response:** `200 OK` with assessment details
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Assessment not found
+
+- `PUT /assessments/:assessmentId`: Update an assessment
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:** Fields to update
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid input
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Assessment not found
+
+- `DELETE /assessments/:assessmentId`: Delete an assessment
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Assessment not found
+
+- `GET /assessments/module/:moduleId`: Get assessments for a module
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Parameters:** includeQuestions, page, limit
+  - **Response:** `200 OK` with list of assessments
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Module not found
+
+- `POST /assessments/:assessmentId/questions`: Add a question to an assessment
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:**
+    ```json
+    {
+      "question_text": "string",
+      "question_type": "multiple_choice|true_false|short_answer|essay",
+      "points": "number",
+      "options": [
+        {
+          "text": "string",
+          "is_correct": "boolean"
+        }
+      ],
+      "answer_key": "string",
+      "word_limit": "number"
+    }
+    ```
+  - **Response:** `201 Created` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid input
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Assessment not found
+
+- `PUT /assessments/questions/:questionId`: Update a question
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:** Fields to update
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid input
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Question not found
+
+- `DELETE /assessments/questions/:questionId`: Delete a question
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Question not found
+
+- `POST /assessments/:assessmentId/submissions`: Start a new submission
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `201 Created` with submission details
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid request
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Assessment not found
+
+- `POST /assessments/submissions/:submissionId/questions/:questionId/answers`: Save an answer
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Request Body:**
+    ```json
+    {
+      "optionId": "number",
+      "textResponse": "string"
+    }
+    ```
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid answer format
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: User doesn't own this submission
+    - `404 Not Found`: Submission or question not found
+
+- `POST /assessments/submissions/:submissionId/submit`: Submit a completed assessment
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with score details
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: User doesn't own this submission
+    - `404 Not Found`: Submission not found
+    - `409 Conflict`: Assessment already submitted
+
+- `GET /assessments/:assessmentId/submissions`: Get all submissions for an assessment
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Query Parameters:** page, limit
+  - **Response:** `200 OK` with list of submissions
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Teacher or admin role required
+    - `404 Not Found`: Assessment not found
+
+- `GET /assessments/:assessmentId/my-submissions`: Get current user's all submissions
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Parameters:** includeAnswers
+  - **Response:** `200 OK` with submissions
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Assessment not found
+
+- `GET /assessments/:assessmentId/my-submission`: Get current user's latest submission
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Query Parameters:** includeAnswers, page, limit
+  - **Response:** `200 OK` with submission
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Assessment or submission not found
+
+- `POST /assessments/submissions/:submissionId/grade`: Grade a submission
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:**
+    ```json
+    {
+      "grade": {
+        "questionId": "number",
+        "points": "number",
+        "feedback": "string"
+      },
+      "feedback": "string"
+    }
+    ```
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid grading data
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Teacher or admin role required
+    - `404 Not Found`: Submission not found
+
+- `GET /assessments/submissions/:submissionId`: Get a specific submission with answers
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with submission details
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Submission not found
+
+- `POST /assessments/:assessmentId/publish`: Publish an assessment
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Assessment not found
+
+- `POST /assessments/:assessmentId/unpublish`: Unpublish an assessment
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Assessment not found
+
+### Announcement Endpoints
+
+- `POST /announcements`: Create a new announcement
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:**
+    ```json
+    {
+      "title": "string",
+      "message": "string",
+      "course_id": "number"
+    }
+    ```
+  - **Response:** `201 Created` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid input
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Course not found
+
+- `GET /announcements/course/:courseId`: Get announcements by course ID
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with list of announcements
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Course not found
+
+- `GET /announcements/global`: Get global announcements
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with list of global announcements
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+
+- `GET /announcements/:announcementId`: Get announcement by ID
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with announcement details
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Announcement not found
+
+- `GET /announcements/user/:userId/course/:courseId`: Get announcements by user and course
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Response:** `200 OK` with list of announcements
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: User or course not found
+
+- `GET /announcements/user/:userId`: Get announcements by user ID
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Response:** `200 OK` with list of announcements
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: User not found
+
+- `PUT /announcements/:announcementId`: Update an announcement
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:**
+    ```json
+    {
+      "title": "string",
+      "message": "string",
+      "course_id": "number"
+    }
+    ```
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Announcement not found
+
+- `DELETE /announcements/:announcementId`: Delete an announcement
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Announcement not found
+
+### Attendance Endpoints
+
+- `POST /attendance`: Create a new attendance record
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:**
+    ```json
+    {
+      "courseId": "number",
+      "date": "YYYY-MM-DD"
+    }
+    ```
+  - **Response:** `201 Created` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid input
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Course not found
+
+- `GET /attendance/course/:courseId`: Get attendance by course ID and date
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Response:** `200 OK` with attendance record
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Attendance record not found
+
+- `GET /attendance/student/:studentId`: Get attendance records by student ID
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with list of attendance records
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Student not found
+
+- `GET /attendance/:attendanceId`: Get attendance by ID
+
+  - **Headers:** `Authorization: Bearer <token>`
+  - **Response:** `200 OK` with attendance details
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `404 Not Found`: Attendance not found
+
+- `PUT /attendance/:attendanceId`: Update attendance status
+
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Request Body:**
+    ```json
+    {
+      "status": "present|absent|late|excused"
+    }
+    ```
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid status
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Attendance not found
+
+- `DELETE /attendance/:attendanceId`: Delete attendance record
+  - **Headers:** `Authorization: Bearer <token>` (student teacher/teacher/admin)
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `401 Unauthorized`: Invalid or missing token
+    - `403 Forbidden`: Insufficient permissions
+    - `404 Not Found`: Attendance not found
+
+### Passwordless Authentication Endpoints
+
+- `POST /auth/passwordless/magic-link`: Request magic link authentication
+
+  - **Request Body:**
+    ```json
+    {
+      "email": "string"
+    }
+    ```
+  - **Response:** `200 OK` on success
+  - **Error Codes:**
+    - `400 Bad Request`: Email is required
+    - `404 Not Found`: User not found
+
+- `POST /auth/passwordless/numeric-code`: Request numeric code authentication
+
+  - **Request Body:**
+    ```json
+    {
+      "email": "string"
+    }
+    ```
+  - **Response:** `200 OK` with numeric code
+  - **Error Codes:**
+    - `400 Bad Request`: Email is required
+    - `404 Not Found`: User not found
+
+- `POST /auth/passwordless/picture-code`: Request picture code authentication
+
+  - **Request Body:**
+    ```json
+    {
+      "email": "string"
+    }
+    ```
+  - **Response:** `200 OK` with picture code
+  - **Error Codes:**
+    - `400 Bad Request`: Email is required
+    - `404 Not Found`: User not found
+
+- `POST /auth/passwordless/verify`: Verify passwordless authentication code
+  - **Request Body:**
+    ```json
+    {
+      "email": "string",
+      "code": "string"
+    }
+    ```
+  - **Response:** `200 OK` with authentication token
+  - **Error Codes:**
+    - `400 Bad Request`: Invalid or expired code
+    - `404 Not Found`: User not found
 
 ## Testing Instructions
 
