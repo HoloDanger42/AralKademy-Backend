@@ -32,7 +32,7 @@ const config = {
     return process.env.NODE_ENV || 'development'
   },
 
-  port: parseInt(process.env.PORT, 10) || 4000,
+  port: parseInt(process.env.PORT, 10) || 3000,
 
   // Database
   dbConfig: {
