@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export const adminsList = [
   {
     first_name: 'Sheila Ruth',
@@ -86,3 +87,93 @@ export const adminsList = [
     school_id: 1002,
   },
 ]
+=======
+export const adminsList = [
+  {
+    first_name: 'Sheila Ruth',
+    last_name: 'Masangkay',
+    email: 'smmasangkay@ust.edu.ph',
+    password: process.env.ADMIN_PASSWORD,
+    role: 'admin',
+    school_id: 1001,
+  },
+  {
+    first_name: 'Drew Darwin',
+    middle_initial: 'D',
+    last_name: 'Cruz',
+    email: 'drewdarwin.cruz.cics@ust.edu.ph',
+    password: process.env.ADMIN_PASSWORD,
+    role: 'admin',
+    school_id: 1001,
+  },{
+    first_name: 'Stephanie',
+    middle_initial: 'C',
+    last_name: 'Curilan',
+    email: 'stephanie.curilan.cics@ust.edu.ph',
+    password: process.env.ADMIN_PASSWORD,
+    role: 'admin',
+    school_id: 1001,
+  },
+  {
+    first_name: 'Melchor Ray',
+    middle_initial: 'G',
+    last_name: 'Domingo',
+    email: 'melchorray.domingo.cics@ust.edu.ph',
+    password: process.env.ADMIN_PASSWORD,
+    role: 'admin',
+    school_id: 1001,
+  },
+  {
+    first_name: 'Lennard Ace',
+    middle_initial: 'A',
+    last_name: 'Flores',
+    email: 'lennardace.flores.cics@ust.edu.ph',
+    password: process.env.ADMIN_PASSWORD,
+    role: 'admin',
+    school_id: 1001,
+  },
+  {
+    first_name: 'John Lester Emmanuel',
+    last_name: 'Lopez',
+    email: 'johnlester.lopez.cics@ust.edu.ph',
+    password: process.env.ADMIN_PASSWORD,
+    role: 'admin',
+    school_id: 1001,
+  },
+  {
+    first_name: 'John Dexter Ivan',
+    middle_initial: 'C',
+    last_name: 'Sanchez',
+    email: 'johndexter.sanchez.cics@ust.edu.ph',
+    password: process.env.ADMIN_PASSWORD,
+    role: 'admin',
+    school_id: 1001,
+  },
+  {
+    first_name: 'Tristan Daniel',
+    middle_initial: 'S',
+    last_name: 'Sigua',
+    email: 'tristandaniel.sigua.cics@ust.edu.ph',
+    password: process.env.ADMIN_PASSWORD,
+    role: 'admin',
+    school_id: 1001,
+  },
+  {
+    first_name: 'Erika Bianca',
+    middle_initial: 'I',
+    last_name: 'Villaroza',
+    email: 'erikabianca.villaroza.cics@ust.edu.ph',
+    password: process.env.ADMIN_PASSWORD,
+    role: 'admin',
+    school_id: 1001,
+  },
+  {
+    first_name: 'Ma. Ailene',
+    last_name: 'Libao',
+    email: 'aralkademy@gmail.com',
+    password: process.env.ADMIN_PASSWORD,
+    role: 'admin',
+    school_id: 1002,
+  },
+]
+>>>>>>> 627466f638de697919d077ca56524377d406840d
