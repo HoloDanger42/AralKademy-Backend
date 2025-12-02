@@ -1,0 +1,80 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Non-sensitive environment variables
+      NODE_ENV: test
+      DB_HOST: localhost
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: test_db
+      DB_DIALECT: postgres
+      PORT: 4000
+      # Sensitive variables from GitHub secrets
+      JWT_SECRET: ${{ secrets.JWT_SECRET || 'test-jwt-secret-for-ci' }}
+      RECAPTCHA_SECRET_KEY: ${{ secrets.RECAPTCHA_SECRET_KEY || 'test-recaptcha-key' }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD || 'admin12345' }}
+      EMAIL_USER: ${{ secrets.EMAIL_USER || 'test-email-user' }}
+      EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD || 'test-email-password' }}
+      # Test-specific overrides
+      ENABLE_RECAPTCHA: false
+      ENABLE_EMAIL_VERIFICATION: false
+      RUN_SEEDERS: true
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Create .env file
+        run: |
+          echo "NODE_ENV=$NODE_ENV" >> .env
+          echo "DB_HOST=$DB_HOST" >> .env
+          echo "DB_USER=$DB_USER" >> .env
+          echo "DB_PASSWORD=$DB_PASSWORD" >> .env
+          echo "DB_NAME=$DB_NAME" >> .env
+          echo "DB_DIALECT=$DB_DIALECT" >> .env
+          echo "PORT=$PORT" >> .env
+          echo "JWT_SECRET=$JWT_SECRET" >> .env
+          echo "RECAPTCHA_SECRET_KEY=$RECAPTCHA_SECRET_KEY" >> .env
+          echo "ADMIN_PASSWORD=$ADMIN_PASSWORD" >> .env
+          echo "EMAIL_USER=$EMAIL_USER" >> .env
+          echo "EMAIL_PASSWORD=$EMAIL_PASSWORD" >> .env
+          echo "ENABLE_RECAPTCHA=$ENABLE_RECAPTCHA" >> .env
+          echo "ENABLE_EMAIL_VERIFICATION=$ENABLE_EMAIL_VERIFICATION" >> .env
+          echo "RUN_SEEDERS=$RUN_SEEDERS" >> .env
+      - name: Install dependencies
+        run: npm ci
+      - name: Run linters
+        run: npm run lint
+      - name: Run tests
+        run: npm run test
